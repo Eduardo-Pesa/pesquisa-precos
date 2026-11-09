@@ -1,0 +1,3111 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0f3b3a"><link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><title>Pesquisa de Pre&#xe7;os</title>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head><body>
+<meta name="theme-color" content="#0f3b3a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: app de campo, uma coluna, barra superior fixa e acoes grandes no rodape (estilo etiqueta de gondola) */
+:root{
+  --bg:#eef2f1; --surface:#ffffff; --surface2:#e3e9e8; --ink:#14201f; --muted:#5a6967; --line:#c9d3d1;
+  --brand:#0f3b3a; --brand-ink:#ffffff; --tag:#ffd23f; --tag-ink:#1b1a10;
+  --ok:#1f7a4d; --ok-bg:#d9efe3; --warn:#9a5b00; --warn-bg:#fdebc8; --bad:#b3261e; --bad-bg:#f9dedc; --info-bg:#dceaf3;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1514; --surface:#16211f; --surface2:#1e2b29; --ink:#e4ecea; --muted:#93a4a1; --line:#2c3b39;
+  --brand:#123f3d; --brand-ink:#f2f7f6; --tag:#ffd23f; --tag-ink:#1b1a10;
+  --ok:#6fd3a0; --ok-bg:#163527; --warn:#f2b45a; --warn-bg:#3a2a10; --bad:#ff8a80; --bad-bg:#3d1714; --info-bg:#173040; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1514; --surface:#16211f; --surface2:#1e2b29; --ink:#e4ecea; --muted:#93a4a1; --line:#2c3b39;
+  --brand:#123f3d; --brand-ink:#f2f7f6; --tag:#ffd23f; --tag-ink:#1b1a10;
+  --ok:#6fd3a0; --ok-bg:#163527; --warn:#f2b45a; --warn-bg:#3a2a10; --bad:#ff8a80; --bad-bg:#3d1714; --info-bg:#173040; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--f-body);-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--brand)}
+button,input,select,textarea{font:inherit;color:inherit}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--brand);color:var(--brand-ink);
+  padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;align-items:center;gap:10px}
+.top h1{font:700 22px/1.1 var(--f-display);letter-spacing:.02em;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
+.top .back{background:transparent;border:1px solid rgba(255,255,255,.35);color:var(--brand-ink);border-radius:8px;padding:6px 10px;cursor:pointer}
+.sync{font:500 12px var(--f-mono);padding:4px 8px;border-radius:99px;background:rgba(255,255,255,.12);white-space:nowrap;cursor:pointer;border:0;color:var(--brand-ink)}
+.sync.off{background:var(--tag);color:var(--tag-ink)}
+main{padding-block:16px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h2{font:700 20px/1.15 var(--f-display);letter-spacing:.03em;text-transform:uppercase;margin:6px 0 0;text-wrap:balance}
+h3{font:600 15px/1.3 var(--f-body);margin:0}
+.muted{color:var(--muted)} .small{font-size:13px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-height:92px}
+.tile b{font:700 19px/1.1 var(--f-display);letter-spacing:.03em;text-transform:uppercase}
+.tile span{font-size:13px;color:var(--muted)}
+.tile:active{transform:scale(.98)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>*{min-width:0}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:10px 14px;cursor:pointer;font-weight:600;min-height:44px}
+.btn.pri{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+.btn.tag{background:var(--tag);color:var(--tag-ink);border-color:var(--tag)}
+.btn.bad{color:var(--bad);border-color:var(--bad)}
+.btn.sm{min-height:34px;padding:6px 10px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.grow{flex:1}
+:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+input.in,select.in,textarea.in{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px;width:100%;color:var(--ink)}
+input.in:focus,select.in:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--tag) 55%,transparent)}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.f2.st{grid-template-columns:1fr}}
+.pill{display:inline-block;font:600 11px/1 var(--f-body);letter-spacing:.05em;text-transform:uppercase;padding:5px 8px;border-radius:99px;background:var(--surface2);color:var(--muted);white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.info{background:var(--info-bg);color:var(--ink)}
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.li{display:flex;gap:10px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);cursor:pointer;text-align:left;background:transparent;border-left:0;border-right:0;border-bottom:0;width:100%}
+.li:first-child{border-top:0}
+.li .t{flex:1;min-width:0}
+.li .t div:first-child{font-weight:600;overflow-wrap:anywhere}
+.bar{height:6px;border-radius:9px;background:var(--surface2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok)}
+/* etiqueta de preco */
+.tagcard{background:var(--tag);color:var(--tag-ink);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:6px;position:relative}
+.tagcard .nm{font:700 24px/1.08 var(--f-display);letter-spacing:.01em;text-transform:uppercase;overflow-wrap:anywhere}
+.tagcard .meta{font:500 12px var(--f-mono);opacity:.8;overflow-wrap:anywhere}
+.ean{background:#fff;border-radius:6px;padding:6px 8px 2px;align-self:flex-start;max-width:100%}
+.ean svg{display:block;max-width:100%;height:auto}
+.price{font:600 20px var(--f-mono);text-align:right}
+.chk{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);cursor:pointer;min-height:44px;flex:1}
+.chk input{width:22px;height:22px;accent-color:var(--brand)}
+.chk.on{border-color:var(--bad);background:var(--bad-bg)}
+.chk.of.on{border-color:var(--warn);background:var(--warn-bg)}
+.foot{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
+  padding-block:10px calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:8px}
+.foot .btn{flex:1}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:var(--surface2);font:600 11px var(--f-body);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+td.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+td.min{background:var(--ok-bg);color:var(--ok);font-weight:600}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--surface2)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.tabs button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 14px;white-space:nowrap;cursor:pointer;font-weight:600;font-size:13px}
+.tabs button.on{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+.modal{position:fixed;inset:0;z-index:20;background:rgba(5,15,14,.55);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:640px;max-height:92%;overflow:auto;border-radius:16px 16px 0 0;
+  padding-block:16px calc(16px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:12px}
+@media (min-width:700px){.modal{align-items:center}.sheet{border-radius:16px}}
+.video{position:relative;background:#000;border-radius:var(--r);overflow:hidden;aspect-ratio:4/3;max-width:100%}
+.video video{width:100%;height:100%;object-fit:cover;display:block}
+.video:after{content:"";position:absolute;left:10%;right:10%;top:48%;height:2px;background:var(--bad);box-shadow:0 0 8px var(--bad)}
+.ph{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ph label{border:2px dashed var(--line);border-radius:var(--r);aspect-ratio:1;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;overflow:hidden;background:var(--surface);font-size:13px;color:var(--muted);padding:6px}
+.ph img{width:100%;height:100%;object-fit:cover}
+.ph input{display:none}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;max-width:90%;text-align:center}
+.err{color:var(--bad);font-weight:600;font-size:13px}
+.boot{padding:40px 20px;text-align:center}
+.brandmark{font:700 40px/1 var(--f-display);text-transform:uppercase;letter-spacing:.02em}
+.brandmark em{font-style:normal;background:var(--tag);color:var(--tag-ink);padding:0 8px;border-radius:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 10px;font-size:13px;cursor:pointer}
+.chip.on{background:var(--ok-bg);border-color:var(--ok);color:var(--ok);font-weight:600}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div id="app"><div class="boot"><div class="brandmark">Pesquisa de <em>Pre&#xe7;os</em></div><p class="muted" id="bootMsg">Carregando bases&#x2026;</p></div></div>
+<div id="modal"></div>
+<div id="toast" hidden></div>
+<input type="file" id="fileScan" accept="image/&#42;" capture="environment" hidden>
+<input type="file" id="fileFoto" accept="image/&#42;" capture="environment" hidden>
+<input type="file" id="fileImport" accept=".csv,.txt,.xlsx,.xls" hidden>
+
+<script>window.__bootErr = function(m) {
+ if (window.__booted) {
+  var t = document.getElementById("toast");
+  if (t) {
+   t.textContent = "Erro: " + m;
+   t.className = "toast";
+   t.hidden = false;
+   setTimeout((function() {
+    t.hidden = true;
+   }), 6e3);
+  }
+  return;
+ }
+ var a = document.getElementById("app");
+ if (a && a.innerHTML.indexOf("flogin") < 0 && a.innerHTML.indexOf("logout") < 0) a.innerHTML = '<div class="boot"><p class="err">Erro ao abrir: ' + String(m).replace(/</g, "&lt;") + '</p><p class="muted">Abra no Chrome (Android) ou Safari (iPhone) atualizado e envie esta mensagem ao suporte.</p></div>';
+};
+
+window.addEventListener("error", (function(e) {
+ var f = String(e.filename || "");
+ if (/jsdelivr|cdnjs|unpkg/.test(f)) return;
+ window.__bootErr((e.message || e) + " [linha " + (e.lineno || "?") + ":" + (e.colno || "?") + "]");
+}));
+
+window.addEventListener("unhandledrejection", (function(e) {
+ window.__bootErr(e.reason && e.reason.message || e.reason);
+}));</script>
+<script>(function() {
+ function L(urls, test) {
+  var i = 0;
+  (function n() {
+   if (test() || i >= urls.length) return;
+   var e = document.createElement("script");
+   e.src = urls[i++];
+   e.async = true;
+   e.onerror = function() {
+    e.remove();
+    n();
+   };
+   document.head.appendChild(e);
+  })();
+ }
+ L([ "https:/\/cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.mini.min.js", "https:/\/cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.mini.min.js" ], (function() {
+  return !!window.XLSX;
+ }));
+ L([ "https:/\/cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js", "https:/\/unpkg.com/@zxing/library@0.21.3/umd/index.min.js" ], (function() {
+  return !!window.ZXing;
+ }));
+})();</script>
+<script>"use strict";
+
+const APPV = "G3.0";
+
+const $ = s => document.querySelector(s);
+
+const esc = v => String(v ?? "").replace(/[&<>"']/g, (c => ({
+ "&": "&amp;",
+ "<": "&lt;",
+ ">": "&gt;",
+ '"': "&quot;",
+ "'": "&#39;"
+}[c])));
+
+const norm = s => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+const now = () => Date.now();
+
+const fmtD = t => t ? new Date(t).toLocaleDateString("pt-BR") : "";
+
+const fmtDT = t => t ? new Date(t).toLocaleString("pt-BR", {
+ day: "2-digit",
+ month: "2-digit",
+ year: "2-digit",
+ hour: "2-digit",
+ minute: "2-digit"
+}) : "";
+
+const today = () => (new Date).toISOString().slice(0, 10);
+
+const money = v => v == null || v === "" ? "" : Number(v).toLocaleString("pt-BR", {
+ minimumFractionDigits: 2,
+ maximumFractionDigits: 2
+});
+
+const pnum = v => {
+ if (v == null) return null;
+ v = String(v).trim().replace(/[R$\s]/g, "");
+ if (!v) return null;
+ if (v.includes(",")) v = v.replace(/\./g, "").replace(",", ".");
+ const n = Number(v);
+ return isFinite(n) ? n : null;
+};
+
+const tmo = (p, ms) => Promise.race([ p, new Promise(((_, rej) => setTimeout((() => rej(new Error("timeout"))), ms))) ]);
+
+const bootMsg = m => {
+ const b = document.getElementById("bootMsg");
+ if (b) b.textContent = m;
+};
+
+const idle = () => new Promise((r => (window.requestIdleCallback || setTimeout)(r, {
+ timeout: 200
+})));
+
+function toast(m, ms = 2200) {
+ const t = $("#toast");
+ t.textContent = m;
+ t.hidden = false;
+ t.className = "toast";
+ clearTimeout(toast._t);
+ toast._t = setTimeout((() => t.hidden = true), ms);
+}
+
+const KV = {
+ db: null,
+ mem: {},
+ async open() {
+  try {
+   this.db = await tmo(new Promise(((res, rej) => {
+    const r = indexedDB.open("pesquisa_precos", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("kv");
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+    r.onblocked = () => rej(new Error("blocked"));
+   })), 4e3);
+  } catch (e) {
+   this.db = null;
+   try {
+    const ls = localStorage.getItem("pp_mem");
+    if (ls) this.mem = JSON.parse(ls);
+   } catch (x) {}
+  }
+ },
+ async get(k) {
+  if (!this.db) return this.mem[k];
+  try {
+   return await tmo(new Promise(((res, rej) => {
+    const r = this.db.transaction("kv").objectStore("kv").get(k);
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+   })), 3e3);
+  } catch (e) {
+   return this.mem[k];
+  }
+ },
+ async set(k, v) {
+  this.mem[k] = v;
+  if (!this.db) {
+   if (k !== "prodBase") try {
+    const m = {
+     ...this.mem
+    };
+    delete m.prodBase;
+    localStorage.setItem("pp_mem", JSON.stringify(m));
+   } catch (e) {}
+   return;
+  }
+  try {
+   await new Promise(((res, rej) => {
+    const t = this.db.transaction("kv", "readwrite");
+    t.objectStore("kv").put(v, k);
+    t.oncomplete = res;
+    t.onerror = () => rej(t.error);
+   }));
+  } catch (e) {}
+ },
+ _p: {},
+ save(k) {
+  clearTimeout(this._p[k]);
+  this._p[k] = setTimeout((() => this.set(k, S[k])), 250);
+ }
+};
+
+const S = {
+ user: null,
+ prodBaseVer: "orig",
+ prods: new Map,
+ prodArr: [],
+ eanIdx: new Map,
+ famIdx: new Map,
+ prodEdits: {},
+ lojas: [],
+ concs: [],
+ vinc: [],
+ users: [],
+ listas: {},
+ coletas: {},
+ aux: {},
+ queue: [],
+ cfg: {
+  wa: ""
+ },
+ token: null,
+ pesq: [],
+ pesqItens: {},
+ rej: [],
+ allSeqs: [],
+ envios: [],
+ fotos: {},
+ online: navigator.onLine
+};
+
+function mkProd(r) {
+ return {
+  seq: +r.seq,
+  nome: r.nome || "",
+  ean: r.ean || "",
+  n1: r.n1 || "",
+  n2: r.n2 || "",
+  n3: r.n3 || "",
+  n4: r.n4 || "",
+  n5: r.n5 || "",
+  avo: r.avo ?? "",
+  alt: r.alt ?? "",
+  fam: r.fam ?? "",
+  perc: r.perc ?? 100,
+  custo: r.custo ?? 0
+ };
+}
+
+function indexProd(p) {
+ p._k = norm(p.nome + " " + p.seq + " " + p.ean + " " + p.n4 + " " + p.n5);
+}
+
+async function loadBase() {
+ const rows = await KV.get("prodBase") || [];
+ S.prodBaseVer = await KV.get("prodBaseVer") || "";
+ S.prods = new Map;
+ rows.forEach((r => S.prods.set(+r.seq, mkProd(r))));
+ Object.values(S.prodEdits).forEach((e => applyEdit(e, false)));
+ rebuildIdx();
+}
+
+const arr2prod = a => ({
+ seq: +a[0],
+ nome: String(a[1] ?? ""),
+ ean: String(a[2] ?? ""),
+ n1: a[3] ?? "",
+ n2: a[4] ?? "",
+ n3: a[5] ?? "",
+ n4: a[6] ?? "",
+ n5: a[7] ?? "",
+ avo: a[8] ?? "",
+ alt: a[9] ?? "",
+ fam: a[10] ?? "",
+ perc: a[11] === "" ? 100 : a[11],
+ custo: a[12] === "" ? 0 : a[12]
+});
+
+async function downloadBase() {
+ const info = await gs("baseInfo", authA());
+ const per = 8e3;
+ let rows = [];
+ for (let off = 0; off < info.n; off += per) {
+  bootMsg(`Baixando base de produtos: ${Math.min(off + per, info.n).toLocaleString("pt-BR")} de ${info.n.toLocaleString("pt-BR")}\u2026`);
+  const ch = await gs("getProd", authA(), off, per);
+  rows = rows.concat(ch.map(arr2prod));
+ }
+ await KV.set("prodBase", rows);
+ await KV.set("prodBaseVer", info.ver);
+ clearEdits();
+ S.cfg.prodSince = info.now;
+ KV.save("cfg");
+ await loadBase();
+}
+
+function applyEdit(e, rb = true) {
+ if ((e.baseVer || "") !== S.prodBaseVer) return;
+ if (e.del) S.prods.delete(+e.seq); else S.prods.set(+e.seq, mkProd(e));
+ if (rb) rebuildIdx();
+}
+
+function rebuildIdx() {
+ S.prodArr = [ ...S.prods.values() ];
+ S.allSeqs = S.prodArr.map((p => p.seq));
+ COLV++;
+ S.eanIdx = new Map;
+ S.famIdx = new Map;
+ for (const p of S.prodArr) {
+  indexProd(p);
+  String(p.ean).split(/[,;\s]+/).filter(Boolean).forEach((e => S.eanIdx.set(e.replace(/^0+/, ""), p)));
+  if (p.fam !== "") {
+   const a = S.famIdx.get(p.fam);
+   a ? a.push(p.seq) : S.famIdx.set(p.fam, [ p.seq ]);
+  }
+ }
+}
+
+const prodByEan = e => S.eanIdx.get(String(e).replace(/\D/g, "").replace(/^0+/, ""));
+
+function searchProd(q, lim = 60, pool) {
+ q = norm(q).trim();
+ if (!q) return [];
+ const tk = q.split(/\s+/);
+ const out = [];
+ for (const p of pool || S.prodArr) {
+  if (tk.every((t => p._k.includes(t)))) {
+   out.push(p);
+   if (out.length >= lim) break;
+  }
+ }
+ return out;
+}
+
+async function loadAll() {
+ bootMsg("Abrindo armazenamento do aparelho\u2026");
+ await KV.open();
+ bootMsg("Lendo dados salvos\u2026");
+ for (const k of [ "prodEdits", "lojas", "concs", "vinc", "users", "listas", "coletas", "aux", "queue", "cfg", "pesq", "pesqItens", "rej", "envios", "fotos" ]) {
+  const v = await KV.get(k);
+  if (v != null) S[k] = v;
+ }
+ S.queue.forEach((o => delete o._f));
+ await loadBase();
+ const sess = await KV.get("session");
+ if (sess && sess.user) {
+  S.user = sess.user;
+  S.token = sess.token;
+ }
+}
+
+const API_URL = "https:/\/script.google.com/macros/s/AKfycbyWsqYdBCMgIEfpxyEcqC4XOFq0W9Dbz03FiA8hEMqv8ivmYX01vX6VFlwf6cOGqc-B/exec";
+
+const HAS_RUN = !!(window.google && google.script && google.script.run);
+
+const HAS_GS = HAS_RUN || /^https:/.test(API_URL);
+
+const IN_FRAME = (() => {
+ try {
+  return window.top !== window.self;
+ } catch (e) {
+  return true;
+ }
+})();
+
+const parseR = r => {
+ try {
+  return typeof r === "string" ? JSON.parse(r) : r;
+ } catch (e) {
+  return r;
+ }
+};
+
+function gs(fn, ...a) {
+ if (HAS_RUN) return new Promise(((res, rej) => {
+  google.script.run.withSuccessHandler((r => res(parseR(r)))).withFailureHandler(rej)[fn](...a);
+ }));
+ if (!HAS_GS) return Promise.reject(new Error("Sem servidor Google"));
+ const ctl = new AbortController;
+ const tm = setTimeout((() => ctl.abort()), 12e4);
+ return fetch(API_URL, {
+  method: "POST",
+  headers: {
+   "Content-Type": "text/plain;charset=utf-8"
+  },
+  body: JSON.stringify({
+   fn: fn,
+   args: a
+  }),
+  signal: ctl.signal,
+  redirect: "follow"
+ }).then((r => {
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+ })).then((j => {
+  if (j.err) throw new Error(j.err);
+  return parseR(j.ok);
+ })).catch((e => {
+  throw new Error(e.name === "AbortError" ? "Tempo esgotado" : errTxt(e));
+ })).finally((() => clearTimeout(tm)));
+}
+
+const authA = () => JSON.stringify({
+ login: S.user && S.user.login,
+ token: S.token
+});
+
+const errTxt = e => String(e && e.message || e || "erro");
+
+const isAuthErr = e => /AUTH/.test(String(e && e.message || e));
+
+function enqueue(col, id, data) {
+ id = String(id).replace(/[^\w-]/g, "_");
+ S.queue = S.queue.filter((o => o._f || !(o.col === col && o.id === id)));
+ S.queue.push({
+  col: col,
+  id: id,
+  data: data
+ });
+ KV.save("queue");
+ renderSync();
+ setTimeout(flush, 30);
+}
+
+let flushing = false, pulling = false, syncErr = "", lastOk = 0;
+
+async function flush() {
+ if (!HAS_GS || !S.token || flushing || !navigator.onLine || !S.queue.length) return;
+ flushing = true;
+ try {
+  while (S.queue.length && navigator.onLine) {
+   let size = 0, batch = [];
+   for (const o of S.queue) {
+    const l = JSON.stringify(o).length;
+    if (batch.length && (size + l > 15e5 || batch.length >= 25)) break;
+    batch.push(o);
+    size += l;
+   }
+   batch.forEach((o => o._f = true));
+   let r;
+   try {
+    r = await gs("push", authA(), JSON.stringify(batch.map((o => ({
+     col: o.col,
+     id: o.id,
+     data: o.data
+    })))));
+    syncErr = "";
+    lastOk = now();
+   } catch (e) {
+    batch.forEach((o => delete o._f));
+    syncErr = isAuthErr(e) ? "Sess\xe3o expirada: toque em Sair e entre de novo" : "Falha no envio: " + errTxt(e);
+    break;
+   }
+   const errs = r && r.errors || [];
+   const bad = new Set(errs.map((x => x.col + ":" + x.id)));
+   errs.forEach((x => {
+    const o = batch.find((b => b.col + ":" + b.id === x.col + ":" + x.id));
+    S.rej = S.rej.filter((z => !(z.col === x.col && z.id === x.id)));
+    S.rej.push({
+     col: x.col,
+     id: x.id,
+     msg: x.msg,
+     data: o ? o.data : null,
+     dt: now()
+    });
+   }));
+   if (errs.length) {
+    KV.save("rej");
+    syncErr = errs.length + " registro(s) recusado(s): " + errs[0].msg;
+   }
+   const sent = new Set(batch);
+   S.queue = S.queue.filter((o => !sent.has(o)));
+   KV.save("queue");
+   renderSync();
+   await idle();
+  }
+ } finally {
+  flushing = false;
+  renderSync();
+ }
+}
+
+async function pull() {
+ if (!HAS_GS || !S.token || pulling || !navigator.onLine) return;
+ pulling = true;
+ try {
+  const r = await gs("pull", authA(), JSON.stringify({
+   since: S.cfg.since || 0,
+   prodSince: S.cfg.prodSince || 0,
+   baseVer: S.prodBaseVer,
+   pesqVer: S.cfg.pesqVer || ""
+  }));
+  lastOk = now();
+  S.lojas = r.lojas;
+  S.concs = r.concs;
+  S.vinc = r.vinc;
+  if (r.users) S.users = r.users;
+  if (r.envios && !S.queue.some((o => o.col === "cadastros" && o.id === "envios"))) S.envios = r.envios;
+  [ "lojas", "concs", "vinc", "users", "envios" ].forEach((k => KV.save(k)));
+  if (r.me) {
+   S.user = {
+    ...S.user,
+    ...r.me
+   };
+   KV.set("session", {
+    user: S.user,
+    token: S.token
+   });
+  }
+  const pend = new Set(S.queue.map((o => o.col + ":" + o.id)));
+  const mergeIn = (arr, store, col, key) => {
+   (arr || []).forEach((d => {
+    if (pend.has(col + ":" + d.id)) return;
+    const loc = store[d.id];
+    if (!loc || (d.upd || 0) >= (loc.upd || 0)) store[d.id] = d;
+   }));
+   KV.save(key);
+  };
+  mergeIn(r.listas, S.listas, "listas", "listas");
+  mergeIn(r.coletas, S.coletas, "coletas", "coletas");
+  mergeIn(r.auxiliar, S.aux, "auxiliar", "aux");
+  mergeIn(r.fotos, S.fotos, "fotos", "fotos");
+  const pendP = S.queue.filter((o => o.col === "pesquisas"));
+  if (r.pesq) {
+   S.pesq = r.pesq.filter((x => !pendP.some((o => o.id === x.id))));
+   pendP.forEach((o => {
+    if (o.data) S.pesq.push(pesqFromData(o.data));
+   }));
+   KV.save("pesq");
+  }
+  if (r.pesqItens) {
+   const keep = {};
+   pendP.forEach((o => {
+    if (o.data && S.pesqItens[o.id]) keep[o.id] = S.pesqItens[o.id];
+   }));
+   S.pesqItens = {
+    ...r.pesqItens,
+    ...keep
+   };
+   S.cfg.pesqVer = r.pesqVer;
+   KV.save("pesqItens");
+  }
+  COLV++;
+  const rm = r.removed || {};
+  (rm.listas || []).forEach((id => delete S.listas[id]));
+  (rm.coletas || []).forEach((id => delete S.coletas[id]));
+  (rm.auxiliar || []).forEach((id => delete S.aux[id]));
+  (rm.fotos || []).forEach((id => delete S.fotos[id]));
+  if (r.baseVer !== S.prodBaseVer || r.prodFull) {
+   toast("Atualizando base de produtos\u2026", 4e3);
+   await downloadBase();
+  } else {
+   let ch = 0;
+   (r.prod || []).forEach((a => {
+    const e = {
+     ...arr2prod(a),
+     upd: now(),
+     baseVer: S.prodBaseVer
+    };
+    S.prodEdits[e.seq] = e;
+    applyEdit(e, false);
+    ch++;
+   }));
+   (rm.produtos || []).forEach((q => {
+    const e = {
+     seq: +q,
+     del: true,
+     baseVer: S.prodBaseVer
+    };
+    S.prodEdits[q] = e;
+    applyEdit(e, false);
+    ch++;
+   }));
+   if (ch) {
+    rebuildIdx();
+    KV.save("prodEdits");
+   }
+   S.cfg.prodSince = r.now;
+  }
+  S.cfg.since = r.now;
+  S.cfg.lastPull = now();
+  KV.save("cfg");
+  if (!syncErr.startsWith("Sess\xe3o")) syncErr = "";
+  softRender();
+ } catch (e) {
+  syncErr = isAuthErr(e) ? "Sess\xe3o expirada: toque em Sair e entre de novo" : "Falha ao receber dados: " + errTxt(e);
+ } finally {
+  pulling = false;
+  renderSync();
+  flush();
+ }
+}
+
+function syncLabel() {
+ if (!HAS_GS) return "Modo teste";
+ if (!navigator.onLine) return S.queue.length ? `Offline \xb7 ${S.queue.length} pend.` : "Offline";
+ if (syncErr.startsWith("Sess\xe3o")) return "Entrar de novo";
+ if (S.queue.length) return `Enviando ${S.queue.length}`;
+ if (syncErr) return "Ver erro de envio";
+ return "Salvo no Drive";
+}
+
+function renderSync() {
+ const b = $("#syncb");
+ if (b) {
+  b.textContent = syncLabel();
+  b.classList.toggle("off", !navigator.onLine || !HAS_GS || S.queue.length > 0 || !!syncErr);
+ }
+}
+
+let _started = false;
+
+function startSync() {
+ if (_started) return;
+ _started = true;
+ pull();
+ setInterval(flush, 15e3);
+ setInterval(pull, 6e4);
+}
+
+addEventListener("online", (() => {
+ renderSync();
+ flush();
+ pull();
+}));
+
+addEventListener("offline", renderSync);
+
+function saveCad(k) {
+ S.cfg.upd = S.cfg.upd || {};
+ S.cfg.upd[k] = now();
+ S[k] = S[k].map((r => {
+  const o = {};
+  Object.keys(r).forEach((x => {
+   if (x[0] !== "_") o[x] = r[x];
+  }));
+  return o;
+ }));
+ KV.save(k);
+ KV.save("cfg");
+ enqueue("cadastros", k, {
+  rows: S[k],
+  upd: S.cfg.upd[k]
+ });
+}
+
+function clearEdits() {
+ Object.keys(S.prodEdits).forEach((k => delete S.prodEdits[k]));
+ KV.save("prodEdits");
+}
+
+function saveProd(p, del) {
+ const e = del ? {
+  seq: p.seq,
+  del: true
+ } : {
+  ...mkProd(p)
+ };
+ e.upd = now();
+ e.baseVer = S.prodBaseVer;
+ S.prodEdits[p.seq] = e;
+ KV.save("prodEdits");
+ applyEdit(e);
+ enqueue("produtos_edit", String(p.seq), e);
+}
+
+function saveLista(l) {
+ l.upd = now();
+ l.qtd = isTodos(l.todos) || l.modelo && isTodos((pesqBy(l.modelo) || {}).todos) ? "TODOS" : itensOf(l).length;
+ S.listas[l.id] = l;
+ KV.save("listas");
+ enqueue("listas", l.id, l);
+}
+
+function saveColeta(c) {
+ c.upd = now();
+ COLV++;
+ S.coletas[c.id] = c;
+ KV.save("coletas");
+ enqueue("coletas", c.id, c);
+}
+
+function saveFotoCol(f) {
+ f.upd = now();
+ S.fotos[f.id] = f;
+ KV.save("fotos");
+ enqueue("fotos", f.id, f);
+}
+
+function saveAux(a) {
+ a.upd = now();
+ S.aux[a.id] = a;
+ KV.save("aux");
+ enqueue("auxiliar", a.id, a);
+}
+
+const lojaBy = c => S.lojas.find((l => +l.cod === +c));
+
+const concBy = i => S.concs.find((c => +c.id === +i));
+
+const lojaNome = c => {
+ const l = lojaBy(c);
+ return l ? l.empresa : "Loja " + c;
+};
+
+const concNome = i => {
+ const c = concBy(i);
+ return c ? c.nome : "Conc. " + i;
+};
+
+const userLojas = u => String(u.lojas || "").split(/[,;\s]+/).filter(Boolean).map(Number);
+
+const isAdm = () => S.user && S.user.perfil === "MASTER";
+
+const isPricing = () => S.user && (S.user.perfil === "PRICING" || S.user.perfil === "MASTER");
+
+function eanSvg(code) {
+ code = String(code).replace(/\D/g, "");
+ if (code.length === 12) {
+  let s = 0;
+  for (let i = 0; i < 12; i++) s += +code[i] * (i % 2 ? 3 : 1);
+  code += (10 - s % 10) % 10;
+ }
+ if (code.length !== 13) return "";
+ const L = [ "0001101", "0011001", "0010011", "0111101", "0100011", "0110001", "0101111", "0111011", "0110111", "0001011" ];
+ const R = L.map((x => x.replace(/./g, (b => b === "0" ? "1" : "0"))));
+ const G = R.map((x => [ ...x ].reverse().join("")));
+ const P = [ "LLLLLL", "LLGLGG", "LLGGLG", "LLGGGL", "LGLLGG", "LGGLLG", "LGGGLL", "LGLGLG", "LGLGGL", "LGGLGL" ][+code[0]];
+ let bits = "101";
+ for (let i = 1; i < 7; i++) bits += (P[i - 1] === "L" ? L : G)[+code[i]];
+ bits += "01010";
+ for (let i = 7; i < 13; i++) bits += R[+code[i]];
+ bits += "101";
+ let r = "";
+ const w = 2;
+ for (let i = 0; i < bits.length; i++) if (bits[i] === "1") {
+  const g = i < 3 || i >= 45 && i < 50 || i >= 92;
+  r += `<rect x="${(i + 9) * w}" y="0" width="${w}" height="${g ? 58 : 50}" fill="#111"/>`;
+ }
+ const tx = `<text x="2" y="70" font-family="monospace" font-size="15" fill="#111">${code[0]}</text><text x="${(9 + 3 + 21) * w}" y="70" font-family="monospace" font-size="15" fill="#111" text-anchor="middle">${code.slice(1, 7)}</text><text x="${(9 + 50 + 21) * w}" y="70" font-family="monospace" font-size="15" fill="#111" text-anchor="middle">${code.slice(7)}</text>`;
+ return `<svg viewBox="0 0 ${(95 + 18) * w} 74" width="226" height="74" role="img" aria-label="EAN ${code}"><rect width="100%" height="100%" fill="#fff"/>${r}${tx}</svg>`;
+}
+
+let V = {
+ name: "login"
+};
+
+const hist = [];
+
+function go(name, p = {}, push = true) {
+ if (push && V.name !== "login") hist.push(V);
+ V = {
+  name: name,
+  ...p
+ };
+ render();
+ window.scrollTo(0, 0);
+}
+
+function back() {
+ V = hist.pop() || {
+  name: "home"
+ };
+ render();
+}
+
+function softRender() {
+ const a = document.activeElement;
+ if (a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.tagName === "SELECT")) return;
+ if (!$("#modal").innerHTML && [ "home", "listas", "lista", "bases", "aux", "conc" ].includes(V.name)) render();
+}
+
+function shell(title, body, {backBtn: backBtn = true, foot: foot = ""} = {}) {
+ return `<header class="top">${backBtn ? `<button class="back" data-act="back" aria-label="Voltar">\u2039</button>` : ""}<h1>${esc(title)}</h1><button class="sync" id="syncb" data-act="syncinfo">${esc(syncLabel())}</button></header><main>${body}</main>${foot ? `<div class="foot">${foot}</div>` : ""}`;
+}
+
+function render() {
+ const f = VIEWS[V.name] || VIEWS.home;
+ $("#app").innerHTML = f();
+ renderSync();
+ (AFTER[V.name] || (() => {}))();
+ hydrateFotos();
+}
+
+const FOTO = {};
+
+const fotoId = v => {
+ const m = String(v || "").match(/\/d\/([\w-]{15,})/) || String(v || "").match(/[?&]id=([\w-]{15,})/);
+ return m ? m[1] : "";
+};
+
+async function getFoto(v) {
+ if (!v) return null;
+ if (String(v).startsWith("data:")) return v;
+ const id = fotoId(v);
+ if (!id) return null;
+ if (FOTO[id]) return FOTO[id];
+ const r = await gs("foto", authA(), id);
+ FOTO[id] = "data:" + (r.mime || "image/jpeg") + ";base64," + r.b64;
+ return FOTO[id];
+}
+
+function fotoTag(v, alt, style) {
+ return v ? `<img data-foto="${esc(v)}" alt="${esc(alt)}" style="${style};background:var(--surface2)">` : "";
+}
+
+function hydrateFotos() {
+ document.querySelectorAll("img[data-foto]").forEach((img => {
+  const v = img.getAttribute("data-foto");
+  img.removeAttribute("data-foto");
+  getFoto(v).then((src => {
+   if (src) img.src = src; else img.alt = "Foto indispon\xedvel";
+  })).catch((() => {
+   img.alt = "Foto indispon\xedvel (sem internet?)";
+  }));
+ }));
+}
+
+async function fotoFile(v, name) {
+ try {
+  const d = await getFoto(v);
+  return d ? new File([ dataURLBlob(d) ], name, {
+   type: "image/jpeg"
+  }) : null;
+ } catch (e) {
+  return null;
+ }
+}
+
+const AFTER = {};
+
+function modal(html) {
+ $("#modal").innerHTML = `<div class="modal" data-act="mclose-bg"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
+ hydrateFotos();
+}
+
+function mclose() {
+ $("#modal").innerHTML = "";
+ if (SCAN.stop) SCAN.stop();
+}
+
+function ask(msg, ok = "Confirmar", danger = true) {
+ return new Promise((res => {
+  ask._r = res;
+  modal(`<h3>${esc(msg)}</h3><div class="row"><button class="btn grow" data-act="askno">Cancelar</button><button class="btn grow ${danger ? "bad" : "pri"}" data-act="askyes">${esc(ok)}</button></div>`);
+ }));
+}
+
+const VIEWS = {};
+
+VIEWS.login = () => `<header class="top"><h1>Pesquisa de Pre\xe7os</h1></header><main>\n  <div class="card"><div class="brandmark">Pesquisa de <em>Pre\xe7os</em></div><p class="muted small">Coleta de pre\xe7os de concorrentes, com ou sem internet. Os dados s\xe3o salvos na planilha do Google Drive da empresa.</p></div>\n  <form class="card" id="flogin"><label class="f">Usu\xe1rio<input class="in" id="lgUser" autocomplete="username" autocapitalize="characters" placeholder="Ex.: LOJA002" required></label>\n  <label class="f">Senha<input class="in mono" id="lgPin" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" required></label>\n  <label class="row small"><input type="checkbox" id="lgShow"> Mostrar senha</label>\n  <p class="err" id="lgErr"></p><button class="btn pri" type="submit" id="lgBtn">Entrar</button></form>\n  <p class="muted small">Pe\xe7a seu usu\xe1rio e senha ao Pricing. No primeiro acesso deste aparelho \xe9 preciso estar com internet.</p></main>`;
+
+VIEWS.home = () => {
+ const u = S.user;
+ const p = u.perfil;
+ const minhas = todasListas();
+ const abertas = minhas.filter((l => l.status !== "Conclu\xedda" && !expirada(l)));
+ const pend = abertas.length;
+ const auxP = Object.values(S.aux).filter((a => a.status === "Pendente")).length;
+ const tiles = [ `<button class="tile" data-act="nav" data-v="listas"><b>Pesquisas</b><span>${pend} em aberto</span></button>` ];
+ if (isPricing()) tiles.push(`<button class="tile" data-act="nav" data-v="pesqs"><b>Pesquisas fixas</b><span>${S.pesq.length} cadastrada(s) \xb7 renovam sozinhas</span></button>`);
+ if (isPricing()) tiles.push(`<button class="tile" data-act="nav" data-v="novaLista"><b>Lista avulsa</b><span>Pesquisa \xfanica, fora da rotina</span></button>`);
+ if (isPricing()) tiles.push(`<button class="tile" data-act="nav" data-v="aux"><b>Base auxiliar</b><span>${auxP} produto(s) sem cadastro</span></button>`);
+ tiles.push(`<button class="tile" data-act="nav" data-v="bases"><b>Bases</b><span>${isAdm() ? "Incluir, editar e excluir" : isPricing() ? "Produtos e v\xednculos" : "Consultar produtos"}</span></button>`);
+ tiles.push(`<button class="tile" data-act="nav" data-v="exportar"><b>Exportar / WhatsApp</b><span>CSV ou Excel .xlsx</span></button>`);
+ return shell("In\xedcio", `<div class="row" style="justify-content:space-between"><div><h2>Ol\xe1, ${esc(u.nome)}</h2><div class="muted small">${esc(p)}${p === "LOJA" ? " \xb7 " + userLojas(u).map(lojaNome).join(", ") : ""}</div></div><button class="btn sm" data-act="logout">Sair</button></div>\n  <div class="grid">${tiles.join("")}</div>\n  ${listCards(abertas.sort(((a, b) => (a.validade || a.prevista || "").localeCompare(b.validade || b.prevista || "") || lojaNome(a.loja).localeCompare(lojaNome(b.loja)))).slice(0, p === "LOJA" ? 20 : 8), "Para pesquisar" + (p !== "LOJA" && abertas.length > 8 ? " (" + abertas.length + ", veja todas em Pesquisas)" : ""))}`, {
+  backBtn: false
+ });
+};
+
+let _pc = {
+ v: -1,
+ n: -1,
+ m: {}
+};
+
+function listaProg(l) {
+ const n = Object.keys(S.coletas).length;
+ if (_pc.v !== COLV || _pc.n !== n) {
+  _pc = {
+   v: COLV,
+   n: n,
+   m: {}
+  };
+  for (const c of Object.values(S.coletas)) if (!c.extra) _pc.m[c.lista] = (_pc.m[c.lista] || 0) + 1;
+ }
+ const tot = itensOf(l).length * (l.concs || []).length;
+ const done = Math.min(tot, _pc.m[l.id] || 0);
+ return {
+  tot: tot,
+  done: done,
+  pct: tot ? Math.round(done * 100 / tot) : 0
+ };
+}
+
+function stPill(s) {
+ return `<span class="pill ${s === "Conclu\xedda" ? "ok" : s === "Em andamento" ? "warn" : s === "Expirada" ? "bad" : "info"}">${esc(s || "Pendente")}</span>`;
+}
+
+function listaSub(l) {
+ const it = itensOf(l);
+ const qt = isTodos(l.todos) || l.modelo && isTodos((pesqBy(l.modelo) || {}).todos) ? "todos os produtos" : it.length + " itens";
+ return `${esc(lojaNome(l.loja))} \xb7 ${l.modelo ? "Fixa" : "Avulsa"} \xb7 ${l.validade ? "de " + fmtYmd(l.inicio || l.prevista) + " at\xe9 " + fmtYmd(l.validade) : "prevista " + fmtYmd(l.prevista)} \xb7 ${qt} \xd7 ${l.concs.length} conc.`;
+}
+
+function listCards(arr, title) {
+ if (!arr.length) return `<div class="card"><h3>${esc(title)}</h3><p class="muted small">Nenhuma pesquisa aqui. ${isPricing() ? "Cadastre uma em \u201cPesquisas fixas\u201d ou crie uma lista avulsa." : "Quando o Pricing liberar a pesquisa da sua loja ela aparece aqui. Toque no selo verde l\xe1 em cima para atualizar."}</p></div>`;
+ return `<h2>${esc(title)}</h2><div class="list">${arr.map((l => {
+  const g = listaProg(l);
+  return `<button class="li" data-act="openLista" data-id="${esc(l.id)}"><div class="t"><div>${esc(l.nome)}</div><div class="muted small">${listaSub(l)}</div><div class="bar" style="margin-top:6px"><i style="width:${g.pct}%"></i></div></div><div style="text-align:right">${stPill(stOf(l))}<div class="mono small muted">${g.pct}%</div></div></button>`;
+ })).join("")}</div>`;
+}
+
+VIEWS.listas = () => {
+ let arr = todasListas();
+ const f = V.f || "abertas";
+ const fl = V.fl || "";
+ arr = arr.filter((l => {
+  const st = stOf(l);
+  return f === "todas" || (f === "abertas" ? st !== "Conclu\xedda" && st !== "Expirada" : f === "concluidas" ? st === "Conclu\xedda" : st === "Expirada");
+ })).filter((l => !fl || +l.loja === +fl)).sort(((a, b) => (b.validade || b.prevista || "").localeCompare(a.validade || a.prevista || "") || lojaNome(a.loja).localeCompare(lojaNome(b.loja))));
+ const lojasV = [ ...new Set(todasListas().map((l => +l.loja))) ].sort(((a, b) => a - b));
+ return shell("Pesquisas", `<div class="tabs">${[ [ "abertas", "Em aberto" ], [ "concluidas", "Conclu\xeddas" ], [ "expiradas", "Expiradas" ], [ "todas", "Todas" ] ].map((([k, t]) => `<button class="${f === k ? "on" : ""}" data-act="lf" data-f="${k}">${t}</button>`)).join("")}</div>\n   ${lojasV.length > 1 ? `<label class="f">Loja<select class="in" id="lfLoja"><option value="">Todas as lojas</option>${lojasV.map((c => `<option value="${c}" ${+fl === c ? "selected" : ""}>${esc(lojaNome(c))}</option>`)).join("")}</select></label>` : ""}\n   ${listCards(arr, "Pesquisas")}`);
+};
+
+AFTER.listas = () => {
+ const s = $("#lfLoja");
+ if (s) s.onchange = () => {
+  V.fl = s.value;
+  render();
+ };
+};
+
+VIEWS.lista = () => {
+ const l = getLista(V.id);
+ if (!l) return shell("Lista", "<p>Lista n\xe3o encontrada.</p>");
+ const ext = Object.values(S.coletas).filter((c => c.lista === l.id && c.extra)).length;
+ const auxN = Object.values(S.aux).filter((a => a.lista === l.id)).length;
+ const rows = l.concs.map((c => {
+  let d = 0;
+  itensOf(l).forEach((s => {
+   if (S.coletas[`${l.id}-${c}-${s}`]) d++;
+  }));
+  const fin = (l.finConcs || []).includes(c);
+  const vv = S.vinc.find((v => +v.loja === +l.loja && +v.conc === +c));
+  return `<button class="li" data-act="pickConc" data-c="${c}"><div class="t"><div>${esc(concNome(c))}</div><div class="muted small">${esc(vv ? vv.classif + " \xb7 " + vv.pesquisador : "")} \xb7 ${d}/${itensOf(l).length} coletados</div><div class="bar" style="margin-top:6px"><i style="width:${itensOf(l).length ? d * 100 / itensOf(l).length : 0}%"></i></div></div>${fin ? `<span class="pill ok">Finalizado</span>` : d ? `<span class="pill warn">Em coleta</span>` : `<span class="pill">Iniciar</span>`}</button>`;
+ })).join("");
+ return shell(l.nome, `<div class="card"><div class="row" style="justify-content:space-between"><div><h3>${esc(lojaNome(l.loja))}</h3><div class="muted small">${listaSub(l)}${l.criadoPor && l.criadoPor !== "AUTO" ? " \xb7 criada por " + esc(l.criadoPor) : ""}</div></div>${stPill(stOf(l))}</div>\n    <div class="muted small">Data da coleta: <b class="mono">${fmtD(now())}</b> (autom\xe1tica)${l.validade ? ` \xb7 v\xe1lida at\xe9 <b class="mono">${fmtYmd(l.validade)}</b>` : ""} \xb7 ${ext} produto(s) extra \xb7 ${auxN} sem cadastro</div>\n    ${expirada(l) ? `<p class="err small">Esta pesquisa venceu em ${fmtYmd(l.validade)}. N\xe3o aceita mais pre\xe7os; a pr\xf3xima rodada aparece no dia da pesquisa.</p>` : ""}</div>\n    <h2>Escolha o concorrente</h2><div class="list">${rows}</div>\n    <div class="row">${l.status !== "Conclu\xedda" && !expirada(l) && !l.virtual ? `<button class="btn tag grow" data-act="finLista">Finalizar pesquisa</button>` : ""}<button class="btn grow" data-act="expLista">Exportar / WhatsApp</button><button class="btn grow" data-act="expTxt">Exportar TXT</button>${isPricing() ? `<button class="btn grow" data-act="nav" data-v="analise" data-id="${esc(l.id)}">Comparar pre\xe7os</button>${l.virtual ? "" : `<button class="btn bad" data-act="delLista">Excluir</button>`}` : ""}</div>`);
+};
+
+let COLV = 0;
+
+const DIAS = [ "DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB" ];
+
+const DIAS_N = {
+ DOM: "domingo",
+ SEG: "segunda",
+ TER: "ter\xe7a",
+ QUA: "quarta",
+ QUI: "quinta",
+ SEX: "sexta",
+ SAB: "s\xe1bado",
+ QUALQUER: "qualquer dia"
+};
+
+const ymd = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+
+const addDays = (s, n) => {
+ const d = new Date(s + "T12:00:00");
+ d.setDate(d.getDate() + n);
+ return ymd(d);
+};
+
+const hojeS = () => ymd(new Date);
+
+const fmtYmd = s => s ? s.slice(8, 10) + "/" + s.slice(5, 7) + "/" + s.slice(0, 4) : "";
+
+function pesqFromData(d) {
+ return {
+  id: d.id,
+  nome: d.nome,
+  lojas: d.lojas,
+  dia: d.dia,
+  validade: d.validade,
+  todos: d.todos,
+  concs: d.concs,
+  pesq: d.pesq,
+  ativa: d.ativa
+ };
+}
+
+const pesqBy = id => S.pesq.find((m => String(m.id) === String(id)));
+
+const isTodos = v => String(v).toUpperCase() === "S" || v === true;
+
+function pesqLojas(m) {
+ const s = String(m.lojas || "").toUpperCase().trim();
+ const at = S.lojas.filter((l => l.status !== "Desativado")).map((l => +l.cod));
+ return !s || s === "TODAS" ? at : s.split(/[,;\s]+/).filter(Boolean).map(Number);
+}
+
+function cicloAtual(m, hoje = hojeS()) {
+ const V = Math.max(1, parseInt(m.validade) || 7);
+ const dia = String(m.dia || "").toUpperCase().slice(0, 3);
+ const wi = DIAS.indexOf(dia);
+ let ini;
+ if (wi >= 0) {
+  const d = new Date(hoje + "T12:00:00");
+  ini = addDays(hoje, -((d.getDay() - wi + 7) % 7));
+ } else {
+  const anc = "2026-01-05";
+  const days = Math.round((new Date(hoje + "T12:00:00") - new Date(anc + "T12:00:00")) / 864e5);
+  ini = addDays(anc, Math.floor(days / V) * V);
+ }
+ const fim = addDays(ini, V - 1);
+ return hoje <= fim ? {
+  ini: ini,
+  fim: fim
+ } : {
+  ini: null,
+  fim: fim,
+  prox: addDays(ini, wi >= 0 ? 7 : V)
+ };
+}
+
+function pesqConcs(m, loja) {
+ const pz = String(m.pesq || "").trim();
+ const only = String(m.concs || "").split(/[,;\s]+/).filter(Boolean).map(Number);
+ return [ ...new Set(S.vinc.filter((v => +v.loja === +loja && (!pz || String(v.pesquisador).split("/").map((x => x.trim())).includes(pz)))).map((v => +v.conc))) ].filter((c => (!only.length || only.includes(c)) && (concBy(c) || {}).status !== "Inativo"));
+}
+
+function rodadasAtuais() {
+ const u = S.user;
+ const out = [];
+ const mine = u.perfil === "LOJA" ? userLojas(u) : null;
+ for (const m of S.pesq) {
+  if (String(m.ativa).toUpperCase() === "N") continue;
+  const c = cicloAtual(m);
+  if (!c.ini) continue;
+  for (const loja of pesqLojas(m)) {
+   if (mine && !mine.includes(+loja)) continue;
+   const id = `R-${m.id}-${loja}-${c.ini.replace(/-/g, "")}`;
+   if (S.listas[id]) {
+    out.push(S.listas[id]);
+    continue;
+   }
+   const cs = pesqConcs(m, loja);
+   if (!cs.length) continue;
+   out.push({
+    id: id,
+    virtual: true,
+    modelo: m.id,
+    modeloNome: m.nome,
+    nome: m.nome,
+    loja: +loja,
+    concs: cs,
+    inicio: c.ini,
+    validade: c.fim,
+    prevista: c.ini,
+    status: "Pendente",
+    criadoPor: "AUTO",
+    finConcs: []
+   });
+  }
+ }
+ return out;
+}
+
+function getLista(id) {
+ if (S.listas[id]) return S.listas[id];
+ return rodadasAtuais().find((r => r.id === id));
+}
+
+function itensOf(l) {
+ if (!l) return [];
+ if (isTodos(l.todos)) return S.allSeqs;
+ if (l.modelo) {
+  const m = pesqBy(l.modelo);
+  if (m) {
+   if (isTodos(m.todos)) return S.allSeqs;
+   return S.pesqItens[m.id] || [];
+  }
+ }
+ return l.itens || [];
+}
+
+const expirada = l => !!(l.validade && hojeS() > l.validade && l.status !== "Conclu\xedda");
+
+const stOf = l => expirada(l) ? "Expirada" : l.status || "Pendente";
+
+function materializa(l) {
+ if (!l.virtual) return l;
+ const o = {
+  ...l
+ };
+ delete o.virtual;
+ o.criada = now();
+ saveLista(o);
+ return o;
+}
+
+function todasListas() {
+ const u = S.user;
+ const vis = l => u.perfil !== "LOJA" || userLojas(u).includes(+l.loja);
+ const m = new Map;
+ Object.values(S.listas).filter(vis).forEach((l => m.set(l.id, l)));
+ rodadasAtuais().forEach((l => {
+  if (!m.has(l.id)) m.set(l.id, l);
+ }));
+ return [ ...m.values() ];
+}
+
+function colKey() {
+ return `${V.lista}-${V.conc}-${V.seq}`;
+}
+
+VIEWS.conc = () => {
+ const l = getLista(V.lista);
+ const items = itensOf(l);
+ const idx = V.idx ?? 0;
+ const seq = V.seq ?? items[idx];
+ V.seq = seq;
+ const fotosItem = Object.values(S.fotos).filter((f => f.lista === l.id && +f.conc === +V.conc && +f.seq === +seq));
+ const nF = fotosItem.length;
+ const p = S.prods.get(+seq) || {
+  seq: seq,
+  nome: "(produto removido da base) " + seq,
+  ean: "",
+  n1: "",
+  n2: "",
+  n3: "",
+  n4: "",
+  n5: ""
+ };
+ const c = S.coletas[colKey()] || {};
+ const done = items.filter((s => S.coletas[`${l.id}-${V.conc}-${s}`])).length;
+ const extra = !items.includes(+seq);
+ const ean = String(p.ean || "").split(/[,;\s]+/)[0] || c.ean || "";
+ const fld = (id, lab, v) => `<label class="f">${lab}<input class="in price" id="${id}" inputmode="decimal" placeholder="0,00" value="${v != null ? esc(money(v)) : ""}" autocomplete="off"></label>`;
+ return shell(concNome(V.conc), `<div class="row" style="justify-content:space-between"><span class="muted small">${esc(l.nome)} \xb7 ${esc(lojaNome(l.loja))}</span><span class="mono small">${extra ? "EXTRA" : items.indexOf(+seq) + 1 + "/" + items.length} \xb7 ${done} feitos</span></div>\n   <div class="bar"><i style="width:${done * 100 / items.length}%"></i></div>\n   <div class="row"><button class="btn tag grow" data-act="scan">\u25ae\u25af\u25ae Escanear</button><button class="btn grow" data-act="buscar">Buscar</button><button class="btn grow" data-act="itens">Itens</button><button class="btn grow" data-act="colFoto" aria-label="Tirar foto para confer\xeancia">Foto${nF ? " (" + nF + ")" : ""}</button></div>\n   <div class="tagcard"><div class="row" style="justify-content:space-between;align-items:flex-start"><span class="meta">SEQ ${esc(p.seq)} \xb7 ${esc([ p.n2, p.n3, p.n4 ].filter(Boolean).join(" \u203a "))}</span>${c.upd ? `<span class="pill ok">Coletado</span>` : extra ? `<span class="pill warn">Extra</span>` : ""}</div>\n     <div class="nm">${esc(p.nome)}</div><div class="meta">${esc(p.n5)}${ean ? " \xb7 EAN " + esc(ean) : " \xb7 sem EAN na base"}</div>${ean ? `<div class="ean">${eanSvg(ean)}</div>` : ""}${nF ? `<div class="row">${fotosItem.slice(-4).map((f => fotoTag(f.foto, "Foto de confer\xeancia", "width:56px;height:56px;object-fit:cover;border-radius:6px"))).join("")}</div>` : ""}</div>\n   <div class="f2">${fld("pReg", "Pre\xe7o regular", c.reg)}${fld("pClub", "Pre\xe7o club / fidelidade", c.club)}${fld("pCx", "Pre\xe7o caixa / atacado", c.caixa)}${fld("pApp", "Pre\xe7o app / digital", c.app)}</div>\n   <label class="f">Qtd. m\xednima no atacado / un. na caixa<input class="in mono" id="pCxQ" inputmode="numeric" value="${esc(c.caixaQtd || "")}"></label>\n   <div class="row"><label class="chk of ${c.oferta ? "on" : ""}"><input type="checkbox" id="pOf" ${c.oferta ? "checked" : ""}> Oferta</label><label class="chk ${c.naoEnc ? "on" : ""}"><input type="checkbox" id="pNe" ${c.naoEnc ? "checked" : ""}> N\xe3o encontrado</label></div>\n   <p class="err" id="cErr"></p>\n   <div class="row"><button class="btn sm" data-act="concFim">Concluir este concorrente</button>${c.upd ? `<button class="btn sm bad" data-act="limparCol">Apagar coleta</button>` : ""}</div>`, {
+  foot: `<button class="btn" data-act="prev" aria-label="Anterior">\u2039</button><button class="btn" data-act="skip">Pular</button><button class="btn pri" style="flex:2" data-act="saveNext">Salvar e pr\xf3ximo \u203a</button>`
+ });
+};
+
+AFTER.login = () => {
+ const c = $("#lgShow");
+ if (c) c.onchange = () => {
+  $("#lgPin").type = c.checked ? "text" : "password";
+ };
+};
+
+AFTER.conc = () => {
+ const r = $("#pReg");
+ if (r && !r.value && !("ontouchstart" in window)) r.focus();
+ document.querySelectorAll(".chk input").forEach((i => i.onchange = () => i.parentElement.classList.toggle("on", i.checked)));
+};
+
+function nextIdx(l, from) {
+ const it = itensOf(l);
+ for (let i = from + 1; i < it.length; i++) if (!S.coletas[`${l.id}-${V.conc}-${it[i]}`]) return i;
+ for (let i = 0; i <= from && i < it.length; i++) if (!S.coletas[`${l.id}-${V.conc}-${it[i]}`]) return i;
+ return -1;
+}
+
+function gotoItem(i, seq) {
+ V.idx = i;
+ V.seq = seq ?? itensOf(getLista(V.lista))[i];
+ render();
+ window.scrollTo(0, 0);
+}
+
+VIEWS.novaLista = () => {
+ const d = V.d || (V.d = {
+  nome: "",
+  prev: today(),
+  val: 7,
+  lojas: [],
+  itens: [],
+  pesq: "",
+  fam: false,
+  cat2: "",
+  cat3: "",
+  todos: false
+ });
+ if (V.d.edit) return pesqEditView(d);
+ const n2 = [ ...new Set(S.prodArr.map((p => p.n2))) ].sort();
+ const n3 = d.cat2 ? [ ...new Set(S.prodArr.filter((p => p.n2 === d.cat2)).map((p => p.n3))) ].sort() : [];
+ const byB = {};
+ S.lojas.filter((l => l.status !== "Desativado")).forEach((l => (byB[l.bandeira] = byB[l.bandeira] || []).push(l)));
+ const pes = [ ...new Set(S.vinc.flatMap((v => String(v.pesquisador).split("/").map((s => s.trim())))).filter(Boolean)) ].sort();
+ return shell("Nova lista", `<div class="card"><label class="f">Nome da lista<input class="in" id="nlNome" value="${esc(d.nome)}" placeholder="Ex.: Ofertas semana 45 \u2013 Mercearia"></label>\n   <div class="f2"><label class="f">Data da pesquisa<input class="in" type="date" id="nlPrev" value="${esc(d.prev)}"></label><label class="f">Validade (dias)<input class="in mono" id="nlVal" inputmode="numeric" value="${esc(d.val)}"></label>\n   <label class="f">Pesquisador dos concorrentes<select class="in" id="nlPesq"><option value="">Todos os v\xednculos</option>${pes.map((p => `<option ${d.pesq === p ? "selected" : ""}>${esc(p)}</option>`)).join("")}</select></label></div></div>\n   <div class="card"><h3>Lojas (${d.lojas.length})</h3>${Object.keys(byB).sort().map((b => `<div><div class="row" style="justify-content:space-between"><span class="pill">${esc(b)}</span><button class="btn sm" data-act="nlBand" data-b="${esc(b)}">Marcar bandeira</button></div><div class="chips" style="margin-top:6px">${byB[b].map((l => {
+  const nc = S.vinc.filter((v => +v.loja === +l.cod)).length;
+  return `<button class="chip ${d.lojas.includes(+l.cod) ? "on" : ""}" data-act="nlLoja" data-c="${l.cod}" ${nc ? "" : "title='Sem concorrentes vinculados'"}>${esc(l.empresa)}${nc ? "" : " \u26a0"}</button>`;
+ })).join("")}</div></div>`)).join("")}</div>\n   ${pickerHtml(d)}<p class="err" id="nlErr"></p>`, {
+  foot: `<button class="btn pri" data-act="nlCriar">Criar ${d.lojas.length > 1 ? d.lojas.length + " listas" : "lista"}</button>`
+ });
+};
+
+function pickerHtml(d) {
+ const n2 = [ ...new Set(S.prodArr.map((p => p.n2))) ].sort();
+ const n3 = d.cat2 ? [ ...new Set(S.prodArr.filter((p => p.n2 === d.cat2)).map((p => p.n3))) ].sort() : [];
+ return `<div class="card"><h3>Produtos (${d.todos ? "todos da base: " + S.prodArr.length.toLocaleString("pt-BR") : d.itens.length})</h3>\n    <label class="chk ${d.todos ? "on" : ""}" style="flex:none"><input type="checkbox" id="nlTodos" ${d.todos ? "checked" : ""}> Incluir TODOS os produtos da base</label>\n    ${d.todos ? `<p class="muted small">A pesquisa usa a base de produtos inteira. A loja encontra cada item pelo scanner ou pela busca; produtos novos na base entram automaticamente.</p>` : `\n    <div class="f2"><label class="f">Departamento (N02)<select class="in" id="nlC2"><option value="">\u2014</option>${n2.map((x => `<option ${d.cat2 === x ? "selected" : ""}>${esc(x)}</option>`)).join("")}</select></label>\n    <label class="f">Categoria (N03)<select class="in" id="nlC3"><option value="">\u2014</option>${n3.map((x => `<option ${d.cat3 === x ? "selected" : ""}>${esc(x)}</option>`)).join("")}</select></label></div>\n    <label class="f">Buscar por nome, SEQ, EAN ou gramagem<input class="in" id="nlQ" placeholder="Ex.: LEITE INTEGRAL 1L" autocomplete="off" value="${esc(d.q || "")}"></label>\n    <label class="row small"><input type="checkbox" id="nlFam" ${d.fam ? "checked" : ""}> Incluir automaticamente os produtos da mesma fam\xedlia</label>\n    <div id="nlRes"></div>\n    <details><summary class="small">Colar lista de c\xf3digos SEQ-PRODUTO ou EAN</summary><textarea class="in mono" id="nlPaste" rows="4" placeholder="Um c\xf3digo por linha"></textarea><button class="btn sm" data-act="nlPaste">Adicionar c\xf3digos</button></details>\n    ${d.itens.length ? `<div class="list" style="max-height:320px;overflow:auto">${d.itens.map((s => {
+  const p = S.prods.get(s);
+  return `<div class="li"><div class="t"><div class="small">${esc(p ? p.nome : s)}</div><div class="muted small mono">${s}${p ? " \xb7 fam " + p.fam : ""}</div></div><button class="btn sm" data-act="nlRem" data-s="${s}">Remover</button></div>`;
+ })).join("")}</div><button class="btn sm bad" data-act="nlClear">Limpar produtos</button>` : ""}`}</div>`;
+}
+
+function nlSync() {
+ const d = V.d;
+ const g = (id, k, cb) => {
+  const e = $("#" + id);
+  if (e) d[k] = cb ? e.checked : e.value;
+ };
+ g("nlQ", "q");
+ g("nlNome", "nome");
+ g("nlPrev", "prev");
+ g("nlVal", "val");
+ g("nlPesq", "pesq");
+ g("nlFam", "fam", 1);
+ g("nlTodos", "todos", 1);
+ g("peDia", "dia");
+ g("peAtiva", "ativa", 1);
+ g("peTodasLojas", "todasLojas", 1);
+}
+
+function nlResults() {
+ const d = V.d;
+ const q = $("#nlQ").value;
+ let pool = S.prodArr;
+ if (d.cat2) pool = pool.filter((p => p.n2 === d.cat2));
+ if (d.cat3) pool = pool.filter((p => p.n3 === d.cat3));
+ const res = q.trim() ? searchProd(q, 80, pool) : d.cat2 ? pool.slice(0, 80) : [];
+ const tot = q.trim() ? null : pool.length;
+ $("#nlRes").innerHTML = res.length ? `<div class="row" style="justify-content:space-between"><span class="small muted">${res.length}${res.length >= 80 ? "+" : ""} resultado(s)${tot && d.cat2 ? " \xb7 " + tot + " na categoria" : ""}</span>${d.cat2 && !q.trim() ? `<button class="btn sm tag" data-act="nlAddCat">Adicionar todos da categoria (${Math.min(tot, 1e3)})</button>` : ""}</div><div class="list" style="max-height:300px;overflow:auto">${res.map((p => `<button class="li" data-act="nlAdd" data-s="${p.seq}"><div class="t"><div class="small">${esc(p.nome)}</div><div class="muted small mono">${p.seq} \xb7 ${esc(p.n4)} \xb7 ${esc(p.n5)}</div></div>${d.itens.includes(p.seq) ? `<span class="pill ok">Na lista</span>` : `<span class="pill">+ Add</span>`}</button>`)).join("")}</div>` : q.trim() ? `<p class="muted small">Nada encontrado.</p>` : "";
+}
+
+AFTER.novaLista = () => {
+ const t = $("#nlTodos");
+ if (t) t.onchange = () => {
+  nlSync();
+  render();
+ };
+ const tl = $("#peTodasLojas");
+ if (tl) tl.onchange = () => {
+  nlSync();
+  render();
+ };
+ if (!$("#nlQ")) return;
+ $("#nlQ").oninput = () => {
+  clearTimeout(nlResults._t);
+  nlResults._t = setTimeout(nlResults, 150);
+ };
+ $("#nlC2").onchange = e => {
+  nlSync();
+  V.d.cat2 = e.target.value;
+  V.d.cat3 = "";
+  render();
+ };
+ $("#nlC3").onchange = e => {
+  nlSync();
+  V.d.cat3 = e.target.value;
+  render();
+ };
+ if (V.d.cat2 || V.d.q) nlResults();
+};
+
+AFTER.pesqEdit = AFTER.novaLista;
+
+function nlAddSeq(s) {
+ const d = V.d;
+ const p = S.prods.get(+s);
+ if (!p) return 0;
+ let n = 0;
+ const add = x => {
+  if (!d.itens.includes(x)) {
+   d.itens.push(x);
+   n++;
+  }
+ };
+ add(p.seq);
+ if ($("#nlFam") && $("#nlFam").checked && p.fam !== "") (S.famIdx.get(p.fam) || []).forEach(add);
+ return n;
+}
+
+VIEWS.pesqs = () => {
+ const arr = [ ...S.pesq ].sort(((a, b) => String(a.nome).localeCompare(String(b.nome))));
+ return shell("Pesquisas fixas", `<p class="muted small">Cadastre uma vez e s\xf3 fa\xe7a a manuten\xe7\xe3o dos itens. Cada pesquisa abre sozinha para as lojas no dia escolhido e vale pelo n\xfamero de dias definido; depois disso uma nova rodada come\xe7a e os pre\xe7os de cada semana ficam separados.</p>\n  ${arr.length ? `<div class="list">${arr.map((m => {
+  const c = cicloAtual(m);
+  const L = String(m.lojas || "").toUpperCase();
+  const nL = pesqLojas(m).length;
+  return `<button class="li" data-act="peOpen" data-id="${esc(m.id)}"><div class="t"><div>${esc(m.nome)}</div><div class="muted small">${!L || L === "TODAS" ? "Todas as lojas (" + nL + ")" : nL + " loja(s): " + pesqLojas(m).map(lojaNome).join(", ")} \xb7 ${esc(DIAS_N[String(m.dia || "QUALQUER").toUpperCase()] || m.dia)} \xb7 ${parseInt(m.validade) || 7} dias \xb7 ${isTodos(m.todos) ? "todos os produtos" : (S.pesqItens[m.id] || []).length + " itens"}</div><div class="muted small">${c.ini ? "Rodada atual: " + fmtYmd(c.ini) + " a " + fmtYmd(c.fim) : "Pr\xf3xima rodada: " + fmtYmd(c.prox)}</div></div>${String(m.ativa).toUpperCase() === "N" ? `<span class="pill">Pausada</span>` : `<span class="pill ok">Ativa</span>`}</button>`;
+ })).join("")}</div>` : `<div class="card"><p class="muted">Nenhuma pesquisa fixa ainda. Exemplo: \u201cPadr\xe3o segunda-feira\u201d para todas as lojas, e uma espec\xedfica para a loja 02.</p></div>`}`, {
+  foot: `<button class="btn pri" data-act="peNew">+ Nova pesquisa fixa</button>`
+ });
+};
+
+function pesqEditView(d) {
+ const byB = {};
+ S.lojas.filter((l => l.status !== "Desativado")).forEach((l => (byB[l.bandeira] = byB[l.bandeira] || []).push(l)));
+ const pes = [ ...new Set(S.vinc.flatMap((v => String(v.pesquisador).split("/").map((s => s.trim())))).filter(Boolean)) ].sort();
+ const nC = d.todasLojas ? S.lojas.filter((l => l.status !== "Desativado")).length : d.lojas.length;
+ return shell(d.id ? "Editar pesquisa fixa" : "Nova pesquisa fixa", `<div class="card"><label class="f">Nome da pesquisa<input class="in" id="nlNome" value="${esc(d.nome)}" placeholder="Ex.: Padr\xe3o segunda-feira"></label>\n   <div class="f2"><label class="f">Dia da pesquisa<select class="in" id="peDia">${[ "SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM", "QUALQUER" ].map((x => `<option value="${x}" ${d.dia === x ? "selected" : ""}>${DIAS_N[x][0].toUpperCase() + DIAS_N[x].slice(1)}</option>`)).join("")}</select></label>\n   <label class="f">Validade (dias)<input class="in mono" id="nlVal" inputmode="numeric" value="${esc(d.val)}"></label></div>\n   <label class="f">Pesquisador dos concorrentes<select class="in" id="nlPesq"><option value="">Todos os v\xednculos da loja</option>${pes.map((p => `<option ${d.pesq === p ? "selected" : ""}>${esc(p)}</option>`)).join("")}</select></label>\n   <label class="row small"><input type="checkbox" id="peAtiva" ${d.ativa ? "checked" : ""}> Pesquisa ativa</label></div>\n   <div class="card"><h3>Lojas (${nC})</h3><label class="chk ${d.todasLojas ? "on" : ""}" style="flex:none"><input type="checkbox" id="peTodasLojas" ${d.todasLojas ? "checked" : ""}> Todas as lojas (inclui lojas novas automaticamente)</label>\n   ${d.todasLojas ? "" : Object.keys(byB).sort().map((b => `<div><div class="row" style="justify-content:space-between"><span class="pill">${esc(b)}</span><button class="btn sm" data-act="nlBand" data-b="${esc(b)}">Marcar bandeira</button></div><div class="chips" style="margin-top:6px">${byB[b].map((l => {
+  const nc = S.vinc.filter((v => +v.loja === +l.cod)).length;
+  return `<button class="chip ${d.lojas.includes(+l.cod) ? "on" : ""}" data-act="nlLoja" data-c="${l.cod}">${esc(l.empresa)}${nc ? "" : " \u26a0"}</button>`;
+ })).join("")}</div></div>`)).join("")}</div>\n   ${pickerHtml(d)}<p class="err" id="nlErr"></p>`, {
+  foot: `${d.id ? `<button class="btn bad" data-act="peDel">Excluir</button>` : ""}<button class="btn pri" style="flex:2" data-act="peSave">Salvar pesquisa</button>`
+ });
+}
+
+VIEWS.pesqEdit = () => pesqEditView(V.d);
+
+function savePesq(m, itens) {
+ const data = {
+  ...m,
+  itens: isTodos(m.todos) ? [] : itens,
+  upd: now()
+ };
+ const i = S.pesq.findIndex((x => x.id === m.id));
+ if (i >= 0) S.pesq[i] = pesqFromData(m); else S.pesq.push(pesqFromData(m));
+ if (!isTodos(m.todos)) S.pesqItens[m.id] = [ ...itens ]; else delete S.pesqItens[m.id];
+ KV.save("pesq");
+ KV.save("pesqItens");
+ COLV++;
+ enqueue("pesquisas", m.id, data);
+}
+
+VIEWS.analise = () => {
+ const l = getLista(V.id);
+ const cs = l.concs;
+ let IT = itensOf(l);
+ if (IT.length > 600) IT = IT.filter((s => cs.some((c => S.coletas[`${l.id}-${c}-${s}`]))));
+ const rows = IT.map((s => {
+  const p = S.prods.get(s);
+  const v = cs.map((c => {
+   const x = S.coletas[`${l.id}-${c}-${s}`];
+   return x && !x.naoEnc ? x : null;
+  }));
+  const pr = v.map((x => x ? x.reg ?? x.club ?? x.caixa ?? x.app : null));
+  const mn = Math.min(...pr.filter((x => x != null)));
+  return `<tr><td class="mono">${s}</td><td>${esc(p ? p.nome : "")}</td>${pr.map(((x, i) => `<td class="n ${x != null && x === mn && pr.filter((y => y != null)).length > 1 ? "min" : ""}">${x != null ? money(x) + (v[i].oferta ? " \u2605" : "") : "\u2013"}</td>`)).join("")}</tr>`;
+ })).join("");
+ return shell("Comparar pre\xe7os", `<p class="muted small">${esc(l.nome)} \xb7 ${esc(lojaNome(l.loja))}. Menor pre\xe7o regular em verde; \u2605 = oferta.</p><div class="tw"><table><thead><tr><th>SEQ</th><th>Produto</th>${cs.map((c => `<th>${esc(concNome(c))}</th>`)).join("")}</tr></thead><tbody>${rows}</tbody></table></div>`);
+};
+
+VIEWS.aux = () => {
+ const f = V.f || "Pendente";
+ const arr = Object.values(S.aux).filter((a => f === "Todos" || a.status === f)).sort(((a, b) => b.dt - a.dt));
+ return shell("Base auxiliar", `<p class="muted small">Produtos escaneados ou buscados que n\xe3o existem na base de fam\xedlias. Inclua na base geral ou vincule o EAN a um produto existente.</p>\n  <div class="tabs">${[ "Pendente", "Inclu\xeddo", "Vinculado", "Todos" ].map((k => `<button class="${f === k ? "on" : ""}" data-act="af" data-f="${k}">${k}</button>`)).join("")}</div>\n  ${arr.length ? `<div class="list">${arr.map((a => `<button class="li" data-act="auxOpen" data-id="${esc(a.id)}">${a.fotoF ? fotoTag(a.fotoF, "", "width:52px;height:52px;object-fit:cover;border-radius:6px") : ""}<div class="t"><div>${esc(a.desc || "(sem descri\xe7\xe3o)")}</div><div class="muted small mono">EAN ${esc(a.ean)} \xb7 R$ ${money(a.reg)}${a.oferta ? " oferta" : ""}</div><div class="muted small">${esc(lojaNome(a.loja))} \xb7 ${esc(concNome(a.conc))} \xb7 ${fmtDT(a.dt)}</div></div><span class="pill ${a.status === "Pendente" ? "warn" : "ok"}">${esc(a.status)}</span></button>`)).join("")}</div>` : `<div class="card"><p class="muted">Nenhum produto ${f === "Todos" ? "" : f.toLowerCase()}.</p></div>`}\n  <button class="btn" data-act="expAux">Exportar base auxiliar</button>`);
+};
+
+const DEFS = {
+ produtos: {
+  t: "Produtos",
+  key: "seq",
+  fields: [ [ "seq", "SEQ-PRODUTO", "n" ], [ "nome", "Nome do produto" ], [ "ean", "EAN (v\xe1rios separados por v\xedrgula)" ], [ "n1", "N01" ], [ "n2", "N02" ], [ "n3", "N03" ], [ "n4", "N04" ], [ "n5", "N05" ], [ "avo", "SEQ-AVO", "n" ], [ "alt", "SEQ-ALT", "n" ], [ "fam", "SEQ-FAMILIA", "n" ], [ "perc", "% propor\xe7\xe3o pre\xe7o", "n" ], [ "custo", "Custo", "n" ] ],
+  cols: [ [ "seq", "SEQ" ], [ "nome", "Produto" ], [ "ean", "EAN" ], [ "n2", "N02" ], [ "fam", "Fam\xedlia" ] ],
+  rows: () => S.prodArr,
+  can: () => isPricing(),
+  imp: () => isAdm()
+ },
+ lojas: {
+  t: "Lojas",
+  key: "cod",
+  fields: [ [ "cod", "Cod Empresa", "n" ], [ "empresa", "Empresa" ], [ "bandeira", "Bandeira" ], [ "cluster", "Cluster precifica\xe7\xe3o" ], [ "segmento", "Segmento" ], [ "uf", "UF" ], [ "cidade", "Cidade" ], [ "ger", "Ger. operacional" ], [ "status", "Status (Ativado/Desativado)" ] ],
+  cols: [ [ "cod", "Cod" ], [ "empresa", "Empresa" ], [ "bandeira", "Bandeira" ], [ "cluster", "Cluster" ], [ "cidade", "Cidade" ], [ "status", "Status" ] ],
+  rows: () => S.lojas,
+  can: () => isAdm()
+ },
+ concs: {
+  t: "Concorrentes",
+  key: "id",
+  fields: [ [ "id", "ID concorrente", "n" ], [ "nome", "Nome concorrente" ], [ "nome_mi7", "Nome MI7" ], [ "regiao", "Regi\xe3o / cidades" ], [ "status", "Status (Ativo/Inativo)" ] ],
+  cols: [ [ "id", "ID" ], [ "nome", "Nome" ], [ "regiao", "Regi\xe3o" ], [ "status", "Status" ] ],
+  rows: () => S.concs,
+  can: () => isAdm()
+ },
+ vinc: {
+  t: "Loja \xd7 Concorrente",
+  key: "_k",
+  fields: [ [ "loja", "ID loja", "n" ], [ "conc", "ID concorrente", "n" ], [ "classif", "Classifica\xe7\xe3o (CONC-01\u2026)" ], [ "pesquisador", "Pesquisador" ], [ "mi7", "MI7" ], [ "lista", "Lista pesq." ] ],
+  cols: [ [ "loja", "Loja" ], [ "_ln", "Nome loja" ], [ "conc", "Conc." ], [ "_cn", "Concorrente" ], [ "classif", "Classif." ], [ "pesquisador", "Pesquisador" ] ],
+  rows: () => S.vinc.map((v => ({
+   ...v,
+   _k: v.loja + "-" + v.conc,
+   _ln: lojaNome(v.loja),
+   _cn: concNome(v.conc)
+  }))),
+  can: () => isPricing()
+ },
+ envios: {
+  t: "Envios",
+  key: "destino",
+  fields: [ [ "nome", "Nome" ], [ "tipo", "Tipo (EMAIL ou WHATSAPP)" ], [ "destino", "E-mail ou WhatsApp com DDD" ], [ "rels", "Relat\xf3rios (TXT, XLSX, AUX)" ], [ "ativo", "Ativo (S/N)" ] ],
+  cols: [ [ "nome", "Nome" ], [ "tipo", "Tipo" ], [ "destino", "Destino" ], [ "rels", "Relat\xf3rios" ], [ "ativo", "Ativo" ] ],
+  rows: () => S.envios,
+  can: () => isPricing()
+ },
+ users: {
+  t: "Usu\xe1rios",
+  key: "login",
+  fields: [ [ "login", "Login" ], [ "nome", "Nome" ], [ "perfil", "Perfil (MASTER, PRICING, LOJA)" ], [ "lojas", "Lojas (c\xf3digos separados por v\xedrgula)" ], [ "pin", "Senha" ], [ "ativo", "Ativo (S/N)" ] ],
+  cols: [ [ "login", "Login" ], [ "nome", "Nome" ], [ "perfil", "Perfil" ], [ "lojas", "Lojas" ], [ "ativo", "Ativo" ] ],
+  rows: () => S.users,
+  can: () => isAdm()
+ }
+};
+
+VIEWS.bases = () => {
+ const t = V.t || "produtos";
+ const D = DEFS[t];
+ const tabs = Object.keys(DEFS).filter((k => k === "produtos" || k === "vinc" ? true : k === "envios" ? isPricing() : isAdm()));
+ const q = V.q || "";
+ const pg = V.pg || 0;
+ let rows = D.rows();
+ if (q.trim()) {
+  if (t === "produtos") rows = searchProd(q, 5e3); else {
+   const tk = norm(q).split(/\s+/);
+   rows = rows.filter((r => {
+    const s = norm(D.cols.map((c => r[c[0]])).join(" "));
+    return tk.every((x => s.includes(x)));
+   }));
+  }
+ }
+ const per = 50;
+ const page = rows.slice(pg * per, pg * per + per);
+ return shell("Bases", `<div class="tabs">${tabs.map((k => `<button class="${t === k ? "on" : ""}" data-act="bt" data-t="${k}">${DEFS[k].t}</button>`)).join("")}</div>\n   <div class="row"><input class="in" style="flex:1" id="bq" placeholder="Pesquisar em ${esc(D.t.toLowerCase())}" value="${esc(q)}" autocomplete="off">${D.can() ? `<button class="btn pri" data-act="bnew">+ Incluir</button>` : ""}</div>\n   <div class="row small muted" style="justify-content:space-between"><span>${rows.length.toLocaleString("pt-BR")} registro(s)</span><span>${D.can() ? "Toque numa linha para editar ou excluir" : "Somente consulta"}</span></div>\n   <div class="tw"><table><thead><tr>${D.cols.map((c => `<th>${esc(c[1])}</th>`)).join("")}</tr></thead><tbody>${page.map((r => `<tr class="click" data-act="bedit" data-k="${esc(r[D.key])}">${D.cols.map((c => `<td class="${c[0] === "nome" || c[0] === "_cn" || c[0] === "empresa" ? "" : ""}">${esc(r[c[0]])}</td>`)).join("")}</tr>`)).join("")}</tbody></table></div>\n   <div class="row" style="justify-content:center"><button class="btn sm" data-act="bpg" data-d="-1" ${pg ? "" : "disabled"}>\u2039 Anterior</button><span class="mono small">${pg + 1}/${Math.max(1, Math.ceil(rows.length / per))}</span><button class="btn sm" data-act="bpg" data-d="1" ${(pg + 1) * per < rows.length ? "" : "disabled"}>Pr\xf3xima \u203a</button></div>\n   ${D.can() ? `<div class="card"><h3>Importar / exportar ${esc(D.t)}</h3><p class="muted small">Exporte, edite no Excel e importe de volta (CSV com \u201c;\u201d ou .xlsx, mesmas colunas). A importa\xe7\xe3o substitui a base inteira na planilha e em todos os aparelhos.${t === "produtos" ? " Voc\xea tamb\xe9m pode editar direto na aba PRODUTOS da planilha." : ""}</p><div class="row"><button class="btn sm" data-act="bexp" data-fmt="xlsx">Exportar .xlsx</button><button class="btn sm" data-act="bexp" data-fmt="csv">Exportar .csv</button>${t !== "produtos" || isAdm() ? `<button class="btn sm" data-act="bimp">Importar arquivo</button>` : ""}${t === "produtos" && HAS_GS ? `<button class="btn sm" data-act="brestore">Baixar base de novo</button>` : ""}</div></div>` : ""}`);
+};
+
+AFTER.bases = () => {
+ const b = $("#bq");
+ b.oninput = () => {
+  clearTimeout(b._t);
+  b._t = setTimeout((() => {
+   V.q = b.value;
+   V.pg = 0;
+   const pos = b.selectionStart;
+   render();
+   const nb = $("#bq");
+   nb.focus();
+   nb.setSelectionRange(pos, pos);
+  }), 250);
+ };
+};
+
+function editForm(t, k) {
+ const D = DEFS[t];
+ const r = k == null ? {} : D.rows().find((x => String(x[D.key]) === String(k))) || {};
+ const can = D.can();
+ modal(`<h3>${k == null ? "Incluir" : can ? "Editar" : "Detalhe"} \xb7 ${esc(D.t)}</h3><form id="fed" class="card" style="border:0;padding:0;background:transparent">${D.fields.map((([f, lab, ty]) => `<label class="f">${esc(lab)}<input class="in ${ty === "n" ? "mono" : ""}" name="${f}" ${ty === "n" ? 'inputmode="decimal"' : ""} value="${esc(r[f] ?? "")}" ${can ? "" : "readonly"} ${(f === D.key || t === "vinc" && (f === "loja" || f === "conc")) && k != null ? "readonly" : ""}></label>`)).join("")}\n  ${t === "produtos" && k != null && r.fam !== "" ? `<p class="muted small">Fam\xedlia ${esc(r.fam)}: ${(S.famIdx.get(r.fam) || []).length} produto(s).</p>` : ""}<p class="err" id="edErr"></p>\n  <div class="row">${can && k != null ? `<button type="button" class="btn bad" data-act="bdel" data-t="${t}" data-k="${esc(k)}">Excluir</button>` : ""}<button type="button" class="btn grow" data-act="mclose">Fechar</button>${can ? `<button class="btn pri grow" type="submit">Salvar</button>` : ""}</div></form>`);
+ $("#fed").onsubmit = e => {
+  e.preventDefault();
+  const fd = Object.fromEntries(new FormData(e.target));
+  const err = m => $("#edErr").textContent = m;
+  D.fields.forEach((([f, , ty]) => {
+   if (ty === "n" && fd[f] !== "" && fd[f] != null) {
+    const n = pnum(fd[f]);
+    if (n == null) return;
+    fd[f] = n;
+   }
+  }));
+  if (t === "produtos") {
+   if (!fd.seq && fd.seq !== 0) return err("Informe o SEQ-PRODUTO");
+   if (k == null && S.prods.has(+fd.seq)) return err("SEQ j\xe1 existe na base");
+   if (!fd.nome) return err("Informe o nome");
+   saveProd(fd);
+  } else {
+   const arr = S[t];
+   if (t === "vinc") {
+    fd._k = fd.loja + "-" + fd.conc;
+    if (!lojaBy(fd.loja)) return err("Loja n\xe3o existe na base de lojas");
+    if (!concBy(fd.conc)) return err("Concorrente n\xe3o existe na base");
+   }
+   if (!fd[D.key]) return err("Campo obrigat\xf3rio: " + D.fields[0][1]);
+   if (t === "users") {
+    fd.login = String(fd.login).toUpperCase();
+    fd.perfil = String(fd.perfil).toUpperCase();
+    if (![ "MASTER", "PRICING", "LOJA" ].includes(fd.perfil)) return err("Perfil deve ser MASTER, PRICING ou LOJA");
+   }
+   const i = arr.findIndex((x => String(t === "vinc" ? x.loja + "-" + x.conc : x[D.key]) === String(k ?? fd[D.key])));
+   if (k == null && i >= 0) return err("J\xe1 existe um registro com essa chave");
+   const clean = {
+    ...fd
+   };
+   delete clean._k;
+   if (i >= 0) arr[i] = {
+    ...arr[i],
+    ...clean
+   }; else arr.push(clean);
+   saveCad(t);
+  }
+  mclose();
+  toast("Salvo");
+  render();
+ };
+}
+
+VIEWS.exportar = () => {
+ const u = S.user;
+ const ls = Object.values(S.listas).filter((l => u.perfil !== "LOJA" || userLojas(u).includes(+l.loja))).sort(((a, b) => (b.criada || 0) - (a.criada || 0)));
+ return shell("Exportar", `<div class="card"><h3>Coletas</h3><label class="f">Lista<select class="in" id="exL"><option value="">Todas as listas vis\xedveis</option>${ls.map((l => `<option value="${esc(l.id)}">${esc(l.nome)} \xb7 ${esc(lojaNome(l.loja))}</option>`)).join("")}</select></label>\n   <div class="row"><button class="btn pri grow" data-act="exCol" data-fmt="xlsx">Excel .xlsx</button><button class="btn grow" data-act="exCol" data-fmt="csv">CSV</button><button class="btn tag grow" data-act="exTxt">TXT (layout)</button></div>\n   <p class="muted small">TXT: um arquivo por concorrente, linha = concorrente (6) + EAN/DUN (14) + pre\xe7o sem v\xedrgula (8) + S/N oferta + 1. Ex.: 027300 07898279790394 00000699 N1.</p></div>\n   <div class="card"><h3>WhatsApp do Pricing</h3><label class="f">N\xfamero com DDD (opcional, para abrir a conversa)<input class="in mono" id="waN" inputmode="tel" placeholder="67999999999" value="${esc(S.cfg.wa || "")}"></label><button class="btn sm" data-act="saveWa">Salvar n\xfamero</button>\n   <p class="muted small">No celular, o bot\xe3o de exportar abre o compartilhamento do sistema para escolher o WhatsApp. Quando o compartilhamento n\xe3o estiver dispon\xedvel, o arquivo \xe9 salvo e voc\xea o anexa na conversa.</p></div>\n   ${isPricing() ? `<div class="card"><h3>Base auxiliar</h3><button class="btn" data-act="expAux">Exportar base auxiliar com fotos</button></div>` : ""}\n   <div class="card"><h3>Sincroniza\xe7\xe3o</h3><p class="small">${HAS_GS ? "Cada pre\xe7o \xe9 gravado no aparelho e enviado sozinho para a planilha do Google Drive, em segundo plano. Sem internet, fica na fila e sobe quando a conex\xe3o voltar." : "Modo teste: aberto fora do link do Google, nada \xe9 enviado."}${S.cfg.lastPull ? " \xdaltima atualiza\xe7\xe3o: " + fmtDT(S.cfg.lastPull) + "." : ""}</p><p class="mono small">${S.queue.length} registro(s) na fila${syncErr ? " \xb7 " + esc(syncErr) : ""}</p></div>`);
+};
+
+function colRows(lid) {
+ const u = S.user;
+ return Object.values(S.coletas).filter((c => (lid ? c.lista === lid : true) && (u.perfil !== "LOJA" || userLojas(u).includes(+c.loja)))).sort(((a, b) => a.dt - b.dt)).map((c => {
+  const p = S.prods.get(+c.seq) || {};
+  const l = S.listas[c.lista] || {};
+  return {
+   DATA_COLETA: fmtDT(c.dt),
+   PESQUISA: c.pesquisa || l.modeloNome || l.nome || c.listaNome || c.lista,
+   TIPO: c.modelo || l.modelo ? "FIXA" : "AVULSA",
+   INICIO: fmtYmd(c.inicio || l.inicio || l.prevista || ""),
+   VALIDADE: fmtYmd(c.validade || l.validade || ""),
+   LISTA: l.nome || c.listaNome || c.lista,
+   COD_LOJA: c.loja,
+   LOJA: lojaNome(c.loja),
+   ID_CONCORRENTE: c.conc,
+   CONCORRENTE: concNome(c.conc),
+   SEQ_PRODUTO: c.seq,
+   PRODUTO: p.nome || c.nome || "",
+   EAN: c.ean || String(p.ean || "").split(",")[0] || "",
+   SEQ_FAMILIA: p.fam ?? "",
+   N01: p.n1 || "",
+   N02: p.n2 || "",
+   N03: p.n3 || "",
+   N04: p.n4 || "",
+   N05: p.n5 || "",
+   PRECO_REGULAR: c.reg ?? "",
+   PRECO_CLUB: c.club ?? "",
+   PRECO_CAIXA: c.caixa ?? "",
+   QTD_CAIXA: c.caixaQtd || "",
+   PRECO_APP: c.app ?? "",
+   OFERTA: c.oferta ? "S" : "N",
+   NAO_ENCONTRADO: c.naoEnc ? "S" : "N",
+   EXTRA: c.extra ? "S" : "N",
+   USUARIO: c.user
+  };
+ }));
+}
+
+function auxRows(lid) {
+ return Object.values(S.aux).filter((a => !lid || a.lista === lid)).map((a => ({
+  DATA: fmtDT(a.dt),
+  EAN: a.ean,
+  DESCRICAO: a.desc,
+  GRAMAGEM: a.unid,
+  PRECO_REGULAR: a.reg ?? "",
+  PRECO_CLUB: a.club ?? "",
+  PRECO_CAIXA: a.caixa ?? "",
+  PRECO_APP: a.app ?? "",
+  OFERTA: a.oferta ? "S" : "N",
+  COD_LOJA: a.loja,
+  LOJA: lojaNome(a.loja),
+  ID_CONCORRENTE: a.conc,
+  CONCORRENTE: concNome(a.conc),
+  LISTA: (S.listas[a.lista] || {}).nome || "",
+  USUARIO: a.user,
+  STATUS: a.status,
+  SEQ_VINCULADO: a.seqVinc || "",
+  FOTO_FRENTE: a.fotoF ? String(a.fotoF).startsWith("http") ? a.fotoF : `foto_${a.ean}_frente.jpg` : "",
+  FOTO_EAN: a.fotoE ? String(a.fotoE).startsWith("http") ? a.fotoE : `foto_${a.ean}_ean.jpg` : ""
+ })));
+}
+
+function toCsv(rows) {
+ if (!rows.length) return "\ufeff";
+ const h = Object.keys(rows[0]);
+ const q = v => {
+  v = typeof v === "number" ? String(v).replace(".", ",") : String(v ?? "");
+  return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+ };
+ return "\ufeff" + [ h.join(";"), ...rows.map((r => h.map((k => q(r[k]))).join(";"))) ].join("\r\n");
+}
+
+function toBlob(rows, fmt, sheet = "Dados", more) {
+ if (fmt === "xlsx" && window.XLSX) {
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [ {} ]), sheet);
+  (more || []).forEach((([n, r]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(r.length ? r : [ {} ]), n)));
+  return new Blob([ XLSX.write(wb, {
+   bookType: "xlsx",
+   type: "array"
+  }) ], {
+   type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+ }
+ return new Blob([ toCsv(rows) ], {
+  type: "text/csv"
+ });
+}
+
+const dataURLBlob = d => {
+ const [h, b] = d.split(",");
+ const bin = atob(b);
+ const a = new Uint8Array(bin.length);
+ for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+ return new Blob([ a ], {
+  type: h.slice(5).split(";")[0]
+ });
+};
+
+async function deliver(filename, blob, text, extraFiles = [], tipo = "XLSX") {
+ sendFiles([ {
+  name: filename,
+  blob: blob
+ } ], {
+  tipo: tipo,
+  titulo: "Arquivo pronto",
+  resumo: text,
+  extra: extraFiles
+ });
+}
+
+const up = v => String(v || "").trim().toUpperCase();
+
+const relOk = (e, t) => !String(e.rels || "").trim() || up(e.rels).split(/[,;\s]+/).includes(t);
+
+const envAtivos = tp => S.envios.filter((e => up(e.tipo) === tp && up(e.ativo) !== "N" && String(e.destino || "").trim()));
+
+const waNum = n => {
+ n = String(n).replace(/\D/g, "");
+ return n.length <= 11 ? "55" + n : n;
+};
+
+function canShareFiles() {
+ try {
+  return !IN_FRAME && !!navigator.canShare && navigator.canShare({
+   files: [ new File([ "x" ], "x.txt", {
+    type: "text/plain"
+   }) ]
+  });
+ } catch (e) {
+  return false;
+ }
+}
+
+async function b64Of(blob) {
+ return await new Promise(((res, rej) => {
+  const r = new FileReader;
+  r.onload = () => res(String(r.result).split(",")[1]);
+  r.onerror = rej;
+  r.readAsDataURL(blob);
+ }));
+}
+
+async function payloadFiles(files) {
+ const out = [];
+ for (const f of files) {
+  if (f.text != null) out.push({
+   name: f.name,
+   mime: "text/plain",
+   text: f.text
+  }); else out.push({
+   name: f.name,
+   mime: f.blob.type || "application/octet-stream",
+   b64: await b64Of(f.blob)
+  });
+ }
+ return out;
+}
+
+function sendFiles(files, o) {
+ V._sf = {
+  files: files,
+  ...o
+ };
+ const em = envAtivos("EMAIL"), wa = envAtivos("WHATSAPP");
+ const share = canShareFiles();
+ modal(`<h3>${esc(o.titulo || "Arquivos")}</h3><div class="list">${files.map((f => `<div class="li"><div class="t"><div class="small mono">${esc(f.name)}</div>${f.info ? `<div class="muted small">${esc(f.info)}</div>` : ""}</div></div>`)).join("")}</div>${o.aviso || ""}\n   <div class="row"><button class="btn pri grow" data-act="sfDown">Baixar no ${IN_FRAME ? "computador" : "aparelho"}</button><button class="btn grow" data-act="sfDrive">Salvar no Google Drive</button></div>\n   <div class="card"><h3>E-mail</h3>${em.length ? em.map((e => `<label class="row small"><input type="checkbox" class="sfEm" value="${esc(e.destino)}" ${relOk(e, o.tipo) ? "checked" : ""}> ${esc(e.nome || e.destino)} <span class="muted">${esc(e.destino)}</span></label>`)).join("") : `<p class="muted small">Nenhum e-mail cadastrado em Bases \u203a Envios.</p>`}\n    ${isPricing() ? `<input class="in" id="sfEmX" type="email" placeholder="Outro e-mail (opcional)" autocomplete="off">` : ""}<button class="btn" data-act="sfMail">Enviar por e-mail</button></div>\n   <div class="card"><h3>WhatsApp</h3>${share ? `<button class="btn" data-act="sfShare">Enviar os arquivos (escolher a conversa)</button>` : ""}\n    ${wa.map((e => `<button class="btn" data-act="sfWa" data-n="${esc(e.destino)}">Enviar link para ${esc(e.nome || e.destino)}</button>`)).join("")}\n    ${!wa.length ? `<button class="btn" data-act="sfWa" data-n="">Enviar link pelo WhatsApp</button>` : ""}<p class="muted small">O link abre o arquivo salvo no Google Drive; qualquer pessoa com o link consegue baixar.</p></div>\n   ${em.some((e => relOk(e, o.tipo))) || wa.some((e => relOk(e, o.tipo))) ? `<button class="btn tag" data-act="sfAll">Enviar para todos os cadastrados (${o.tipo})</button>` : ""}\n   <div id="sfOut"></div><button class="btn" data-act="mclose">Fechar</button>`);
+}
+
+function sfOut(h) {
+ const o = $("#sfOut");
+ if (o) o.innerHTML = h;
+}
+
+async function sfSave(pub) {
+ const sf = V._sf;
+ const r = await gs("saveFiles", authA(), JSON.stringify({
+  pub: !!pub,
+  files: await payloadFiles(sf.files)
+ }));
+ return r;
+}
+
+async function sfMailTo(to) {
+ const sf = V._sf;
+ const r = await gs("sendReport", authA(), JSON.stringify({
+  to: to,
+  subject: `Pesquisa de Pre\xe7os \xb7 ${sf.titulo || ""} \xb7 ${fmtD(now())}`,
+  body: (sf.resumo || "") + "\n\nArquivos: " + sf.files.map((f => f.name)).join(", "),
+  files: await payloadFiles(sf.files)
+ }));
+ return r;
+}
+
+async function sfWaLinks() {
+ if (V._sf.links) return V._sf.links;
+ const r = await sfSave(true);
+ V._sf.links = r.files;
+ return r.files;
+}
+
+function waText(links) {
+ const sf = V._sf;
+ return `${sf.titulo || "Pesquisa de pre\xe7os"} \xb7 ${fmtD(now())}\n${sf.resumo || ""}\n` + links.map((f => `${f.name}: ${f.url}`)).join("\n");
+}
+
+const pad0 = (v, n) => String(v).replace(/\D/g, "").padStart(n, "0").slice(-n);
+
+const ddmm = t => {
+ const d = new Date(t);
+ return String(d.getDate()).padStart(2, "0") + String(d.getMonth() + 1).padStart(2, "0");
+};
+
+const safeName = x => String(x).replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim();
+
+function txtFiles(listaIds) {
+ const files = new Map;
+ let semEan = 0, semPreco = 0;
+ for (const lid of listaIds) {
+  const l = getLista(lid) || S.listas[lid];
+  if (!l) continue;
+  const cols = Object.values(S.coletas).filter((c => c.lista === lid && !c.naoEnc));
+  for (const c of cols) {
+   const preco = c.reg ?? c.club ?? c.caixa ?? c.app;
+   if (preco == null) {
+    semPreco++;
+    continue;
+   }
+   const p = S.prods.get(+c.seq) || {};
+   const ean = String(c.ean || String(p.ean || "").split(/[,;\s]+/)[0] || "").replace(/\D/g, "");
+   if (ean.length < 8) {
+    semEan++;
+    continue;
+   }
+   const vv = S.vinc.find((v => +v.loja === +l.loja && +v.conc === +c.conc)) || {};
+   const mi7 = String(vv.mi7 || "").trim();
+   const base = mi7 || `${lojaNome(l.loja)} - ${l.modeloNome || l.nome} - ${concNome(c.conc)}`;
+   const key = safeName(base) + "_C-" + c.conc;
+   let f = files.get(key);
+   if (!f) {
+    f = {
+     key: key,
+     conc: c.conc,
+     dt: 0,
+     lines: new Map,
+     pesq: new Set,
+     lojas: new Set
+    };
+    files.set(key, f);
+   }
+   const ex = f.lines.get(ean);
+   if (!ex || c.dt >= ex.dt) f.lines.set(ean, {
+    dt: c.dt,
+    txt: pad0(c.conc, 6) + pad0(ean, 14) + pad0(Math.round(preco * 100), 8) + (c.oferta ? "S" : "N") + "1"
+   });
+   f.dt = Math.max(f.dt, c.dt || 0);
+   f.pesq.add(l.modeloNome || l.nome);
+   f.lojas.add(lojaNome(l.loja));
+  }
+ }
+ const out = [ ...files.values() ].map((f => ({
+  name: `${ddmm(f.dt || now())} - ${f.key}.txt`,
+  text: [ ...f.lines.values() ].map((x => x.txt)).join("\r\n") + "\r\n",
+  n: f.lines.size,
+  pesq: [ ...f.pesq ].join(", "),
+  lojas: [ ...f.lojas ].join(", ")
+ })));
+ return {
+  files: out,
+  semEan: semEan,
+  semPreco: semPreco
+ };
+}
+
+async function exportTxt(listaIds) {
+ const r = txtFiles(listaIds);
+ if (!r.files.length) return modal(`<h3>Nada para exportar</h3><p class="small">Nenhum pre\xe7o com EAN nesta sele\xe7\xe3o.${r.semEan ? ` ${r.semEan} pre\xe7o(s) ficaram de fora porque o produto n\xe3o tem EAN na base: cadastre o EAN em Bases \u203a Produtos ou escaneie o produto.` : ""}</p><button class="btn" data-act="mclose">OK</button>`);
+ sendFiles(r.files.map((f => ({
+  name: f.name,
+  text: f.text,
+  blob: new Blob([ f.text ], {
+   type: "text/plain"
+  }),
+  info: `${f.n} linha(s) \xb7 ${f.lojas} \xb7 ${f.pesq}`
+ }))), {
+  tipo: "TXT",
+  titulo: `Arquivos TXT (${r.files.length})`,
+  resumo: `${r.files.reduce(((a, f) => a + f.n), 0)} pre\xe7o(s) em ${r.files.length} arquivo(s).`,
+  aviso: `${r.semEan ? `<p class="err small">${r.semEan} pre\xe7o(s) sem EAN na base ficaram de fora.</p>` : ""}<p class="muted small mono">Exemplo de linha: ${esc(r.files[0].text.split("\r\n")[0])}</p>`
+ });
+}
+
+async function exportColetas(lid, fmt) {
+ const rows = colRows(lid);
+ if (!rows.length) return toast("Nenhuma coleta para exportar");
+ const l = S.listas[lid];
+ const name = `pesquisa_${l ? norm(lojaNome(l.loja)).replace(/\W+/g, "_") : "geral"}_${today()}.${fmt === "xlsx" && window.XLSX ? "xlsx" : "csv"}`;
+ const ax = auxRows(lid);
+ const fr = Object.values(S.fotos).filter((f => !lid || f.lista === lid)).map((f => ({
+  DATA: fmtDT(f.dt),
+  PESQUISA: f.pesquisa || "",
+  COD_LOJA: f.loja,
+  LOJA: lojaNome(f.loja),
+  CONCORRENTE: concNome(f.conc),
+  SEQ_PRODUTO: f.seq,
+  PRODUTO: f.nome,
+  USUARIO: f.user,
+  LINK: String(f.foto || "").startsWith("http") ? f.foto : "(enviando)"
+ })));
+ const more = [];
+ if (ax.length) more.push([ "Sem cadastro", ax ]);
+ if (fr.length) more.push([ "Fotos", fr ]);
+ const blob = toBlob(rows, fmt, "Coletas", more.length ? more : null);
+ const extra = [];
+ if (fmt === "xlsx") for (const a of Object.values(S.aux).filter((a => !lid || a.lista === lid))) {
+  const f1 = await fotoFile(a.fotoF, `foto_${a.ean}_frente.jpg`), f2 = await fotoFile(a.fotoE, `foto_${a.ean}_ean.jpg`);
+  if (f1) extra.push(f1);
+  if (f2) extra.push(f2);
+ }
+ await deliver(name, blob, `Pesquisa de pre\xe7os ${l ? l.nome + " \u2013 " + lojaNome(l.loja) : ""} \xb7 ${rows.length} pre\xe7os coletados`, extra);
+}
+
+const SCAN = {
+ stop: null,
+ cb: null
+};
+
+const ZX = () => {
+ if (!window.ZXing) return null;
+ const h = new Map;
+ h.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E, ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.ITF ]);
+ h.set(ZXing.DecodeHintType.TRY_HARDER, true);
+ return new ZXing.BrowserMultiFormatReader(h);
+};
+
+function openScanner(cb) {
+ SCAN.cb = cb;
+ modal(`<h3>Escanear c\xf3digo de barras</h3><div class="video" id="vbox"><video id="vid" playsinline muted></video></div><p class="muted small" id="scMsg">Aponte a c\xe2mera para o c\xf3digo de barras.</p>\n   <div class="row"><button class="btn tag grow" data-act="scanPhoto">Tirar foto do c\xf3digo</button></div>\n   <form class="row" id="fean"><input class="in mono" style="flex:1" id="eanIn" inputmode="numeric" placeholder="Digitar EAN ou usar leitor" autocomplete="off"><button class="btn pri">OK</button></form>\n   <button class="btn" data-act="mclose">Cancelar</button>`);
+ $("#fean").onsubmit = e => {
+  e.preventDefault();
+  const v = $("#eanIn").value.replace(/\D/g, "");
+  if (v.length >= 6) scanDone(v);
+ };
+ startLive();
+}
+
+async function startLive() {
+ const vid = $("#vid");
+ let stopped = false;
+ const fail = () => {
+  const b = $("#vbox");
+  if (b) b.hidden = true;
+  const m = $("#scMsg");
+  if (m) m.textContent = "C\xe2mera ao vivo indispon\xedvel aqui. Use \u201cTirar foto do c\xf3digo\u201d ou digite o EAN.";
+ };
+ try {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return fail();
+  if ("BarcodeDetector" in window) {
+   const bd = new BarcodeDetector({
+    formats: [ "ean_13", "ean_8", "upc_a", "upc_e", "code_128", "itf" ]
+   });
+   const st = await navigator.mediaDevices.getUserMedia({
+    video: {
+     facingMode: "environment"
+    }
+   });
+   vid.srcObject = st;
+   await vid.play();
+   SCAN.stop = () => {
+    stopped = true;
+    st.getTracks().forEach((t => t.stop()));
+    SCAN.stop = null;
+   };
+   const loop = async () => {
+    if (stopped) return;
+    try {
+     const r = await bd.detect(vid);
+     if (r && r[0]) return scanDone(r[0].rawValue);
+    } catch (e) {}
+    setTimeout(loop, 180);
+   };
+   loop();
+   return;
+  }
+  const r = ZX();
+  if (!r) return fail();
+  SCAN.stop = () => {
+   try {
+    r.reset();
+   } catch (e) {}
+   SCAN.stop = null;
+  };
+  await r.decodeFromConstraints({
+   video: {
+    facingMode: "environment"
+   }
+  }, vid, (res => {
+   if (res) scanDone(res.getText());
+  }));
+ } catch (e) {
+  fail();
+ }
+}
+
+function scanDone(code) {
+ if (navigator.vibrate) try {
+  navigator.vibrate(60);
+ } catch (e) {}
+ const cb = SCAN.cb;
+ SCAN.cb = null;
+ mclose();
+ if (cb) cb(String(code).replace(/\D/g, ""));
+}
+
+async function decodePhoto(file) {
+ const url = URL.createObjectURL(file);
+ try {
+  if ("BarcodeDetector" in window) {
+   const bd = new BarcodeDetector;
+   const bmp = await createImageBitmap(file);
+   const r = await bd.detect(bmp);
+   if (r && r[0]) return r[0].rawValue;
+  }
+  const z = ZX();
+  if (z) {
+   const r = await z.decodeFromImageUrl(url);
+   return r.getText();
+  }
+ } catch (e) {} finally {
+  URL.revokeObjectURL(url);
+ }
+ return null;
+}
+
+$("#fileFoto").onchange = async e => {
+ const f = e.target.files[0];
+ e.target.value = "";
+ if (!f || V.name !== "conc") return;
+ toast("Salvando foto\u2026");
+ const d = await compress(f, 1280);
+ if (!d) return toast("N\xe3o foi poss\xedvel ler a foto");
+ const l = getLista(V.lista);
+ const p = S.prods.get(+V.seq) || {};
+ saveFotoCol({
+  id: "F" + uid(),
+  lista: l.id,
+  listaNome: l.nome,
+  pesquisa: l.modeloNome || l.nome,
+  loja: l.loja,
+  conc: V.conc,
+  seq: +V.seq || "",
+  nome: p.nome || "",
+  dt: now(),
+  user: S.user.login,
+  foto: d
+ });
+ toast("Foto salva com loja, concorrente e data");
+ render();
+};
+
+$("#fileScan").onchange = async e => {
+ const f = e.target.files[0];
+ e.target.value = "";
+ if (!f) return;
+ const m = $("#scMsg");
+ if (m) m.textContent = "Lendo a foto\u2026";
+ const c = await decodePhoto(f);
+ if (c) scanDone(c); else if (m) m.textContent = "N\xe3o consegui ler o c\xf3digo nessa foto. Tente de novo mais perto e com luz, ou digite o EAN.";
+};
+
+async function compress(file, max = 800) {
+ const img = await createImageBitmap(file).catch((() => null));
+ if (!img) return null;
+ const s = Math.min(1, max / Math.max(img.width, img.height));
+ const c = document.createElement("canvas");
+ c.width = Math.round(img.width * s);
+ c.height = Math.round(img.height * s);
+ c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+ return c.toDataURL("image/jpeg", .62);
+}
+
+function handleCode(code) {
+ const l = getLista(V.lista);
+ const p = prodByEan(code);
+ if (p) {
+  const i = itensOf(l).indexOf(p.seq);
+  if (i >= 0) {
+   gotoItem(i);
+   toast("Produto da lista");
+  } else {
+   V.idx = -1;
+   V.seq = p.seq;
+   render();
+   toast("Fora da lista: ser\xe1 salvo como extra");
+  }
+  return;
+ }
+ auxForm({
+  ean: code
+ });
+}
+
+function auxForm(pre = {}) {
+ const l = getLista(V.lista);
+ V._aux = {
+  fotoF: null,
+  fotoE: null
+ };
+ modal(`<h3>Produto sem cadastro</h3><p class="muted small">N\xe3o existe na base de fam\xedlias. Ser\xe1 enviado para a base auxiliar com as duas fotos.</p>\n   <form id="fax" class="card" style="padding:0;border:0;background:transparent"><label class="f">EAN<input class="in mono" name="ean" inputmode="numeric" value="${esc(pre.ean || "")}" required></label>\n   <label class="f">Descri\xe7\xe3o do produto<input class="in" name="desc" value="${esc(pre.desc || "")}" placeholder="Marca, tipo, sabor" required></label>\n   <label class="f">Gramagem / unidade<input class="in" name="unid" placeholder="Ex.: 1L, 500G, 12UN"></label>\n   <div class="f2"><label class="f">Pre\xe7o regular<input class="in price" name="reg" inputmode="decimal"></label><label class="f">Pre\xe7o club<input class="in price" name="club" inputmode="decimal"></label><label class="f">Pre\xe7o caixa<input class="in price" name="caixa" inputmode="decimal"></label><label class="f">Pre\xe7o app<input class="in price" name="app" inputmode="decimal"></label></div>\n   <label class="chk of"><input type="checkbox" name="oferta"> Oferta</label>\n   <div class="ph"><label id="lfF">Foto da frente do produto<input type="file" accept="image/&#42;" capture="environment" id="fF"></label><label id="lfE">Foto do c\xf3digo de barras na g\xf4ndola<input type="file" accept="image/&#42;" capture="environment" id="fE"></label></div>\n   <p class="err" id="axErr"></p><div class="row"><button type="button" class="btn grow" data-act="mclose">Cancelar</button><button class="btn pri grow">Salvar na base auxiliar</button></div></form>`);
+ const ph = (inp, lab, k) => {
+  $(inp).onchange = async e => {
+   const f = e.target.files[0];
+   if (!f) return;
+   const d = await compress(f);
+   V._aux[k] = d;
+   $(lab).innerHTML = `<img src="${d}" alt="foto">`;
+   $(lab).appendChild(e.target);
+  };
+ };
+ ph("#fF", "#lfF", "fotoF");
+ ph("#fE", "#lfE", "fotoE");
+ $("#fax").onsubmit = e => {
+  e.preventDefault();
+  const fd = Object.fromEntries(new FormData(e.target));
+  const err = m => $("#axErr").textContent = m;
+  if (!V._aux.fotoF || !V._aux.fotoE) return err("As duas fotos s\xe3o obrigat\xf3rias.");
+  const reg = pnum(fd.reg), club = pnum(fd.club), cx = pnum(fd.caixa), app = pnum(fd.app);
+  if ([ reg, club, cx, app ].every((x => x == null))) return err("Informe pelo menos um pre\xe7o.");
+  saveAux({
+   id: uid(),
+   ean: fd.ean.replace(/\D/g, ""),
+   desc: norm(fd.desc),
+   unid: norm(fd.unid),
+   reg: reg,
+   club: club,
+   caixa: cx,
+   app: app,
+   oferta: !!fd.oferta,
+   fotoF: V._aux.fotoF,
+   fotoE: V._aux.fotoE,
+   lista: l.id,
+   loja: l.loja,
+   conc: V.conc,
+   user: S.user.login,
+   dt: now(),
+   status: "Pendente"
+  });
+  mclose();
+  toast("Enviado para a base auxiliar");
+ };
+}
+
+const ACT = {
+ back: back,
+ nav: el => {
+  const p = {};
+  if (el.dataset.id) p.id = el.dataset.id;
+  go(el.dataset.v, p);
+ },
+ logout: () => {
+  S.user = null;
+  S.token = null;
+  KV.set("session", null);
+  hist.length = 0;
+  V = {
+   name: "login"
+  };
+  render();
+ },
+ syncinfo: () => {
+  const rj = S.rej.slice(-30).reverse();
+  modal(`<h3>Sincroniza\xe7\xe3o</h3><p class="small">${!HAS_GS ? "Modo teste, sem servidor." : navigator.onLine ? "Online. Os dados v\xe3o para a planilha do Google Drive." : "Sem internet. As coletas ficam guardadas no aparelho e sobem sozinhas quando a conex\xe3o voltar."}${S.cfg.lastPull ? " \xdaltima atualiza\xe7\xe3o: " + fmtDT(S.cfg.lastPull) + "." : ""}</p><p class="mono small">${S.queue.length} registro(s) aguardando envio${lastOk ? "<br>\xdaltimo contato com o Google: " + fmtDT(lastOk) : ""}${syncErr ? `<br><span class="err">${esc(syncErr)}</span>` : ""}</p>\n   ${rj.length ? `<div class="card"><h3>Recusados pela planilha (${S.rej.length})</h3><div class="list">${rj.map((x => `<div class="li"><div class="t"><div class="small">${esc(x.col)} \xb7 ${esc(x.id)}</div><div class="err small">${esc(x.msg)}</div></div></div>`)).join("")}</div><div class="row"><button class="btn sm" data-act="rejRetry">Tentar enviar de novo</button><button class="btn sm bad" data-act="rejClear">Descartar lista de erros</button></div></div>` : ""}<p class="muted small">Vers\xe3o ${APPV} \xb7 ${S.prodArr.length.toLocaleString("pt-BR")} produtos no aparelho</p><div class="row"><button class="btn grow" data-act="syncNow">Atualizar agora</button><button class="btn pri grow" data-act="mclose">OK</button></div>`);
+  flush();
+ },
+ syncNow: () => {
+  mclose();
+  flush();
+  pull();
+  toast("Atualizando\u2026");
+ },
+ rejRetry: () => {
+  const r = S.rej;
+  S.rej = [];
+  KV.save("rej");
+  r.forEach((x => {
+   if (x.data !== undefined) enqueue(x.col, x.id, x.data);
+  }));
+  mclose();
+  toast(r.length + " registro(s) reenviado(s)");
+ },
+ rejClear: () => {
+  S.rej = [];
+  KV.save("rej");
+  syncErr = "";
+  mclose();
+  renderSync();
+ },
+ mclose: mclose,
+ "mclose-bg": (el, e) => {
+  if (e.target === el) mclose();
+ },
+ askno: () => {
+  mclose();
+  ask._r && ask._r(false);
+ },
+ askyes: () => {
+  mclose();
+  ask._r && ask._r(true);
+ },
+ lf: el => {
+  V.f = el.dataset.f;
+  render();
+ },
+ af: el => {
+  V.f = el.dataset.f;
+  render();
+ },
+ openLista: el => go("lista", {
+  id: el.dataset.id
+ }),
+ pickConc: el => {
+  let l = getLista(V.id);
+  const c = +el.dataset.c;
+  if (expirada(l)) return toast("Pesquisa vencida em " + fmtYmd(l.validade) + ": n\xe3o aceita mais pre\xe7os", 3500);
+  if (l.status === "Conclu\xedda") return toast("Pesquisa j\xe1 finalizada");
+  l = materializa(l);
+  if (l.status === "Pendente") {
+   l.status = "Em andamento";
+   saveLista(l);
+  }
+  const ni = itensOf(l).findIndex((s => !S.coletas[`${l.id}-${c}-${s}`]));
+  go("conc", {
+   lista: l.id,
+   conc: c,
+   idx: ni < 0 ? 0 : ni
+  });
+ },
+ saveNext: () => {
+  const l = getLista(V.lista);
+  const err = m => {
+   $("#cErr").textContent = m;
+  };
+  const reg = pnum($("#pReg").value), club = pnum($("#pClub").value), cx = pnum($("#pCx").value), app = pnum($("#pApp").value), ne = $("#pNe").checked;
+  for (const [v, id] of [ [ reg, "pReg" ], [ club, "pClub" ], [ cx, "pCx" ], [ app, "pApp" ] ]) if ($("#" + id).value.trim() && v == null) return err("Pre\xe7o inv\xe1lido. Use o formato 12,90.");
+  if (!ne && [ reg, club, cx, app ].every((x => x == null))) return err("Digite ao menos um pre\xe7o ou marque \u201cN\xe3o encontrado\u201d.");
+  const p = S.prods.get(+V.seq) || {};
+  const extra = !itensOf(l).includes(+V.seq);
+  if (expirada(l)) return err("Pesquisa vencida em " + fmtYmd(l.validade) + ". O pre\xe7o n\xe3o foi salvo.");
+  saveColeta({
+   id: colKey(),
+   lista: l.id,
+   listaNome: l.nome,
+   pesquisa: l.modeloNome || l.nome,
+   modelo: l.modelo || "",
+   inicio: l.inicio || l.prevista || "",
+   validade: l.validade || "",
+   loja: l.loja,
+   conc: V.conc,
+   seq: +V.seq,
+   nome: p.nome || "",
+   ean: String(p.ean || "").split(",")[0] || "",
+   reg: reg,
+   club: club,
+   caixa: cx,
+   caixaQtd: $("#pCxQ").value.trim(),
+   app: app,
+   oferta: $("#pOf").checked,
+   naoEnc: ne,
+   extra: extra,
+   user: S.user.login,
+   dt: now()
+  });
+  const from = extra ? V.idx >= 0 ? V.idx : -1 : itensOf(l).indexOf(+V.seq);
+  const ni = nextIdx(l, from);
+  if (ni < 0) {
+   toast("Todos os itens deste concorrente foram coletados");
+   return ACT.concFim();
+  }
+  gotoItem(ni);
+ },
+ skip: () => {
+  const l = getLista(V.lista);
+  const i = itensOf(l).indexOf(+V.seq);
+  gotoItem((i + 1) % itensOf(l).length);
+ },
+ prev: () => {
+  const l = getLista(V.lista);
+  const i = itensOf(l).indexOf(+V.seq);
+  gotoItem(i <= 0 ? itensOf(l).length - 1 : i - 1);
+ },
+ limparCol: async () => {
+  if (!await ask("Apagar a coleta deste produto?", "Apagar")) return;
+  const k = colKey();
+  delete S.coletas[k];
+  KV.save("coletas");
+  enqueue("coletas", k, null);
+  render();
+ },
+ concFim: async () => {
+  const l = getLista(V.lista);
+  const falta = itensOf(l).filter((s => !S.coletas[`${l.id}-${V.conc}-${s}`])).length;
+  if (falta && !await ask(`Ainda faltam ${falta} produto(s) neste concorrente. Concluir mesmo assim?`, "Concluir", false)) return;
+  l.finConcs = [ ...new Set([ ...l.finConcs || [], V.conc ]) ];
+  saveLista(l);
+  const prox = l.concs.find((c => !l.finConcs.includes(c)));
+  if (prox) {
+   modal(`<h3>${esc(concNome(V.conc))} conclu\xeddo</h3><p class="small">Pr\xf3ximo concorrente da lista: <b>${esc(concNome(prox))}</b>.</p><div class="row"><button class="btn grow" data-act="toLista">Ver lista</button><button class="btn pri grow" data-act="toConc" data-c="${prox}">Abrir ${esc(concNome(prox))}</button></div>`);
+  } else {
+   modal(`<h3>Todos os concorrentes conclu\xeddos</h3><p class="small">Finalize a lista para envi\xe1-la ao Pricing.</p><div class="row"><button class="btn grow" data-act="toLista">Ver lista</button><button class="btn tag grow" data-act="finLista2">Finalizar lista</button></div>`);
+  }
+ },
+ toLista: () => {
+  mclose();
+  const id = V.lista;
+  hist.length = 0;
+  hist.push({
+   name: "home"
+  });
+  V = {
+   name: "lista",
+   id: id
+  };
+  render();
+ },
+ toConc: el => {
+  mclose();
+  const l = getLista(V.lista);
+  V.conc = +el.dataset.c;
+  const ni = nextIdx(l, -1);
+  gotoItem(ni < 0 ? 0 : ni);
+ },
+ finLista2: () => {
+  ACT.toLista();
+  ACT.finLista();
+ },
+ finLista: async () => {
+  const l = getLista(V.id);
+  const g = listaProg(l);
+  if (!await ask(`Finalizar a lista com ${g.done} de ${g.tot} pre\xe7os coletados (${g.pct}%)?`, "Finalizar", false)) return;
+  l.status = "Conclu\xedda";
+  l.finalizada = now();
+  l.finalizadaPor = S.user.login;
+  saveLista(l);
+  render();
+  modal(`<h3>Lista finalizada</h3><p class="small">${HAS_GS ? "Os dados j\xe1 est\xe3o sendo enviados para a planilha no Google Drive. " : ""}Envie tamb\xe9m a planilha pelo WhatsApp se o Pricing pedir.</p><div class="row"><button class="btn grow" data-act="mclose">Fechar</button><button class="btn pri grow" data-act="expLista">Enviar .xlsx</button></div>`);
+ },
+ expLista: () => {
+  mclose();
+  exportColetas(V.id || V.lista, "xlsx");
+ },
+ expTxt: () => {
+  mclose();
+  exportTxt([ V.id || V.lista ]);
+ },
+ exTxt: () => {
+  const v = $("#exL").value;
+  const u = S.user;
+  const ids = v ? [ v ] : Object.values(S.listas).filter((l => u.perfil !== "LOJA" || userLojas(u).includes(+l.loja))).map((l => l.id));
+  exportTxt(ids);
+ },
+ sfDown: async () => {
+  const sf = V._sf;
+  if (!IN_FRAME) {
+   const all = [ ...sf.files.map((f => ({
+    name: f.name,
+    blob: f.blob
+   }))), ...(sf.extra || []).map((f => ({
+    name: f.name,
+    blob: f
+   }))) ];
+   for (const f of all) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(f.blob);
+    a.download = f.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    await new Promise((z => setTimeout(z, 350)));
+   }
+   sfOut(`<p class="small">${all.length} arquivo(s) baixado(s). Veja na pasta Downloads.</p>`);
+   return;
+  }
+  if (!navigator.onLine) return toast("Precisa de internet");
+  sfOut(`<p class="muted small">Preparando download\u2026</p>`);
+  try {
+   const r = await sfSave(false);
+   sfOut(`<p class="small">Clique para baixar:</p><div class="list">${r.files.map((f => `<a class="li" href="${esc(f.dl)}" target="_blank" rel="noopener"><div class="t small mono">${esc(f.name)}</div><span class="pill ok">Baixar</span></a>`)).join("")}</div>`);
+  } catch (e) {
+   sfOut(`<p class="err small">Falha: ${esc(errTxt(e))}</p>`);
+  }
+ },
+ sfDrive: async () => {
+  if (!navigator.onLine) return toast("Precisa de internet");
+  sfOut(`<p class="muted small">Salvando no Drive\u2026</p>`);
+  try {
+   const r = await sfSave(false);
+   sfOut(`<p class="small">Salvo na pasta <b>${esc(r.folder)}</b>:</p><div class="list">${r.files.map((f => `<a class="li" href="${esc(f.url)}" target="_blank" rel="noopener"><div class="t small mono">${esc(f.name)}</div><span class="pill">Abrir</span></a>`)).join("")}</div>`);
+  } catch (e) {
+   sfOut(`<p class="err small">Falha ao salvar: ${esc(errTxt(e))}</p>`);
+  }
+ },
+ sfMail: async () => {
+  if (!navigator.onLine) return toast("Precisa de internet");
+  const to = [ ...document.querySelectorAll(".sfEm:checked") ].map((x => x.value));
+  const x = $("#sfEmX");
+  if (x && x.value.trim()) to.push(...x.value.split(/[,;\s]+/).filter(Boolean));
+  if (!to.length) return sfOut(`<p class="err small">Marque ao menos um e-mail.</p>`);
+  sfOut(`<p class="muted small">Enviando e-mail\u2026</p>`);
+  try {
+   const r = await sfMailTo(to);
+   sfOut(`<p class="small">E-mail enviado para ${esc(r.to.join(", "))}.</p>`);
+  } catch (e) {
+   sfOut(`<p class="err small">Falha no e-mail: ${esc(errTxt(e))}</p>`);
+  }
+ },
+ sfShare: async () => {
+  const sf = V._sf;
+  const files = [ ...sf.files.map((f => new File([ f.blob ], f.name, {
+   type: f.blob.type || "text/plain"
+  }))), ...sf.extra || [] ];
+  try {
+   await navigator.share({
+    files: files,
+    title: sf.titulo || "Pesquisa de pre\xe7os",
+    text: sf.resumo || ""
+   });
+  } catch (e) {
+   if (e && e.name !== "AbortError") sfOut(`<p class="err small">N\xe3o foi poss\xedvel compartilhar: ${esc(errTxt(e))}</p>`);
+  }
+ },
+ sfWa: async el => {
+  if (!navigator.onLine) return toast("Precisa de internet");
+  const n = el.dataset.n;
+  sfOut(`<p class="muted small">Gerando links\u2026</p>`);
+  try {
+   const links = await sfWaLinks();
+   const url = "https:/\/wa.me/" + (n ? waNum(n) : "") + "?text=" + encodeURIComponent(waText(links));
+   sfOut(`<a class="btn pri" style="display:block;text-align:center;text-decoration:none" href="${esc(url)}" target="_blank" rel="noopener">Abrir WhatsApp${n ? " (" + esc(n) + ")" : ""}</a>`);
+  } catch (e) {
+   sfOut(`<p class="err small">Falha: ${esc(errTxt(e))}</p>`);
+  }
+ },
+ sfAll: async () => {
+  if (!navigator.onLine) return toast("Precisa de internet");
+  const t = V._sf.tipo;
+  const em = envAtivos("EMAIL").filter((e => relOk(e, t))).map((e => e.destino));
+  const wa = envAtivos("WHATSAPP").filter((e => relOk(e, t)));
+  sfOut(`<p class="muted small">Enviando\u2026</p>`);
+  let h = "";
+  try {
+   if (em.length) {
+    const r = await sfMailTo(em);
+    h += `<p class="small">E-mail enviado para ${esc(r.to.join(", "))}.</p>`;
+   }
+   if (wa.length) {
+    const links = await sfWaLinks();
+    h += `<p class="small">WhatsApp: toque em cada contato para enviar.</p>` + wa.map((e => `<a class="btn" style="display:block;text-align:center;text-decoration:none" href="${esc("https:/\/wa.me/" + waNum(e.destino) + "?text=" + encodeURIComponent(waText(links)))}" target="_blank" rel="noopener">WhatsApp ${esc(e.nome || e.destino)}</a>`)).join("");
+   }
+   sfOut(h);
+  } catch (e) {
+   sfOut(h + `<p class="err small">Falha: ${esc(errTxt(e))}</p>`);
+  }
+ },
+ colFoto: () => $("#fileFoto").click(),
+ delLista: async () => {
+  const l = getLista(V.id);
+  if (!await ask(`Excluir a lista \u201c${l.nome}\u201d e suas coletas?`, "Excluir")) return;
+  Object.keys(S.coletas).forEach((k => {
+   if (S.coletas[k].lista === l.id) {
+    delete S.coletas[k];
+    enqueue("coletas", k, null);
+   }
+  }));
+  delete S.listas[l.id];
+  KV.save("coletas");
+  KV.save("listas");
+  enqueue("listas", l.id, null);
+  back();
+ },
+ scan: () => openScanner(handleCode),
+ scanPhoto: () => $("#fileScan").click(),
+ buscar: () => {
+  const l = getLista(V.lista);
+  modal(`<h3>Buscar produto</h3><input class="in" id="sq" placeholder="EAN, parte do nome ou gramagem (ex.: LEITE INTEGRAL 1L)" autocomplete="off"><label class="row small"><input type="checkbox" id="sAll"> Buscar tamb\xe9m na base geral</label><div id="sres"></div><button class="btn" data-act="mclose">Fechar</button>`);
+  const run = () => {
+   const q = $("#sq").value;
+   const all = $("#sAll").checked;
+   const pool = itensOf(l).map((s => S.prods.get(s))).filter(Boolean);
+   let r = searchProd(q, 40, pool);
+   if (all && r.length < 40) r = r.concat(searchProd(q, 40 - r.length).filter((p => !itensOf(l).includes(p.seq))));
+   const dig = q.replace(/\D/g, "");
+   $("#sres").innerHTML = (r.length ? `<div class="list">${r.map((p => `<button class="li" data-act="sPick" data-s="${p.seq}"><div class="t"><div class="small">${esc(p.nome)}</div><div class="muted small mono">${p.seq} \xb7 ${esc(p.n5)}</div></div>${itensOf(l).includes(p.seq) ? S.coletas[`${l.id}-${V.conc}-${p.seq}`] ? `<span class="pill ok">Feito</span>` : `<span class="pill">Lista</span>` : `<span class="pill warn">Extra</span>`}</button>`)).join("")}</div>` : q.trim() ? `<p class="muted small">N\xe3o encontrado${all ? "" : " na lista. Marque \u201cbase geral\u201d para ampliar"}.</p>` : "") + (q.trim() ? `<button class="btn sm" data-act="sAux" data-e="${esc(dig.length >= 8 ? dig : "")}" data-d="${esc(dig.length >= 8 ? "" : q)}">N\xe3o achei: cadastrar na base auxiliar</button>` : "");
+  };
+  $("#sq").oninput = () => {
+   clearTimeout(run._t);
+   run._t = setTimeout(run, 150);
+  };
+  $("#sAll").onchange = run;
+  $("#sq").focus();
+ },
+ sPick: el => {
+  mclose();
+  const l = getLista(V.lista);
+  const s = +el.dataset.s;
+  const i = itensOf(l).indexOf(s);
+  if (i >= 0) gotoItem(i); else {
+   V.idx = -1;
+   V.seq = s;
+   render();
+  }
+ },
+ sAux: el => {
+  mclose();
+  auxForm({
+   ean: el.dataset.e,
+   desc: el.dataset.d
+  });
+ },
+ itens: () => {
+  const l = getLista(V.lista);
+  const IT = itensOf(l);
+  modal(`<h3>Itens \xb7 ${esc(concNome(V.conc))}</h3>${IT.length > 400 ? `<p class="muted small">Mostrando os 400 primeiros de ${IT.length.toLocaleString("pt-BR")}. Use Buscar ou Escanear para os demais.</p>` : ""}<div class="list">${IT.slice(0, 400).map(((s, i) => {
+   const p = S.prods.get(s);
+   const c = S.coletas[`${l.id}-${V.conc}-${s}`];
+   return `<button class="li" data-act="iPick" data-i="${i}"><div class="t"><div class="small">${esc(p ? p.nome : s)}</div><div class="muted small mono">${s}${c && !c.naoEnc ? " \xb7 R$ " + money(c.reg ?? c.club ?? c.caixa ?? c.app) : ""}</div></div>${c ? c.naoEnc ? `<span class="pill bad">N/E</span>` : `<span class="pill ok">${c.oferta ? "Oferta" : "OK"}</span>` : `<span class="pill">\u2014</span>`}</button>`;
+  })).join("")}</div><button class="btn" data-act="mclose">Fechar</button>`);
+ },
+ iPick: el => {
+  mclose();
+  gotoItem(+el.dataset.i);
+ },
+ peNew: () => go("pesqEdit", {
+  d: {
+   edit: true,
+   id: "",
+   nome: "",
+   dia: "SEG",
+   val: 7,
+   pesq: "",
+   ativa: true,
+   todasLojas: true,
+   lojas: [],
+   itens: [],
+   todos: false,
+   fam: false,
+   cat2: "",
+   cat3: ""
+  }
+ }),
+ peOpen: el => {
+  const m = pesqBy(el.dataset.id);
+  const L = String(m.lojas || "").toUpperCase().trim();
+  go("pesqEdit", {
+   d: {
+    edit: true,
+    id: m.id,
+    nome: m.nome,
+    dia: String(m.dia || "SEG").toUpperCase(),
+    val: parseInt(m.validade) || 7,
+    pesq: m.pesq || "",
+    ativa: String(m.ativa).toUpperCase() !== "N",
+    todasLojas: !L || L === "TODAS",
+    lojas: !L || L === "TODAS" ? [] : pesqLojas(m),
+    itens: [ ...S.pesqItens[m.id] || [] ],
+    todos: isTodos(m.todos),
+    concs: m.concs || "",
+    fam: false,
+    cat2: "",
+    cat3: ""
+   }
+  });
+ },
+ peSave: () => {
+  nlSync();
+  const d = V.d;
+  const err = x => $("#nlErr").textContent = x;
+  if (!String(d.nome).trim()) return err("D\xea um nome \xe0 pesquisa.");
+  if (!d.todasLojas && !d.lojas.length) return err("Escolha as lojas ou marque \u201cTodas as lojas\u201d.");
+  if (!d.todos && !d.itens.length) return err("Adicione produtos ou marque \u201ctodos os produtos\u201d.");
+  const id = d.id || "P" + uid();
+  const m = {
+   id: id,
+   nome: String(d.nome).trim(),
+   lojas: d.todasLojas ? "TODAS" : d.lojas.join(","),
+   dia: d.dia,
+   validade: Math.max(1, parseInt(d.val) || 7),
+   todos: d.todos ? "S" : "N",
+   concs: d.concs || "",
+   pesq: d.pesq || "",
+   ativa: d.ativa ? "S" : "N"
+  };
+  savePesq(m, d.itens);
+  toast("Pesquisa salva. As lojas recebem na pr\xf3xima atualiza\xe7\xe3o.", 3500);
+  V.d = null;
+  back();
+ },
+ peDel: async () => {
+  const d = V.d;
+  if (!await ask(`Excluir a pesquisa fixa \u201c${d.nome}\u201d? As rodadas j\xe1 feitas continuam na planilha.`, "Excluir")) return;
+  S.pesq = S.pesq.filter((x => x.id !== d.id));
+  delete S.pesqItens[d.id];
+  KV.save("pesq");
+  KV.save("pesqItens");
+  enqueue("pesquisas", d.id, null);
+  V.d = null;
+  back();
+ },
+ nlLoja: el => {
+  nlSync();
+  const c = +el.dataset.c;
+  const d = V.d;
+  d.lojas = d.lojas.includes(c) ? d.lojas.filter((x => x !== c)) : [ ...d.lojas, c ];
+  render();
+ },
+ nlBand: el => {
+  nlSync();
+  const d = V.d;
+  const cs = S.lojas.filter((l => l.bandeira === el.dataset.b && l.status !== "Desativado")).map((l => +l.cod));
+  const all = cs.every((c => d.lojas.includes(c)));
+  d.lojas = all ? d.lojas.filter((c => !cs.includes(c))) : [ ...new Set([ ...d.lojas, ...cs ]) ];
+  render();
+ },
+ nlAdd: el => {
+  nlSync();
+  const n = nlAddSeq(+el.dataset.s);
+  toast(n > 1 ? `${n} produtos adicionados (fam\xedlia)` : n ? "Adicionado" : "J\xe1 estava na lista");
+  const y = scrollY;
+  render();
+  scrollTo(0, y);
+ },
+ nlAddCat: () => {
+  nlSync();
+  const d = V.d;
+  let pool = S.prodArr.filter((p => p.n2 === d.cat2 && (!d.cat3 || p.n3 === d.cat3))).slice(0, 1e3);
+  let n = 0;
+  pool.forEach((p => {
+   if (!d.itens.includes(p.seq)) {
+    d.itens.push(p.seq);
+    n++;
+   }
+  }));
+  toast(n + " produtos adicionados");
+  render();
+ },
+ nlRem: el => {
+  nlSync();
+  V.d.itens = V.d.itens.filter((s => s !== +el.dataset.s));
+  render();
+ },
+ nlClear: () => {
+  nlSync();
+  V.d.itens = [];
+  render();
+ },
+ nlPaste: () => {
+  nlSync();
+  let n = 0, miss = [];
+  $("#nlPaste").value.split(/[\s,;]+/).filter(Boolean).forEach((c => {
+   const p = S.prods.get(+c) || prodByEan(c);
+   if (p) n += nlAddSeq(p.seq); else miss.push(c);
+  }));
+  toast(`${n} adicionados${miss.length ? " \xb7 " + miss.length + " n\xe3o encontrados" : ""}`, 3500);
+  render();
+ },
+ nlCriar: () => {
+  nlSync();
+  const d = V.d;
+  const err = m => $("#nlErr").textContent = m;
+  if (!d.nome.trim()) return err("D\xea um nome \xe0 lista.");
+  if (!d.lojas.length) return err("Selecione ao menos uma loja.");
+  if (!d.todos && !d.itens.length) return err("Adicione produtos ou marque \u201ctodos os produtos\u201d.");
+  const vd = Math.max(1, parseInt(d.val) || 7);
+  let n = 0, sem = [];
+  d.lojas.forEach((c => {
+   let vs = S.vinc.filter((v => +v.loja === c && (!d.pesq || String(v.pesquisador).split("/").map((s => s.trim())).includes(d.pesq))));
+   const cs = [ ...new Set(vs.map((v => +v.conc))) ].filter((i => {
+    const k = concBy(i);
+    return !k || k.status !== "Inativo";
+   }));
+   if (!cs.length) {
+    sem.push(lojaNome(c));
+    return;
+   }
+   saveLista({
+    id: uid(),
+    nome: d.nome.trim(),
+    loja: c,
+    concs: cs,
+    itens: d.todos ? [] : [ ...d.itens ],
+    todos: !!d.todos,
+    prevista: d.prev,
+    inicio: d.prev,
+    validade: addDays(d.prev, vd - 1),
+    criada: now(),
+    criadoPor: S.user.login,
+    status: "Pendente",
+    finConcs: []
+   });
+   n++;
+  }));
+  if (!n) return err("Nenhuma loja selecionada tem concorrente vinculado" + (d.pesq ? " para esse pesquisador" : "") + ".");
+  toast(`${n} lista(s) criada(s)${sem.length ? " \xb7 sem concorrente: " + sem.join(", ") : ""}`, 4e3);
+  V.d = null;
+  hist.length = 0;
+  V = {
+   name: "listas"
+  };
+  hist.push({
+   name: "home"
+  });
+  render();
+ },
+ bt: el => {
+  V.t = el.dataset.t;
+  V.q = "";
+  V.pg = 0;
+  render();
+ },
+ bpg: el => {
+  V.pg = (V.pg || 0) + +el.dataset.d;
+  render();
+  scrollTo(0, 0);
+ },
+ bnew: () => editForm(V.t || "produtos", null),
+ bedit: el => editForm(V.t || "produtos", el.dataset.k),
+ bdel: async el => {
+  const t = el.dataset.t, k = el.dataset.k;
+  if (!await ask(`Excluir o registro ${k} de ${DEFS[t].t}?`, "Excluir")) return;
+  if (t === "produtos") {
+   const p = S.prods.get(+k);
+   if (p) saveProd(p, true);
+  } else {
+   S[t] = S[t].filter((x => String(t === "vinc" ? x.loja + "-" + x.conc : x[DEFS[t].key]) !== String(k)));
+   saveCad(t);
+  }
+  toast("Exclu\xeddo");
+  render();
+ },
+ bexp: el => {
+  const t = V.t || "produtos";
+  const fmt = el.dataset.fmt;
+  let rows;
+  if (t === "produtos") rows = S.prodArr.map((p => ({
+   N01: p.n1,
+   N02: p.n2,
+   N03: p.n3,
+   N04: p.n4,
+   N05: p.n5,
+   CUSTO: p.custo,
+   "SEQ-AVO": p.avo,
+   "SEQ-ALT": p.alt,
+   "SEQ-FAMILIA": p.fam,
+   "SEQ-PRODUTO": p.seq,
+   "NOME PRODUTO": p.nome,
+   "PERCENTUAL PROPORCAO PRECO": p.perc,
+   EAN: p.ean
+  }))); else rows = S[t].map((r => {
+   const o = {};
+   DEFS[t].fields.forEach((([f, lab]) => o[f.toUpperCase()] = r[f] ?? ""));
+   return o;
+  }));
+  deliver(`base_${t}_${today()}.${fmt === "xlsx" && window.XLSX ? "xlsx" : "csv"}`, toBlob(rows, fmt, DEFS[t].t), `Base ${DEFS[t].t} \xb7 ${rows.length} registros`, [], "BASE");
+ },
+ bimp: () => $("#fileImport").click(),
+ brestore: async () => {
+  if (!navigator.onLine) return toast("Precisa de internet");
+  $("#app").innerHTML = `<div class="boot"><p class="muted" id="bootMsg">Baixando base de produtos\u2026</p></div>`;
+  try {
+   await downloadBase();
+   toast("Base atualizada");
+  } catch (e) {
+   toast("Falha ao baixar a base");
+  }
+  render();
+ },
+ auxOpen: el => {
+  const a = S.aux[el.dataset.id];
+  modal(`<h3>${esc(a.desc)}</h3><div class="ph">${fotoTag(a.fotoF, "Frente", "border-radius:8px;width:100%;aspect-ratio:1;object-fit:cover")}${fotoTag(a.fotoE, "C\xf3digo", "border-radius:8px;width:100%;aspect-ratio:1;object-fit:cover")}</div>\n   <p class="small mono">EAN ${esc(a.ean)} \xb7 ${esc(a.unid)}<br>Regular ${money(a.reg)} \xb7 Club ${money(a.club)} \xb7 Caixa ${money(a.caixa)} \xb7 App ${money(a.app)}${a.oferta ? " \xb7 OFERTA" : ""}</p><p class="small muted">${esc(lojaNome(a.loja))} \xb7 ${esc(concNome(a.conc))} \xb7 ${esc(a.user)} \xb7 ${fmtDT(a.dt)}</p>\n   ${a.status === "Pendente" ? `<button class="btn pri" data-act="auxInc" data-id="${esc(a.id)}">Incluir na base de produtos</button><label class="f">Ou vincular o EAN a um produto existente<input class="in" id="avq" placeholder="Buscar produto" autocomplete="off"></label><div id="avr"></div>` : `<span class="pill ok">${esc(a.status)}${a.seqVinc ? " \xb7 SEQ " + a.seqVinc : ""}</span>`}\n   <div class="row"><button class="btn bad" data-act="auxDel" data-id="${esc(a.id)}">Excluir</button><button class="btn grow" data-act="mclose">Fechar</button></div>`);
+  const q = $("#avq");
+  if (q) q.oninput = () => {
+   $("#avr").innerHTML = `<div class="list">${searchProd(q.value, 15).map((p => `<button class="li" data-act="auxVinc" data-id="${esc(a.id)}" data-s="${p.seq}"><div class="t"><div class="small">${esc(p.nome)}</div><div class="muted small mono">${p.seq}${p.ean ? " \xb7 EAN " + esc(p.ean) : ""}</div></div><span class="pill">Vincular</span></button>`)).join("")}</div>`;
+  };
+ },
+ auxInc: el => {
+  const a = S.aux[el.dataset.id];
+  mclose();
+  const seq = Math.max(9e8, ...S.prodArr.map((p => +p.seq || 0))) + 1;
+  editForm("produtos", null);
+  const f = $("#fed");
+  f.seq.value = seq;
+  f.nome.value = [ a.desc, a.unid ].filter(Boolean).join(" ");
+  f.ean.value = a.ean;
+  f.perc.value = 100;
+  f.custo.value = 0;
+  f.querySelectorAll(".chk input").forEach((i => i.onchange = () => i.parentElement.classList.toggle("on", i.checked)));
+  const sub = f.onsubmit;
+  f.onsubmit = e => {
+   const before = S.prods.size;
+   sub(e);
+   if (S.prods.size > before) {
+    a.status = "Inclu\xeddo";
+    a.seqVinc = +f.seq.value;
+    saveAux(a);
+    linkAuxColeta(a);
+   }
+  };
+ },
+ auxVinc: el => {
+  const a = S.aux[el.dataset.id];
+  const p = S.prods.get(+el.dataset.s);
+  const eans = new Set(String(p.ean || "").split(/[,;\s]+/).filter(Boolean));
+  eans.add(a.ean);
+  saveProd({
+   ...p,
+   ean: [ ...eans ].join(",")
+  });
+  a.status = "Vinculado";
+  a.seqVinc = p.seq;
+  saveAux(a);
+  linkAuxColeta(a);
+  mclose();
+  toast("EAN vinculado ao produto " + p.seq);
+  render();
+ },
+ auxDel: async el => {
+  const id = el.dataset.id;
+  if (!await ask("Excluir este produto da base auxiliar?", "Excluir")) return;
+  delete S.aux[id];
+  KV.save("aux");
+  enqueue("auxiliar", id, null);
+  render();
+ },
+ expAux: async () => {
+  const r = auxRows();
+  if (!r.length) return toast("Base auxiliar vazia");
+  toast("Preparando fotos\u2026");
+  const files = [];
+  for (const a of Object.values(S.aux)) {
+   const f1 = await fotoFile(a.fotoF, `foto_${a.ean}_frente.jpg`), f2 = await fotoFile(a.fotoE, `foto_${a.ean}_ean.jpg`);
+   if (f1) files.push(f1);
+   if (f2) files.push(f2);
+  }
+  await deliver(`base_auxiliar_${today()}.${window.XLSX ? "xlsx" : "csv"}`, toBlob(r, "xlsx", "Sem cadastro"), `Base auxiliar \xb7 ${r.length} produto(s) sem cadastro`, files, "AUX");
+ },
+ exCol: el => exportColetas($("#exL").value, el.dataset.fmt),
+ saveWa: () => {
+  S.cfg.wa = $("#waN").value.replace(/\D/g, "");
+  KV.save("cfg");
+  toast("N\xfamero salvo");
+ }
+};
+
+function linkAuxColeta(a) {
+ const l = getLista(a.lista);
+ if (!l || !a.seqVinc) return;
+ saveColeta({
+  id: `${l.id}-${a.conc}-${a.seqVinc}`,
+  lista: l.id,
+  loja: a.loja,
+  conc: a.conc,
+  seq: a.seqVinc,
+  nome: a.desc,
+  ean: a.ean,
+  reg: a.reg,
+  club: a.club,
+  caixa: a.caixa,
+  app: a.app,
+  oferta: a.oferta,
+  naoEnc: false,
+  extra: !itensOf(l).includes(a.seqVinc),
+  user: a.user,
+  dt: a.dt,
+  fromAux: a.id
+ });
+}
+
+document.addEventListener("click", (e => {
+ const el = e.target.closest("[data-act]");
+ if (!el) return;
+ const f = ACT[el.dataset.act];
+ if (!f) return;
+ if (el.tagName === "A") return;
+ if (el.dataset.act !== "mclose-bg") e.preventDefault();
+ f(el, e);
+}));
+
+async function hashPw(s) {
+ try {
+  const b = await crypto.subtle.digest("SHA-256", (new TextEncoder).encode(s));
+  return [ ...new Uint8Array(b) ].map((x => x.toString(16).padStart(2, "0"))).join("");
+ } catch (e) {
+  let h = 0;
+  for (const c of s) h = h * 31 + c.charCodeAt(0) | 0;
+  return "h" + h;
+ }
+}
+
+async function afterLogin() {
+ KV.set("session", {
+  user: S.user,
+  token: S.token
+ });
+ if (!S.prodArr.length && HAS_GS) {
+  $("#app").innerHTML = `<div class="boot"><div class="brandmark">Pesquisa de <em>Pre\xe7os</em></div><p class="muted" id="bootMsg">Baixando base de produtos\u2026</p><p class="muted small">S\xf3 no primeiro acesso. Depois funciona sem internet.</p></div>`;
+  try {
+   await downloadBase();
+  } catch (e) {
+   toast("N\xe3o foi poss\xedvel baixar a base agora. Tente de novo com internet.", 4e3);
+  }
+ }
+ hist.length = 0;
+ V = {
+  name: "home"
+ };
+ render();
+ startSync();
+}
+
+document.addEventListener("submit", (async e => {
+ if (e.target.id !== "flogin") return;
+ e.preventDefault();
+ const err = m => {
+  $("#lgErr").textContent = m;
+  $("#lgBtn").disabled = false;
+ };
+ const lg = $("#lgUser").value.trim().toUpperCase(), pw = $("#lgPin").value.trim();
+ $("#lgBtn").disabled = true;
+ $("#lgErr").textContent = "";
+ const h = await hashPw(lg + "|" + pw);
+ S.cfg.cred = S.cfg.cred || {};
+ if (HAS_GS && navigator.onLine) {
+  try {
+   const r = await gs("login", lg, pw);
+   S.user = r.user;
+   S.token = r.token;
+   S.cfg.cred[lg] = {
+    h: h,
+    user: r.user,
+    token: r.token
+   };
+  } catch (x) {
+   const c = S.cfg.cred[lg];
+   if (/LOGIN/.test(String(x && x.message || x))) return err("Usu\xe1rio ou senha incorretos.");
+   if (c && c.h === h) {
+    S.user = c.user;
+    S.token = c.token;
+   } else return err("N\xe3o foi poss\xedvel conectar ao Google. Verifique a internet.");
+  }
+ } else {
+  const c = S.cfg.cred[lg];
+  if (!c || c.h !== h) return err(HAS_GS ? "Sem internet: entre uma vez com internet neste aparelho." : "Este arquivo precisa ser aberto pelo link do Google.");
+  S.user = c.user;
+  S.token = c.token;
+ }
+ if (S.cfg.lastLogin !== lg) {
+  S.cfg.since = 0;
+  S.cfg.lastLogin = lg;
+ }
+ KV.save("cfg");
+ afterLogin();
+}));
+
+document.addEventListener("keydown", (e => {
+ if (e.key === "Enter" && V.name === "conc" && e.target.classList && e.target.classList.contains("price") && !$("#modal").innerHTML) {
+  e.preventDefault();
+  const ins = [ ...document.querySelectorAll("main .price") ];
+  const i = ins.indexOf(e.target);
+  if (i < ins.length - 1) ins[i + 1].focus(); else ACT.saveNext();
+ }
+}));
+
+$("#fileImport").onchange = async e => {
+ const f = e.target.files[0];
+ e.target.value = "";
+ if (!f) return;
+ const t = V.t || "produtos";
+ try {
+  let rows;
+  if (window.XLSX) {
+   const wb = XLSX.read(await f.arrayBuffer(), {
+    type: "array",
+    FS: ";",
+    raw: false
+   });
+   rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {
+    defval: "",
+    raw: false
+   });
+  } else {
+   const tx = await f.text();
+   const ln = tx.replace(/^\ufeff/, "").split(/\r?\n/).filter(Boolean);
+   const h = ln[0].split(";");
+   rows = ln.slice(1).map((l => {
+    const c = l.split(";");
+    const o = {};
+    h.forEach(((k, i) => o[k] = c[i] ?? ""));
+    return o;
+   }));
+  }
+  const H = r => {
+   const o = {};
+   Object.keys(r).forEach((k => o[norm(k).replace(/[^A-Z0-9]/g, "")] = String(r[k]).trim()));
+   return o;
+  };
+  if (t === "produtos") {
+   const out = rows.map(H).map((r => ({
+    seq: +r.SEQPRODUTO,
+    nome: r.NOMEPRODUTO,
+    n1: r.N01,
+    n2: r.N02,
+    n3: r.N03,
+    n4: r.N04,
+    n5: r.N05,
+    custo: pnum(r.CUSTO) || 0,
+    avo: r.SEQAVO ? +r.SEQAVO : "",
+    alt: r.SEQALT ? +r.SEQALT : "",
+    fam: r.SEQFAMILIA ? +r.SEQFAMILIA : "",
+    perc: pnum(r.PERCENTUALPROPORCAOPRECO) ?? 100,
+    ean: r.EAN || ""
+   }))).filter((r => r.seq && r.nome));
+   if (!out.length) throw new Error("Nenhuma linha com SEQ-PRODUTO e NOME PRODUTO.");
+   if (!await ask(`Substituir a base de produtos por ${out.length.toLocaleString("pt-BR")} produtos do arquivo?`, "Substituir")) return;
+   if (!HAS_GS || !navigator.onLine) throw new Error("A importa\xe7\xe3o da base de produtos precisa de internet.");
+   $("#app").innerHTML = `<div class="boot"><p class="muted" id="bootMsg">Enviando base para a planilha\u2026</p></div>`;
+   await gs("importBegin", authA());
+   const per = 4e3;
+   for (let i = 0; i < out.length; i += per) {
+    bootMsg(`Enviando ${Math.min(i + per, out.length).toLocaleString("pt-BR")} de ${out.length.toLocaleString("pt-BR")}\u2026`);
+    await gs("importChunk", authA(), out.slice(i, i + per));
+   }
+   await gs("importCommit", authA());
+   await downloadBase();
+   toast("Base de produtos importada");
+   render();
+   return;
+  }
+  const D = DEFS[t];
+  const map = {};
+  D.fields.forEach((([f, lab]) => {
+   map[norm(f).replace(/[^A-Z0-9]/g, "")] = f;
+   map[norm(lab).replace(/[^A-Z0-9]/g, "")] = f;
+  }));
+  const alias = {
+   CODEMPRESA: "cod",
+   IDLOJA: "loja",
+   IDCONCORRENTE: t === "concs" ? "id" : "conc",
+   NOMECONCORRENTE: "nome",
+   CLASSIFICACAOCONC: "classif",
+   GEROPERACIONAL: "ger",
+   CLUSTERPRECIFICACAO: "cluster",
+   STATUSEMPRESA: "status",
+   LISTAPESQ: "lista",
+   NOMECONCMI7: "nome_mi7"
+  };
+  const out = rows.map(H).map((r => {
+   const o = {};
+   Object.keys(r).forEach((k => {
+    const f = map[k] || alias[k];
+    if (f && o[f] == null) o[f] = D.fields.find((x => x[0] === f))[2] === "n" ? pnum(r[k]) ?? r[k] : r[k];
+   }));
+   return o;
+  })).filter((o => o[D.fields[0][0]] !== "" && o[D.fields[0][0]] != null));
+  if (!out.length) throw new Error("Colunas n\xe3o reconhecidas.");
+  if (!await ask(`Substituir ${D.t} por ${out.length} registro(s) do arquivo?`, "Substituir")) return;
+  S[t] = t === "users" ? out.map((u => ({
+   ...u,
+   login: String(u.login).toUpperCase(),
+   perfil: String(u.perfil || "LOJA").toUpperCase(),
+   ativo: u.ativo || "S"
+  }))) : out;
+  saveCad(t);
+  toast(D.t + " importado");
+  render();
+ } catch (err) {
+  render();
+  modal(`<h3>N\xe3o foi poss\xedvel importar</h3><p class="small">${esc(err.message || err)}</p><p class="muted small">Use o mesmo formato do arquivo exportado (primeira linha com os nomes das colunas).</p><button class="btn" data-act="mclose">OK</button>`);
+ }
+};
+
+(async () => {
+ try {
+  await loadAll();
+ } catch (e) {
+  $("#app").innerHTML = `<div class="boot"><p class="err">N\xe3o foi poss\xedvel abrir o app neste navegador (${esc(e.message)}). Use o Chrome ou Safari atualizado.</p></div>`;
+  return;
+ }
+ if (S.user && S.token) {
+  if (!S.prodArr.length && HAS_GS && navigator.onLine) {
+   await afterLogin();
+   window.__booted = true;
+   return;
+  }
+  V = {
+   name: "home"
+  };
+  render();
+  startSync();
+ } else {
+  V = {
+   name: "login"
+  };
+  render();
+ }
+ window.__booted = true;
+ try {
+  navigator.storage && navigator.storage.persist && navigator.storage.persist();
+ } catch (e) {}
+})();</script>
+
+<script>if ("serviceWorker" in navigator) addEventListener("load", (function() {
+ navigator.serviceWorker.register("sw.js").catch((function() {}));
+}));</script>
+</body></html>
