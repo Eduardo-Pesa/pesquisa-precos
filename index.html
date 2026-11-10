@@ -190,7 +190,7 @@ window.addEventListener("unhandledrejection", (function(e) {
 })();</script>
 <script>"use strict";
 
-const APPV = "G3.1";
+const APPV = "G3.2";
 
 const $ = s => document.querySelector(s);
 
@@ -779,6 +779,7 @@ function saveProd(p, del) {
 
 function saveLista(l) {
  l.upd = now();
+ l.codigo = codigoOf(l);
  l.qtd = isTodos(l.todos) || l.modelo && isTodos((pesqBy(l.modelo) || {}).todos) ? "TODOS" : itensOf(l).length;
  S.listas[l.id] = l;
  KV.save("listas");
@@ -906,6 +907,8 @@ function tabbar() {
  const cur = {
   lista: "listas",
   analise: "listas",
+  listaEdit: "listas",
+  prodLista: "listas",
   pesqEdit: "pesqs",
   novaLista: "home",
   aux: "home",
@@ -998,7 +1001,10 @@ VIEWS.home = () => {
  const u = S.user;
  const p = u.perfil;
  const minhas = todasListas();
- const abertas = minhas.filter((l => l.status !== "Conclu\xedda" && !expirada(l)));
+ const abertas = minhas.filter((l => {
+  const st = stOf(l);
+  return st === "Pendente" || st === "Em andamento";
+ }));
  const pend = abertas.length;
  const auxP = Object.values(S.aux).filter((a => a.status === "Pendente")).length;
  const tiles = [ `<button class="tile" data-act="nav" data-v="listas"><b>Pesquisas</b><span>${pend} em aberto</span></button>` ];
@@ -1038,7 +1044,7 @@ function listaProg(l) {
 }
 
 function stPill(s) {
- return `<span class="pill ${s === "Conclu\xedda" ? "ok" : s === "Em andamento" ? "warn" : s === "Expirada" ? "bad" : "info"}">${esc(s || "Pendente")}</span>`;
+ return `<span class="pill ${s === "Conclu\xedda" ? "ok" : s === "Em andamento" ? "warn" : s === "Expirada" || s === "Cancelada" ? "bad" : "info"}">${esc(s || "Pendente")}</span>`;
 }
 
 function listaSub(l) {
@@ -1051,27 +1057,100 @@ function listCards(arr, title) {
  if (!arr.length) return `<div class="card"><h3>${esc(title)}</h3><p class="muted small">Nenhuma pesquisa aqui. ${isPricing() ? "Cadastre uma em \u201cPesquisas fixas\u201d ou crie uma lista avulsa." : "Quando o Pricing liberar a pesquisa da sua loja ela aparece aqui. Toque no selo verde l\xe1 em cima para atualizar."}</p></div>`;
  return `<h2>${esc(title)}</h2><div class="list">${arr.map((l => {
   const g = listaProg(l);
-  return `<button class="li" data-act="openLista" data-id="${esc(l.id)}"><div class="t"><div>${esc(l.nome)}</div><div class="muted small">${listaSub(l)}</div><div class="bar" style="margin-top:6px"><i style="width:${g.pct}%"></i></div></div><div style="text-align:right">${stPill(stOf(l))}<div class="mono small muted">${g.pct}%</div></div></button>`;
+  return `<button class="li" data-act="openLista" data-id="${esc(l.id)}"><div class="t"><div>${esc(l.nome)}</div><div class="small mono" style="color:var(--brand)">${esc(codigoOf(l))} \xb7 ${ST_COD[stOf(l)] || ""}</div><div class="muted small">${listaSub(l)}${(() => {
+   const r = realizacao(l);
+   return r ? " \xb7 realizada " + fmtD(r.a) + (ymdOf(r.a) !== ymdOf(r.b) ? " a " + fmtD(r.b) : "") : "";
+  })()}</div><div class="bar" style="margin-top:6px"><i style="width:${g.pct}%"></i></div></div><div style="text-align:right">${stPill(stOf(l))}<div class="mono small muted">${g.pct}%</div></div></button>`;
  })).join("")}</div>`;
 }
 
+const STS = [ [ "abertas", "Pendentes e em andamento" ], [ "Pendente", "Pendente" ], [ "Em andamento", "Em andamento" ], [ "Conclu\xedda", "Conclu\xedda (realizada)" ], [ "Expirada", "Expirada" ], [ "Cancelada", "Cancelada" ], [ "todas", "Todas" ] ];
+
+const DCAMPOS = [ [ "inicio", "Data de in\xedcio" ], [ "fim", "Data de t\xe9rmino" ], [ "real", "Data de realiza\xe7\xe3o" ], [ "inc", "Data de inclus\xe3o" ] ];
+
+function dataCampo(l, k) {
+ if (k === "inicio") return l.inicio || l.prevista || "";
+ if (k === "fim") return l.validade || "";
+ if (k === "inc") return ymdOf(l.criada);
+ if (k === "real") {
+  const r = realizacao(l);
+  return r ? ymdOf(r.b) : l.finalizada ? ymdOf(l.finalizada) : "";
+ }
+ return "";
+}
+
 VIEWS.listas = () => {
- let arr = todasListas();
- const f = V.f || "abertas";
- const fl = V.fl || "";
- arr = arr.filter((l => {
-  const st = stOf(l);
-  return f === "todas" || (f === "abertas" ? st !== "Conclu\xedda" && st !== "Expirada" : f === "concluidas" ? st === "Conclu\xedda" : st === "Expirada");
- })).filter((l => !fl || +l.loja === +fl)).sort(((a, b) => (b.validade || b.prevista || "").localeCompare(a.validade || a.prevista || "") || lojaNome(a.loja).localeCompare(lojaNome(b.loja))));
+ const F = V.F || (V.F = {
+  st: "abertas",
+  q: "",
+  loja: "",
+  tipo: "",
+  dc: "inicio",
+  de: "",
+  ate: "",
+  ord: "desc"
+ });
  const lojasV = [ ...new Set(todasListas().map((l => +l.loja))) ].sort(((a, b) => a - b));
- return shell("Pesquisas", `<div class="tabs">${[ [ "abertas", "Em aberto" ], [ "concluidas", "Conclu\xeddas" ], [ "expiradas", "Expiradas" ], [ "todas", "Todas" ] ].map((([k, t]) => `<button class="${f === k ? "on" : ""}" data-act="lf" data-f="${k}">${t}</button>`)).join("")}</div>\n   ${lojasV.length > 1 ? `<label class="f">Loja<select class="in" id="lfLoja"><option value="">Todas as lojas</option>${lojasV.map((c => `<option value="${c}" ${+fl === c ? "selected" : ""}>${esc(lojaNome(c))}</option>`)).join("")}</select></label>` : ""}\n   ${listCards(arr, "Pesquisas")}`);
+ const tk = norm(F.q).split(/\s+/).filter(Boolean);
+ let arr = todasListas().filter((l => {
+  const st = stOf(l);
+  if (F.st === "abertas") {
+   if (st !== "Pendente" && st !== "Em andamento") return false;
+  } else if (F.st !== "todas" && st !== F.st) return false;
+  if (F.loja && +l.loja !== +F.loja) return false;
+  if (F.tipo && F.tipo === "F" !== !!l.modelo) return false;
+  const dv = dataCampo(l, F.dc);
+  if ((F.de || F.ate) && !dv) return false;
+  if (F.de && dv < F.de) return false;
+  if (F.ate && dv > F.ate) return false;
+  if (tk.length) {
+   const t = norm([ codigoOf(l), l.nome, l.modeloNome, lojaNome(l.loja), l.loja, ST_COD[st], st, l.criadoPor ].join(" "));
+   if (!tk.every((x => t.includes(x)))) return false;
+  }
+  return true;
+ }));
+ arr.sort(((a, b) => {
+  const x = dataCampo(a, F.dc), y = dataCampo(b, F.dc);
+  return (F.ord === "asc" ? x.localeCompare(y) : y.localeCompare(x)) || lojaNome(a.loja).localeCompare(lojaNome(b.loja));
+ }));
+ const cnt = {};
+ todasListas().forEach((l => {
+  const st = stOf(l);
+  cnt[st] = (cnt[st] || 0) + 1;
+ }));
+ return shell("Pesquisas", `<label class="f">Buscar por c\xf3digo, nome ou loja<input class="in" id="lfQ" value="${esc(F.q)}" placeholder="Ex.: F002-261104 \xb7 CON \xb7 Padr\xe3o" autocomplete="off" enterkeyhint="search"></label>\n   <div class="tabs">${STS.map((([k, t]) => {
+  const n = k === "abertas" ? (cnt["Pendente"] || 0) + (cnt["Em andamento"] || 0) : k === "todas" ? todasListas().length : cnt[k] || 0;
+  return `<button class="${F.st === k ? "on" : ""}" data-act="lf" data-f="${esc(k)}">${esc(t)} (${n})</button>`;
+ })).join("")}</div>\n   <details class="card" ${F.loja || F.tipo || F.de || F.ate || F.dc !== "inicio" ? "open" : ""}><summary class="small" style="cursor:pointer;font-weight:600">Mais filtros e ordem</summary>\n    <div class="f2">${lojasV.length > 1 ? `<label class="f">Loja<select class="in" id="lfLoja"><option value="">Todas</option>${lojasV.map((c => `<option value="${c}" ${+F.loja === c ? "selected" : ""}>${esc(lojaNome(c))}</option>`)).join("")}</select></label>` : ""}\n     <label class="f">Tipo<select class="in" id="lfTipo"><option value="">Fixas e avulsas</option><option value="F" ${F.tipo === "F" ? "selected" : ""}>Fixas</option><option value="A" ${F.tipo === "A" ? "selected" : ""}>Avulsas</option></select></label></div>\n    <label class="f">Filtrar e ordenar pela<select class="in" id="lfDc">${DCAMPOS.map((([k, t]) => `<option value="${k}" ${F.dc === k ? "selected" : ""}>${t}</option>`)).join("")}</select></label>\n    <div class="f2"><label class="f">De<input class="in" type="date" id="lfDe" value="${esc(F.de)}"></label><label class="f">At\xe9<input class="in" type="date" id="lfAte" value="${esc(F.ate)}"></label></div>\n    <div class="row"><button class="btn sm grow" data-act="lfOrd">${F.ord === "asc" ? "Mais antigas primeiro" : "Mais recentes primeiro"}</button><button class="btn sm" data-act="lfClear">Limpar filtros</button></div>\n    <p class="muted small">C\xf3digo: F = fixa, A = avulsa \xb7 loja \xb7 data de in\xedcio (AAMMDD) \xb7 identificador. Status: PEN pendente, AND em andamento, CON conclu\xedda, EXP expirada, CAN cancelada.</p></details>\n   ${listCards(arr, arr.length + " pesquisa(s)")}`);
 };
 
 AFTER.listas = () => {
- const s = $("#lfLoja");
- if (s) s.onchange = () => {
-  V.fl = s.value;
-  render();
+ const F = V.F;
+ const set = (id, k) => {
+  const e = $("#" + id);
+  if (e) e.onchange = () => {
+   F[k] = e.value;
+   render();
+  };
+ };
+ set("lfLoja", "loja");
+ set("lfTipo", "tipo");
+ set("lfDc", "dc");
+ set("lfDe", "de");
+ set("lfAte", "ate");
+ const q = $("#lfQ");
+ q.oninput = () => {
+  clearTimeout(q._t);
+  q._t = setTimeout((() => {
+   F.q = q.value;
+   const pos = q.selectionStart;
+   render();
+   const n = $("#lfQ");
+   n.focus();
+   try {
+    n.setSelectionRange(pos, pos);
+   } catch (e) {}
+  }), 250);
  };
 };
 
@@ -1089,7 +1168,10 @@ VIEWS.lista = () => {
   const vv = S.vinc.find((v => +v.loja === +l.loja && +v.conc === +c));
   return `<button class="li" data-act="pickConc" data-c="${c}"><div class="t"><div>${esc(concNome(c))}</div><div class="muted small">${esc(vv ? vv.classif + " \xb7 " + vv.pesquisador : "")} \xb7 ${d}/${itensOf(l).length} coletados</div><div class="bar" style="margin-top:6px"><i style="width:${itensOf(l).length ? d * 100 / itensOf(l).length : 0}%"></i></div></div>${fin ? `<span class="pill ok">Finalizado</span>` : d ? `<span class="pill warn">Em coleta</span>` : `<span class="pill">Iniciar</span>`}</button>`;
  })).join("");
- return shell(l.nome, `<div class="card"><div class="row" style="justify-content:space-between"><div><h3>${esc(lojaNome(l.loja))}</h3><div class="muted small">${listaSub(l)}${l.criadoPor && l.criadoPor !== "AUTO" ? " \xb7 criada por " + esc(l.criadoPor) : ""}</div></div>${stPill(stOf(l))}</div>\n    <div class="muted small">Data da coleta: <b class="mono">${fmtD(now())}</b> (autom\xe1tica)${l.validade ? ` \xb7 v\xe1lida at\xe9 <b class="mono">${fmtYmd(l.validade)}</b>` : ""} \xb7 ${ext} produto(s) extra \xb7 ${auxN} sem cadastro</div>\n    ${expirada(l) ? `<p class="err small">Esta pesquisa venceu em ${fmtYmd(l.validade)}. N\xe3o aceita mais pre\xe7os; a pr\xf3xima rodada aparece no dia da pesquisa.</p>` : ""}</div>\n    <h2>Escolha o concorrente</h2><div class="list">${rows}</div>\n    <div class="row">${l.status !== "Conclu\xedda" && !expirada(l) && !l.virtual ? `<button class="btn tag grow" data-act="finLista">Finalizar pesquisa</button>` : ""}${isPricing() ? `<button class="btn grow" data-act="expLista">Exportar e enviar</button><button class="btn grow" data-act="expTxt">Exportar TXT</button><button class="btn grow" data-act="nav" data-v="analise" data-id="${esc(l.id)}">Comparar pre\xe7os</button>${l.virtual ? "" : `<button class="btn bad" data-act="delLista">Excluir</button>`}` : ""}</div>`);
+ return shell(l.nome, `<div class="card"><div class="row" style="justify-content:space-between"><div><h3>${esc(lojaNome(l.loja))}</h3><div class="muted small">${listaSub(l)}${l.criadoPor && l.criadoPor !== "AUTO" ? " \xb7 criada por " + esc(l.criadoPor) : ""}</div></div>${stPill(stOf(l))}</div>\n    <div class="small mono" style="color:var(--brand)">${esc(codigoOf(l))} \xb7 ${ST_COD[stOf(l)] || ""}</div>\n    <div class="muted small">In\xedcio <b class="mono">${fmtYmd(l.inicio || l.prevista)}</b>${l.validade ? ` \xb7 t\xe9rmino <b class="mono">${fmtYmd(l.validade)}</b>` : ""} \xb7 inclu\xedda ${l.criada ? fmtD(l.criada) : "automaticamente"}${(() => {
+  const r = realizacao(l);
+  return r ? ` \xb7 realizada <b class="mono">${fmtD(r.a)}${ymdOf(r.a) !== ymdOf(r.b) ? " a " + fmtD(r.b) : ""}</b>` : "";
+ })()}${l.finalizada ? " \xb7 finalizada " + fmtDT(l.finalizada) : ""} \xb7 ${ext} extra \xb7 ${auxN} sem cadastro</div>\n    ${expirada(l) ? `<p class="err small">Esta pesquisa venceu em ${fmtYmd(l.validade)}. N\xe3o aceita mais pre\xe7os${isPricing() ? "; para reabrir, edite a data de t\xe9rmino" : "; a pr\xf3xima rodada aparece no dia da pesquisa"}.</p>` : ""}${l.status === "Cancelada" ? `<p class="err small">Pesquisa cancelada${isPricing() ? ". Para reativar, edite e mude o status" : ""}.</p>` : ""}</div>\n    <h2>Escolha o concorrente</h2><div class="list">${rows}</div>\n    <div class="row">${l.status !== "Conclu\xedda" && l.status !== "Cancelada" && !expirada(l) && !l.virtual ? `<button class="btn tag grow" data-act="finLista">Finalizar pesquisa</button>` : ""}</div>${isPricing() ? `<div class="card"><h3>Gest\xe3o da pesquisa</h3><div class="row"><button class="btn grow" data-act="nav" data-v="prodLista" data-id="${esc(l.id)}">Ver produtos</button><button class="btn grow" data-act="nav" data-v="analise" data-id="${esc(l.id)}">Comparar pre\xe7os</button></div>\n     <div class="row"><button class="btn grow" data-act="expLista">Exportar e enviar</button><button class="btn grow" data-act="expTxt">Exportar TXT</button></div>\n     <div class="row"><button class="btn pri grow" data-act="editLista">Editar</button><button class="btn bad grow" data-act="delLista">Excluir</button></div></div>` : ""}`);
 };
 
 let COLV = 0;
@@ -1218,6 +1300,7 @@ function getLista(id) {
 function itensOf(l) {
  if (!l) return [];
  if (isTodos(l.todos)) return S.allSeqs;
+ if (l.itensProprios) return l.itens || [];
  if (l.modelo) {
   const m = pesqBy(l.modelo);
   if (m) {
@@ -1228,9 +1311,60 @@ function itensOf(l) {
  return l.itens || [];
 }
 
-const expirada = l => !!(l.validade && hojeS() > l.validade && l.status !== "Conclu\xedda");
+const expirada = l => !!(l.validade && hojeS() > l.validade && l.status !== "Conclu\xedda" && l.status !== "Cancelada");
 
-const stOf = l => expirada(l) ? "Expirada" : l.status || "Pendente";
+const stOf = l => l.status === "Cancelada" ? "Cancelada" : expirada(l) ? "Expirada" : l.status || "Pendente";
+
+const ST_COD = {
+ Pendente: "PEN",
+ "Em andamento": "AND",
+ "Conclu\xedda": "CON",
+ Expirada: "EXP",
+ Cancelada: "CAN"
+};
+
+function hash4(t) {
+ let h = 5381;
+ for (const c of String(t)) h = (h * 33 ^ c.charCodeAt(0)) >>> 0;
+ return h.toString(36).toUpperCase().padStart(4, "0").slice(-4);
+}
+
+function codigoOf(l) {
+ if (l.codigo) return l.codigo;
+ const ini = String(l.inicio || l.prevista || "").replace(/-/g, "").slice(2, 8) || "000000";
+ return `${l.modelo ? "F" : "A"}${String(l.loja).padStart(3, "0")}-${ini}-${hash4(l.id)}`;
+}
+
+let _rz = {
+ v: -1,
+ n: -1,
+ m: {}
+};
+
+function realizacao(l) {
+ const n = Object.keys(S.coletas).length;
+ if (_rz.v !== COLV || _rz.n !== n) {
+  _rz = {
+   v: COLV,
+   n: n,
+   m: {}
+  };
+  for (const c of Object.values(S.coletas)) {
+   const r = _rz.m[c.lista] || (_rz.m[c.lista] = {
+    a: Infinity,
+    b: 0
+   });
+   if (c.dt) {
+    r.a = Math.min(r.a, c.dt);
+    r.b = Math.max(r.b, c.dt);
+   }
+  }
+ }
+ const r = _rz.m[l.id];
+ return r && r.b ? r : null;
+}
+
+const ymdOf = t => t ? ymd(new Date(t)) : "";
 
 function materializa(l) {
  if (!l.virtual) return l;
@@ -1363,6 +1497,9 @@ function nlSync() {
  g("nlFam", "fam", 1);
  g("nlTodos", "todos", 1);
  g("peDia", "dia");
+ g("elIni", "inicio");
+ g("elFim", "fim");
+ g("elSt", "status");
  g("peAtiva", "ativa", 1);
  g("peTodasLojas", "todasLojas", 1);
 }
@@ -1425,6 +1562,72 @@ function nlAddSeq(s) {
  if ($("#nlFam") && $("#nlFam").checked && p.fam !== "") (S.famIdx.get(p.fam) || []).forEach(add);
  return n;
 }
+
+VIEWS.listaEdit = () => {
+ const d = V.d;
+ const l = getLista(d.id) || {};
+ const cs = [ ...new Set(S.vinc.filter((v => +v.loja === +d.lojaE)).map((v => +v.conc)).concat(d.concs)) ];
+ return shell("Editar pesquisa", `<div class="card"><div class="small mono" style="color:var(--brand)">${esc(codigoOf(l))} \xb7 ${esc(lojaNome(d.lojaE))}${l.modelo ? " \xb7 rodada da pesquisa fixa \u201c" + esc(l.modeloNome || "") + "\u201d" : ""}</div>\n   <label class="f">Nome<input class="in" id="nlNome" value="${esc(d.nome)}"></label>\n   <div class="f2"><label class="f">Data de in\xedcio<input class="in" type="date" id="elIni" value="${esc(d.inicio)}"></label><label class="f">Data de t\xe9rmino<input class="in" type="date" id="elFim" value="${esc(d.fim)}"></label></div>\n   <label class="f">Status<select class="in" id="elSt">${[ "Pendente", "Em andamento", "Conclu\xedda", "Cancelada" ].map((x => `<option ${d.status === x ? "selected" : ""}>${x}</option>`)).join("")}</select></label>\n   <p class="muted small">Conclu\xedda = realizada. Voltar para Pendente ou Em andamento reabre a pesquisa para as lojas. Cancelada some das listas em aberto.</p></div>\n   <div class="card"><h3>Concorrentes (${d.concs.length})</h3><div class="chips">${cs.map((c => `<button class="chip ${d.concs.includes(c) ? "on" : ""}" data-act="elConc" data-c="${c}">${esc(concNome(c))}</button>`)).join("")}</div></div>\n   ${pickerHtml(d)}${l.modelo ? `<p class="muted small">Mudar os produtos aqui vale s\xf3 para esta rodada. Para mudar todas as pr\xf3ximas, edite a pesquisa fixa.</p>` : ""}<p class="err" id="nlErr"></p>`, {
+  foot: `<button class="btn" data-act="back">Cancelar</button><button class="btn pri" style="flex:2" data-act="elSave">Salvar altera\xe7\xf5es</button>`
+ });
+};
+
+AFTER.listaEdit = () => {
+ AFTER.novaLista();
+};
+
+VIEWS.prodLista = () => {
+ if (!isPricing()) return VIEWS.home();
+ const l = getLista(V.id);
+ if (!l) return shell("Produtos", "<p>Pesquisa n\xe3o encontrada.</p>");
+ const P = V.P || (V.P = {
+  q: "",
+  f: "todos",
+  pg: 0
+ });
+ const cs = l.concs || [];
+ let it = itensOf(l);
+ if (P.q.trim()) {
+  const set = new Set(it);
+  it = searchProd(P.q, 5e3, it.length > 5e3 ? undefined : it.map((s => S.prods.get(s))).filter(Boolean)).map((p => p.seq)).filter((s => set.has(s)));
+ }
+ const st = s => {
+  const n = cs.filter((c => S.coletas[`${l.id}-${c}-${s}`])).length;
+  return n === 0 ? "pend" : n === cs.length ? "ok" : "parc";
+ };
+ if (P.f !== "todos") it = it.filter((s => st(s) === P.f));
+ const per = 60, pg = Math.min(P.pg, Math.max(0, Math.ceil(it.length / per) - 1));
+ const page = it.slice(pg * per, pg * per + per);
+ const cell = (c, s) => {
+  const x = S.coletas[`${l.id}-${c}-${s}`];
+  if (!x) return `<td class="n muted">\u2013</td>`;
+  if (x.naoEnc) return `<td class="n muted">N/E</td>`;
+  const v = x.reg ?? x.club ?? x.caixa ?? x.app;
+  return `<td class="n">${money(v)}${x.oferta ? " \u2605" : ""}</td>`;
+ };
+ return shell("Produtos da pesquisa", `<p class="small"><b>${esc(l.nome)}</b> \xb7 ${esc(lojaNome(l.loja))} \xb7 <span class="mono">${esc(codigoOf(l))}</span></p>\n   <label class="f">Buscar produto<input class="in" id="plQ" value="${esc(P.q)}" placeholder="Nome, SEQ, EAN ou gramagem" autocomplete="off"></label>\n   <div class="tabs">${[ [ "todos", "Todos" ], [ "pend", "Pendentes" ], [ "parc", "Parciais" ], [ "ok", "Coletados" ] ].map((([k, t]) => `<button class="${P.f === k ? "on" : ""}" data-act="plF" data-f="${k}">${t}</button>`)).join("")}</div>\n   <p class="muted small">${it.length.toLocaleString("pt-BR")} produto(s)${isTodos(l.todos) || l.modelo && !l.itensProprios && isTodos((pesqBy(l.modelo) || {}).todos) ? " \xb7 pesquisa com todos os produtos da base" : ""}. \u2605 = oferta, N/E = n\xe3o encontrado.</p>\n   <div class="tw"><table><thead><tr><th>SEQ</th><th>Produto</th><th>EAN</th>${cs.map((c => `<th>${esc(concNome(c))}</th>`)).join("")}</tr></thead><tbody>${page.map((s => {
+  const p = S.prods.get(s) || {};
+  return `<tr><td class="mono">${s}</td><td style="white-space:normal;min-width:180px">${esc(p.nome || "(fora da base)")}</td><td class="mono">${esc(String(p.ean || "").split(",")[0] || "\u2013")}</td>${cs.map((c => cell(c, s))).join("")}</tr>`;
+ })).join("")}</tbody></table></div>\n   <div class="row" style="justify-content:center"><button class="btn sm" data-act="plPg" data-d="-1" ${pg ? "" : "disabled"}>\u2039 Anterior</button><span class="mono small">${pg + 1}/${Math.max(1, Math.ceil(it.length / per))}</span><button class="btn sm" data-act="plPg" data-d="1" ${(pg + 1) * per < it.length ? "" : "disabled"}>Pr\xf3xima \u203a</button></div>`);
+};
+
+AFTER.prodLista = () => {
+ const q = $("#plQ");
+ if (q) q.oninput = () => {
+  clearTimeout(q._t);
+  q._t = setTimeout((() => {
+   V.P.q = q.value;
+   V.P.pg = 0;
+   const pos = q.selectionStart;
+   render();
+   const n = $("#plQ");
+   n.focus();
+   try {
+    n.setSelectionRange(pos, pos);
+   } catch (e) {}
+  }), 300);
+ };
+};
 
 VIEWS.pesqs = () => {
  const arr = [ ...S.pesq ].sort(((a, b) => String(a.nome).localeCompare(String(b.nome))));
@@ -2250,6 +2453,16 @@ const ACT = {
   mclose();
   renderSync();
  },
+ plF: el => {
+  V.P.f = el.dataset.f;
+  V.P.pg = 0;
+  render();
+ },
+ plPg: el => {
+  V.P.pg = Math.max(0, (V.P.pg || 0) + +el.dataset.d);
+  render();
+  scrollTo(0, 0);
+ },
  tab: el => {
   const v = el.dataset.v;
   if (V.name === v) return;
@@ -2276,7 +2489,33 @@ const ACT = {
   ask._r && ask._r(true);
  },
  lf: el => {
-  V.f = el.dataset.f;
+  (V.F = V.F || {
+   st: "abertas",
+   q: "",
+   loja: "",
+   tipo: "",
+   dc: "inicio",
+   de: "",
+   ate: "",
+   ord: "desc"
+  }).st = el.dataset.f;
+  render();
+ },
+ lfOrd: () => {
+  V.F.ord = V.F.ord === "asc" ? "desc" : "asc";
+  render();
+ },
+ lfClear: () => {
+  V.F = {
+   st: V.F.st,
+   q: "",
+   loja: "",
+   tipo: "",
+   dc: "inicio",
+   de: "",
+   ate: "",
+   ord: "desc"
+  };
   render();
  },
  af: el => {
@@ -2290,7 +2529,8 @@ const ACT = {
   let l = getLista(V.id);
   const c = +el.dataset.c;
   if (expirada(l)) return toast("Pesquisa vencida em " + fmtYmd(l.validade) + ": n\xe3o aceita mais pre\xe7os", 3500);
-  if (l.status === "Conclu\xedda") return toast("Pesquisa j\xe1 finalizada");
+  if (l.status === "Conclu\xedda") return toast("Pesquisa j\xe1 finalizada" + (isPricing() ? ". Para reabrir, use Editar" : ""));
+  if (l.status === "Cancelada") return toast("Pesquisa cancelada");
   l = materializa(l);
   if (l.status === "Pendente") {
    l.status = "Em andamento";
@@ -2533,18 +2773,103 @@ const ACT = {
  },
  colFoto: () => $("#fileFoto").click(),
  delLista: async () => {
-  const l = getLista(V.id);
-  if (!await ask(`Excluir a lista \u201c${l.nome}\u201d e suas coletas?`, "Excluir")) return;
+  if (!isPricing()) return;
+  let l = getLista(V.id);
+  const nC = Object.values(S.coletas).filter((c => c.lista === l.id)).length;
+  const atual = l.modelo && rodadasAtuais().some((r => r.id === l.id));
+  if (!await ask(`Excluir a pesquisa ${codigoOf(l)} \u201c${l.nome}\u201d${nC ? ` e os ${nC} pre\xe7o(s) coletados` : ""}?${atual ? " Como \xe9 a rodada atual de uma pesquisa fixa, ela fica como Cancelada para n\xe3o ser recriada." : ""}`, "Excluir")) return;
   Object.keys(S.coletas).forEach((k => {
    if (S.coletas[k].lista === l.id) {
     delete S.coletas[k];
     enqueue("coletas", k, null);
    }
   }));
-  delete S.listas[l.id];
   KV.save("coletas");
-  KV.save("listas");
-  enqueue("listas", l.id, null);
+  COLV++;
+  if (atual) {
+   l = materializa(l);
+   l.status = "Cancelada";
+   l.editadoEm = now();
+   l.editadoPor = S.user.login;
+   saveLista(l);
+  } else {
+   delete S.listas[l.id];
+   KV.save("listas");
+   enqueue("listas", l.id, null);
+  }
+  toast("Pesquisa exclu\xedda");
+  back();
+ },
+ editLista: () => {
+  if (!isPricing()) return;
+  const l = getLista(V.id);
+  const it = itensOf(l);
+  const tod = isTodos(l.todos) || !l.itensProprios && l.modelo && isTodos((pesqBy(l.modelo) || {}).todos);
+  go("listaEdit", {
+   d: {
+    edit: true,
+    id: l.id,
+    nome: l.nome,
+    inicio: l.inicio || l.prevista || hojeS(),
+    fim: l.validade || "",
+    status: l.status || "Pendente",
+    concs: [ ...l.concs || [] ],
+    itens: tod ? [] : [ ...it ],
+    todos: !!tod,
+    itensOrig: tod ? "T" : it.join(","),
+    fam: false,
+    cat2: "",
+    cat3: "",
+    lojaE: l.loja
+   }
+  });
+ },
+ elConc: el => {
+  nlSync();
+  const d = V.d;
+  const c = +el.dataset.c;
+  d.concs = d.concs.includes(c) ? d.concs.filter((x => x !== c)) : [ ...d.concs, c ];
+  render();
+ },
+ elSave: async () => {
+  nlSync();
+  const d = V.d;
+  const err = x => $("#nlErr").textContent = x;
+  if (!String(d.nome).trim()) return err("Informe o nome.");
+  if (!d.concs.length) return err("Marque ao menos um concorrente.");
+  if (!d.todos && !d.itens.length) return err("Adicione produtos ou marque todos os produtos.");
+  if (d.fim && d.fim < d.inicio) return err("A data de t\xe9rmino \xe9 anterior \xe0 de in\xedcio.");
+  let l = materializa(getLista(d.id));
+  const o = {
+   ...l,
+   nome: String(d.nome).trim(),
+   inicio: d.inicio,
+   prevista: d.inicio,
+   validade: d.fim || "",
+   concs: [ ...d.concs ],
+   editadoEm: now(),
+   editadoPor: S.user.login
+  };
+  if (d.status !== l.status) {
+   o.status = d.status;
+   if (d.status === "Conclu\xedda") {
+    o.finalizada = now();
+    o.finalizadaPor = S.user.login;
+   } else {
+    o.finalizada = null;
+    if (d.status !== "Cancelada") o.finConcs = [];
+   }
+  }
+  const novos = d.todos ? "T" : d.itens.join(",");
+  if (novos !== d.itensOrig) {
+   o.itensProprios = true;
+   o.todos = !!d.todos;
+   o.itens = d.todos ? [] : [ ...d.itens ];
+  }
+  if (d.status !== "Conclu\xedda" && d.status !== "Cancelada" && o.validade && o.validade < hojeS() && !await ask("A data de t\xe9rmino j\xe1 passou, ent\xe3o a pesquisa continuar\xe1 expirada. Salvar assim mesmo?", "Salvar", false)) return;
+  saveLista(o);
+  toast("Pesquisa atualizada");
+  V.d = null;
   back();
  },
  scan: () => openScanner(handleCode),
