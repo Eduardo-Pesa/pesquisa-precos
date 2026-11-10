@@ -1,5 +1,5 @@
 /* Pesquisa de Precos - service worker: abre o app sem internet */
-const CACHE = "pesquisa-precos-v3";
+const CACHE = "pesquisa-precos-v4";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
   "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.mini.min.js",
   "https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"];

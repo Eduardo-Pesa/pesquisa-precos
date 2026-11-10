@@ -2,117 +2,134 @@
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0f3b3a"><link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><title>Pesquisa de Pre&#xe7;os</title>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
-<meta name="theme-color" content="#0f3b3a">
+<meta name="theme-color" content="#efe9df">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
-/* Layout: app de campo, uma coluna, barra superior fixa e acoes grandes no rodape (estilo etiqueta de gondola) */
+/* Layout: app de campo em uma coluna; barra de abas embaixo (alcance do polegar); botao de scanner a direita para o polegar direito */
 :root{
-  --bg:#eef2f1; --surface:#ffffff; --surface2:#e3e9e8; --ink:#14201f; --muted:#5a6967; --line:#c9d3d1;
-  --brand:#0f3b3a; --brand-ink:#ffffff; --tag:#ffd23f; --tag-ink:#1b1a10;
-  --ok:#1f7a4d; --ok-bg:#d9efe3; --warn:#9a5b00; --warn-bg:#fdebc8; --bad:#b3261e; --bad-bg:#f9dedc; --info-bg:#dceaf3;
+  --bg:#efe9df; --surface:#f8f4ee; --surface2:#e7dfd2; --ink:#1c2523; --muted:#676b63; --line:#dad1c3;
+  --brand:#0f4c4a; --brand-ink:#ffffff; --brand-soft:#d6e6e2; --tag:#ffd23f; --tag-ink:#1b1a10;
+  --ok:#1f7a4d; --ok-bg:#d9efe3; --warn:#94590a; --warn-bg:#f7e5c4; --bad:#b3261e; --bad-bg:#f6dcd8; --info-bg:#e0ebe8;
+  --sh:6px 6px 14px rgba(110,90,60,.16),-5px -5px 12px rgba(255,255,255,.75);
+  --sh-in:inset 3px 3px 7px rgba(110,90,60,.16),inset -3px -3px 7px rgba(255,255,255,.8);
   --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
-  --r:10px;
+  --r:16px; --tabh:64px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0d1514; --surface:#16211f; --surface2:#1e2b29; --ink:#e4ecea; --muted:#93a4a1; --line:#2c3b39;
-  --brand:#123f3d; --brand-ink:#f2f7f6; --tag:#ffd23f; --tag-ink:#1b1a10;
-  --ok:#6fd3a0; --ok-bg:#163527; --warn:#f2b45a; --warn-bg:#3a2a10; --bad:#ff8a80; --bad-bg:#3d1714; --info-bg:#173040; color-scheme:dark}}
+  --bg:#121817; --surface:#1a2221; --surface2:#222c2a; --ink:#e6ecea; --muted:#9aa7a4; --line:#2e3a38;
+  --brand:#1f7a74; --brand-ink:#ffffff; --brand-soft:#1d3532; --tag:#ffd23f; --tag-ink:#1b1a10;
+  --ok:#6fd3a0; --ok-bg:#163527; --warn:#f2b45a; --warn-bg:#3a2a10; --bad:#ff8a80; --bad-bg:#3d1714; --info-bg:#1d3532;
+  --sh:0 2px 10px rgba(0,0,0,.45); --sh-in:inset 0 2px 6px rgba(0,0,0,.5); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0d1514; --surface:#16211f; --surface2:#1e2b29; --ink:#e4ecea; --muted:#93a4a1; --line:#2c3b39;
-  --brand:#123f3d; --brand-ink:#f2f7f6; --tag:#ffd23f; --tag-ink:#1b1a10;
-  --ok:#6fd3a0; --ok-bg:#163527; --warn:#f2b45a; --warn-bg:#3a2a10; --bad:#ff8a80; --bad-bg:#3d1714; --info-bg:#173040; color-scheme:dark}
+  --bg:#121817; --surface:#1a2221; --surface2:#222c2a; --ink:#e6ecea; --muted:#9aa7a4; --line:#2e3a38;
+  --brand:#1f7a74; --brand-ink:#ffffff; --brand-soft:#1d3532; --tag:#ffd23f; --tag-ink:#1b1a10;
+  --ok:#6fd3a0; --ok-bg:#163527; --warn:#f2b45a; --warn-bg:#3a2a10; --bad:#ff8a80; --bad-bg:#3d1714; --info-bg:#1d3532;
+  --sh:0 2px 10px rgba(0,0,0,.45); --sh-in:inset 0 2px 6px rgba(0,0,0,.5); color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--f-body);-webkit-tap-highlight-color:transparent}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--brand)}
+html,body{max-width:100%;overflow-x:hidden}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--f-body);-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 button,input,select,textarea{font:inherit;color:inherit}
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--brand);color:var(--brand-ink);
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);
   padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
-  display:flex;align-items:center;gap:10px}
-.top h1{font:700 22px/1.1 var(--f-display);letter-spacing:.02em;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
-.top .back{background:transparent;border:1px solid rgba(255,255,255,.35);color:var(--brand-ink);border-radius:8px;padding:6px 10px;cursor:pointer}
-.sync{font:500 12px var(--f-mono);padding:4px 8px;border-radius:99px;background:rgba(255,255,255,.12);white-space:nowrap;cursor:pointer;border:0;color:var(--brand-ink)}
+  display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+.top h1{font:700 22px/1.1 var(--f-display);letter-spacing:.02em;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;color:var(--brand)}
+.top .back{background:var(--surface);border:0;box-shadow:var(--sh);color:var(--ink);border-radius:12px;width:40px;height:40px;font-size:22px;line-height:1;cursor:pointer;flex:none}
+.sync{font:500 12px var(--f-mono);padding:6px 10px;border-radius:99px;background:var(--ok-bg);color:var(--ok);white-space:nowrap;cursor:pointer;border:0;flex:none;max-width:46vw;overflow:hidden;text-overflow:ellipsis}
 .sync.off{background:var(--tag);color:var(--tag-ink)}
-main{padding-block:16px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+main{padding-block:16px calc(var(--tabh) + 28px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px;min-width:0}
+main>*{min-width:0}
 h2{font:700 20px/1.15 var(--f-display);letter-spacing:.03em;text-transform:uppercase;margin:6px 0 0;text-wrap:balance}
 h3{font:600 15px/1.3 var(--f-body);margin:0}
 .muted{color:var(--muted)} .small{font-size:13px}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
-.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-height:92px}
-.tile b{font:700 19px/1.1 var(--f-display);letter-spacing:.03em;text-transform:uppercase}
+.card{background:var(--surface);border:0;box-shadow:var(--sh);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:640px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.tile{background:var(--surface);border:0;box-shadow:var(--sh);border-radius:var(--r);padding:14px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-height:92px;min-width:0}
+.tile b{font:700 18px/1.1 var(--f-display);letter-spacing:.03em;text-transform:uppercase;color:var(--brand);overflow-wrap:anywhere}
 .tile span{font-size:13px;color:var(--muted)}
-.tile:active{transform:scale(.98)}
+.tile:active,.btn:active,.li:active{box-shadow:var(--sh-in)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .row>*{min-width:0}
-.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:10px 14px;cursor:pointer;font-weight:600;min-height:44px}
-.btn.pri{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
-.btn.tag{background:var(--tag);color:var(--tag-ink);border-color:var(--tag)}
-.btn.bad{color:var(--bad);border-color:var(--bad)}
-.btn.sm{min-height:34px;padding:6px 10px;font-size:13px}
+.btn{border:0;background:var(--surface);box-shadow:var(--sh);border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:600;min-height:48px}
+.btn.pri{background:var(--brand);color:var(--brand-ink)}
+.btn.tag{background:var(--tag);color:var(--tag-ink)}
+.btn.bad{color:var(--bad)}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:13px}
 .btn:disabled{opacity:.45;cursor:default}
 .btn.grow{flex:1}
 :focus-visible{outline:3px solid var(--tag);outline-offset:2px}
 label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
-input.in,select.in,textarea.in{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px;width:100%;color:var(--ink)}
-input.in:focus,select.in:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--tag) 55%,transparent)}
-.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media (max-width:420px){.f2.st{grid-template-columns:1fr}}
+input.in,select.in,textarea.in{background:var(--surface);border:1px solid transparent;box-shadow:var(--sh-in);border-radius:12px;padding:10px 12px;min-height:48px;width:100%;color:var(--ink);font-size:16px}
+input.in:focus,select.in:focus,textarea.in:focus{border-color:var(--brand);outline:none}
+.f2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .pill{display:inline-block;font:600 11px/1 var(--f-body);letter-spacing:.05em;text-transform:uppercase;padding:5px 8px;border-radius:99px;background:var(--surface2);color:var(--muted);white-space:nowrap}
 .pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.info{background:var(--info-bg);color:var(--ink)}
-.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
-.li{display:flex;gap:10px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);cursor:pointer;text-align:left;background:transparent;border-left:0;border-right:0;border-bottom:0;width:100%}
+.list{display:flex;flex-direction:column;border-radius:var(--r);overflow:hidden;background:var(--surface);box-shadow:var(--sh)}
+.li{display:flex;gap:10px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);cursor:pointer;text-align:left;background:transparent;border-left:0;border-right:0;border-bottom:0;width:100%;color:inherit;text-decoration:none;min-height:56px}
 .li:first-child{border-top:0}
 .li .t{flex:1;min-width:0}
 .li .t div:first-child{font-weight:600;overflow-wrap:anywhere}
 .bar{height:6px;border-radius:9px;background:var(--surface2);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--ok)}
-/* etiqueta de preco */
-.tagcard{background:var(--tag);color:var(--tag-ink);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:6px;position:relative}
-.tagcard .nm{font:700 24px/1.08 var(--f-display);letter-spacing:.01em;text-transform:uppercase;overflow-wrap:anywhere}
+.bar i{display:block;height:100%;background:var(--brand)}
+.tagcard{background:var(--tag);color:var(--tag-ink);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:6px;position:relative;box-shadow:var(--sh)}
+.tagcard .nm{font:700 23px/1.08 var(--f-display);letter-spacing:.01em;text-transform:uppercase;overflow-wrap:anywhere}
 .tagcard .meta{font:500 12px var(--f-mono);opacity:.8;overflow-wrap:anywhere}
-.ean{background:#fff;border-radius:6px;padding:6px 8px 2px;align-self:flex-start;max-width:100%}
+.ean{background:#fff;border-radius:8px;padding:6px 8px 2px;align-self:flex-start;max-width:100%}
 .ean svg{display:block;max-width:100%;height:auto}
-.price{font:600 20px var(--f-mono);text-align:right}
-.chk{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);cursor:pointer;min-height:44px;flex:1}
-.chk input{width:22px;height:22px;accent-color:var(--brand)}
-.chk.on{border-color:var(--bad);background:var(--bad-bg)}
-.chk.of.on{border-color:var(--warn);background:var(--warn-bg)}
-.foot{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
+input.price{font:600 22px var(--f-mono);text-align:right;letter-spacing:.02em}
+.chk{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface);box-shadow:var(--sh);cursor:pointer;min-height:48px;flex:1;min-width:0}
+.chk input{width:22px;height:22px;accent-color:var(--brand);flex:none}
+.chk.on{background:var(--bad-bg);color:var(--bad)}
+.chk.of.on{background:var(--warn-bg);color:var(--warn)}
+.foot{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--line);
   padding-block:10px calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:8px}
 .foot .btn{flex:1}
-.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);box-shadow:0 -4px 16px rgba(80,60,30,.12);border-radius:20px 20px 0 0;
+  padding-block:6px calc(6px + env(safe-area-inset-bottom,0px));padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));display:flex;justify-content:space-around;gap:4px}
+.tabbar button{flex:1;min-width:0;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:14px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:600;min-height:var(--tabh)}
+.tabbar button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button.on{color:var(--brand);background:var(--brand-soft)}
+.tabbar button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.fab{flex:0 0 76px;margin-top:-30px;width:76px;height:76px;border-radius:50%;border:0;background:var(--brand);color:var(--brand-ink);box-shadow:0 8px 20px rgba(15,76,74,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;font-size:11px;font-weight:700}
+.fab svg{width:30px;height:30px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.fab:active{transform:scale(.95)}
+.tw{overflow-x:auto;border-radius:var(--r);background:var(--surface);box-shadow:var(--sh);max-width:100%}
 table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
 th{position:sticky;top:0;background:var(--surface2);font:600 11px var(--f-body);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 td.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 td.min{background:var(--ok-bg);color:var(--ok);font-weight:600}
 tr.click{cursor:pointer} tr.click:hover td{background:var(--surface2)}
-.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
-.tabs button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 14px;white-space:nowrap;cursor:pointer;font-weight:600;font-size:13px}
-.tabs button.on{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
-.modal{position:fixed;inset:0;z-index:20;background:rgba(5,15,14,.55);display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:var(--bg);width:100%;max-width:640px;max-height:92%;overflow:auto;border-radius:16px 16px 0 0;
-  padding-block:16px calc(16px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:12px}
-@media (min-width:700px){.modal{align-items:center}.sheet{border-radius:16px}}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:4px 2px 6px;-webkit-overflow-scrolling:touch}
+.tabs button{border:0;background:var(--surface);box-shadow:var(--sh);border-radius:99px;padding:9px 14px;white-space:nowrap;cursor:pointer;font-weight:600;font-size:13px}
+.tabs button.on{background:var(--brand);color:var(--brand-ink)}
+.modal{position:fixed;inset:0;z-index:20;background:rgba(20,18,12,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:640px;max-height:92%;overflow:auto;border-radius:22px 22px 0 0;
+  padding-block:18px calc(16px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:12px}
+@media (min-width:700px){.modal{align-items:center}.sheet{border-radius:22px}}
 .video{position:relative;background:#000;border-radius:var(--r);overflow:hidden;aspect-ratio:4/3;max-width:100%}
 .video video{width:100%;height:100%;object-fit:cover;display:block}
 .video:after{content:"";position:absolute;left:10%;right:10%;top:48%;height:2px;background:var(--bad);box-shadow:0 0 8px var(--bad)}
-.ph{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ph{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .ph label{border:2px dashed var(--line);border-radius:var(--r);aspect-ratio:1;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;overflow:hidden;background:var(--surface);font-size:13px;color:var(--muted);padding:6px}
 .ph img{width:100%;height:100%;object-fit:cover}
 .ph input{display:none}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;max-width:90%;text-align:center}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tabh) + 30px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;max-width:90%;text-align:center}
 .err{color:var(--bad);font-weight:600;font-size:13px}
 .boot{padding:40px 20px;text-align:center}
-.brandmark{font:700 40px/1 var(--f-display);text-transform:uppercase;letter-spacing:.02em}
-.brandmark em{font-style:normal;background:var(--tag);color:var(--tag-ink);padding:0 8px;border-radius:6px}
+.brandmark{font:700 40px/1 var(--f-display);text-transform:uppercase;letter-spacing:.02em;color:var(--brand)}
+.brandmark em{font-style:normal;background:var(--tag);color:var(--tag-ink);padding:0 8px;border-radius:8px}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
-.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 10px;font-size:13px;cursor:pointer}
-.chip.on{background:var(--ok-bg);border-color:var(--ok);color:var(--ok);font-weight:600}
+.chip{border:0;background:var(--surface);box-shadow:var(--sh);border-radius:99px;padding:7px 11px;font-size:13px;cursor:pointer}
+.chip.on{background:var(--ok-bg);color:var(--ok);font-weight:600}
+.hello{display:flex;align-items:center;gap:12px}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--brand);color:var(--brand-ink);display:flex;align-items:center;justify-content:center;font:700 18px var(--f-display);flex:none}
+@media (max-width:359px){.f2{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -173,7 +190,7 @@ window.addEventListener("unhandledrejection", (function(e) {
 })();</script>
 <script>"use strict";
 
-const APPV = "G3.0";
+const APPV = "G3.1";
 
 const $ = s => document.querySelector(s);
 
@@ -866,8 +883,39 @@ function softRender() {
  if (!$("#modal").innerHTML && [ "home", "listas", "lista", "bases", "aux", "conc" ].includes(V.name)) render();
 }
 
-function shell(title, body, {backBtn: backBtn = true, foot: foot = ""} = {}) {
- return `<header class="top">${backBtn ? `<button class="back" data-act="back" aria-label="Voltar">\u2039</button>` : ""}<h1>${esc(title)}</h1><button class="sync" id="syncb" data-act="syncinfo">${esc(syncLabel())}</button></header><main>${body}</main>${foot ? `<div class="foot">${foot}</div>` : ""}`;
+const ICO = {
+ home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+ list: '<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
+ fix: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/>',
+ box: '<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/>',
+ send: '<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/>',
+ user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+ scan: '<path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 8v8M10 8v8M13 8v8M17 8v8"/>'
+};
+
+const ico = n => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICO[n]}</svg>`;
+
+function tabbar() {
+ if (!S.user) return "";
+ const t = [ [ "home", "home", "In\xedcio" ], [ "listas", "list", "Pesquisas" ] ];
+ if (isPricing()) {
+  t.push([ "pesqs", "fix", "Fixas" ]);
+  t.push([ "exportar", "send", "Enviar" ]);
+ } else t.push([ "bases", "box", "Produtos" ]);
+ t.push([ "conta", "user", "Conta" ]);
+ const cur = {
+  lista: "listas",
+  analise: "listas",
+  pesqEdit: "pesqs",
+  novaLista: "home",
+  aux: "home",
+  bases: isPricing() ? "home" : "bases"
+ }[V.name] || V.name;
+ return `<nav class="tabbar" aria-label="Navega\xe7\xe3o">${t.map((([v, i, l]) => `<button class="${cur === v ? "on" : ""}" data-act="tab" data-v="${v}" ${cur === v ? 'aria-current="page"' : ""}>${ico(i)}<span>${l}</span></button>`)).join("")}</nav>`;
+}
+
+function shell(title, body, {backBtn: backBtn = true, foot: foot = "", fab: fab = ""} = {}) {
+ return `<header class="top">${backBtn ? `<button class="back" data-act="back" aria-label="Voltar">\u2039</button>` : ""}<h1>${esc(title)}</h1><button class="sync" id="syncb" data-act="syncinfo">${esc(syncLabel())}</button></header><main>${body}</main>${fab}${foot ? `<div class="foot">${foot}</div>` : tabbar()}`;
 }
 
 function render() {
@@ -957,9 +1005,9 @@ VIEWS.home = () => {
  if (isPricing()) tiles.push(`<button class="tile" data-act="nav" data-v="pesqs"><b>Pesquisas fixas</b><span>${S.pesq.length} cadastrada(s) \xb7 renovam sozinhas</span></button>`);
  if (isPricing()) tiles.push(`<button class="tile" data-act="nav" data-v="novaLista"><b>Lista avulsa</b><span>Pesquisa \xfanica, fora da rotina</span></button>`);
  if (isPricing()) tiles.push(`<button class="tile" data-act="nav" data-v="aux"><b>Base auxiliar</b><span>${auxP} produto(s) sem cadastro</span></button>`);
- tiles.push(`<button class="tile" data-act="nav" data-v="bases"><b>Bases</b><span>${isAdm() ? "Incluir, editar e excluir" : isPricing() ? "Produtos e v\xednculos" : "Consultar produtos"}</span></button>`);
- tiles.push(`<button class="tile" data-act="nav" data-v="exportar"><b>Exportar / WhatsApp</b><span>CSV ou Excel .xlsx</span></button>`);
- return shell("In\xedcio", `<div class="row" style="justify-content:space-between"><div><h2>Ol\xe1, ${esc(u.nome)}</h2><div class="muted small">${esc(p)}${p === "LOJA" ? " \xb7 " + userLojas(u).map(lojaNome).join(", ") : ""}</div></div><button class="btn sm" data-act="logout">Sair</button></div>\n  <div class="grid">${tiles.join("")}</div>\n  ${listCards(abertas.sort(((a, b) => (a.validade || a.prevista || "").localeCompare(b.validade || b.prevista || "") || lojaNome(a.loja).localeCompare(lojaNome(b.loja)))).slice(0, p === "LOJA" ? 20 : 8), "Para pesquisar" + (p !== "LOJA" && abertas.length > 8 ? " (" + abertas.length + ", veja todas em Pesquisas)" : ""))}`, {
+ tiles.push(`<button class="tile" data-act="nav" data-v="bases"><b>${isPricing() ? "Bases" : "Produtos"}</b><span>${isAdm() ? "Incluir, editar e excluir" : isPricing() ? "Produtos, v\xednculos e envios" : "Consultar produtos"}</span></button>`);
+ if (isPricing()) tiles.push(`<button class="tile" data-act="nav" data-v="exportar"><b>Exportar e enviar</b><span>TXT, Excel, e-mail e WhatsApp</span></button>`);
+ return shell("In\xedcio", `<div class="hello"><div class="avatar" aria-hidden="true">${esc((String(u.nome || u.login).match(/[A-Za-z\u00c0-\u00fa]/) || [ "?" ])[0].toUpperCase())}</div><div style="min-width:0"><h2 style="margin:0">Ol\xe1, ${esc(u.nome)}</h2><div class="muted small">${esc(p)}${p === "LOJA" ? " \xb7 " + userLojas(u).map(lojaNome).join(", ") : ""}</div></div></div>\n  <div class="grid">${tiles.join("")}</div>\n  ${listCards(abertas.sort(((a, b) => (a.validade || a.prevista || "").localeCompare(b.validade || b.prevista || "") || lojaNome(a.loja).localeCompare(lojaNome(b.loja)))).slice(0, p === "LOJA" ? 20 : 8), "Para pesquisar" + (p !== "LOJA" && abertas.length > 8 ? " (" + abertas.length + ", veja todas em Pesquisas)" : ""))}`, {
   backBtn: false
  });
 };
@@ -1041,7 +1089,7 @@ VIEWS.lista = () => {
   const vv = S.vinc.find((v => +v.loja === +l.loja && +v.conc === +c));
   return `<button class="li" data-act="pickConc" data-c="${c}"><div class="t"><div>${esc(concNome(c))}</div><div class="muted small">${esc(vv ? vv.classif + " \xb7 " + vv.pesquisador : "")} \xb7 ${d}/${itensOf(l).length} coletados</div><div class="bar" style="margin-top:6px"><i style="width:${itensOf(l).length ? d * 100 / itensOf(l).length : 0}%"></i></div></div>${fin ? `<span class="pill ok">Finalizado</span>` : d ? `<span class="pill warn">Em coleta</span>` : `<span class="pill">Iniciar</span>`}</button>`;
  })).join("");
- return shell(l.nome, `<div class="card"><div class="row" style="justify-content:space-between"><div><h3>${esc(lojaNome(l.loja))}</h3><div class="muted small">${listaSub(l)}${l.criadoPor && l.criadoPor !== "AUTO" ? " \xb7 criada por " + esc(l.criadoPor) : ""}</div></div>${stPill(stOf(l))}</div>\n    <div class="muted small">Data da coleta: <b class="mono">${fmtD(now())}</b> (autom\xe1tica)${l.validade ? ` \xb7 v\xe1lida at\xe9 <b class="mono">${fmtYmd(l.validade)}</b>` : ""} \xb7 ${ext} produto(s) extra \xb7 ${auxN} sem cadastro</div>\n    ${expirada(l) ? `<p class="err small">Esta pesquisa venceu em ${fmtYmd(l.validade)}. N\xe3o aceita mais pre\xe7os; a pr\xf3xima rodada aparece no dia da pesquisa.</p>` : ""}</div>\n    <h2>Escolha o concorrente</h2><div class="list">${rows}</div>\n    <div class="row">${l.status !== "Conclu\xedda" && !expirada(l) && !l.virtual ? `<button class="btn tag grow" data-act="finLista">Finalizar pesquisa</button>` : ""}<button class="btn grow" data-act="expLista">Exportar / WhatsApp</button><button class="btn grow" data-act="expTxt">Exportar TXT</button>${isPricing() ? `<button class="btn grow" data-act="nav" data-v="analise" data-id="${esc(l.id)}">Comparar pre\xe7os</button>${l.virtual ? "" : `<button class="btn bad" data-act="delLista">Excluir</button>`}` : ""}</div>`);
+ return shell(l.nome, `<div class="card"><div class="row" style="justify-content:space-between"><div><h3>${esc(lojaNome(l.loja))}</h3><div class="muted small">${listaSub(l)}${l.criadoPor && l.criadoPor !== "AUTO" ? " \xb7 criada por " + esc(l.criadoPor) : ""}</div></div>${stPill(stOf(l))}</div>\n    <div class="muted small">Data da coleta: <b class="mono">${fmtD(now())}</b> (autom\xe1tica)${l.validade ? ` \xb7 v\xe1lida at\xe9 <b class="mono">${fmtYmd(l.validade)}</b>` : ""} \xb7 ${ext} produto(s) extra \xb7 ${auxN} sem cadastro</div>\n    ${expirada(l) ? `<p class="err small">Esta pesquisa venceu em ${fmtYmd(l.validade)}. N\xe3o aceita mais pre\xe7os; a pr\xf3xima rodada aparece no dia da pesquisa.</p>` : ""}</div>\n    <h2>Escolha o concorrente</h2><div class="list">${rows}</div>\n    <div class="row">${l.status !== "Conclu\xedda" && !expirada(l) && !l.virtual ? `<button class="btn tag grow" data-act="finLista">Finalizar pesquisa</button>` : ""}${isPricing() ? `<button class="btn grow" data-act="expLista">Exportar e enviar</button><button class="btn grow" data-act="expTxt">Exportar TXT</button><button class="btn grow" data-act="nav" data-v="analise" data-id="${esc(l.id)}">Comparar pre\xe7os</button>${l.virtual ? "" : `<button class="btn bad" data-act="delLista">Excluir</button>`}` : ""}</div>`);
 };
 
 let COLV = 0;
@@ -1232,9 +1280,9 @@ VIEWS.conc = () => {
  const done = items.filter((s => S.coletas[`${l.id}-${V.conc}-${s}`])).length;
  const extra = !items.includes(+seq);
  const ean = String(p.ean || "").split(/[,;\s]+/)[0] || c.ean || "";
- const fld = (id, lab, v) => `<label class="f">${lab}<input class="in price" id="${id}" inputmode="decimal" placeholder="0,00" value="${v != null ? esc(money(v)) : ""}" autocomplete="off"></label>`;
- return shell(concNome(V.conc), `<div class="row" style="justify-content:space-between"><span class="muted small">${esc(l.nome)} \xb7 ${esc(lojaNome(l.loja))}</span><span class="mono small">${extra ? "EXTRA" : items.indexOf(+seq) + 1 + "/" + items.length} \xb7 ${done} feitos</span></div>\n   <div class="bar"><i style="width:${done * 100 / items.length}%"></i></div>\n   <div class="row"><button class="btn tag grow" data-act="scan">\u25ae\u25af\u25ae Escanear</button><button class="btn grow" data-act="buscar">Buscar</button><button class="btn grow" data-act="itens">Itens</button><button class="btn grow" data-act="colFoto" aria-label="Tirar foto para confer\xeancia">Foto${nF ? " (" + nF + ")" : ""}</button></div>\n   <div class="tagcard"><div class="row" style="justify-content:space-between;align-items:flex-start"><span class="meta">SEQ ${esc(p.seq)} \xb7 ${esc([ p.n2, p.n3, p.n4 ].filter(Boolean).join(" \u203a "))}</span>${c.upd ? `<span class="pill ok">Coletado</span>` : extra ? `<span class="pill warn">Extra</span>` : ""}</div>\n     <div class="nm">${esc(p.nome)}</div><div class="meta">${esc(p.n5)}${ean ? " \xb7 EAN " + esc(ean) : " \xb7 sem EAN na base"}</div>${ean ? `<div class="ean">${eanSvg(ean)}</div>` : ""}${nF ? `<div class="row">${fotosItem.slice(-4).map((f => fotoTag(f.foto, "Foto de confer\xeancia", "width:56px;height:56px;object-fit:cover;border-radius:6px"))).join("")}</div>` : ""}</div>\n   <div class="f2">${fld("pReg", "Pre\xe7o regular", c.reg)}${fld("pClub", "Pre\xe7o club / fidelidade", c.club)}${fld("pCx", "Pre\xe7o caixa / atacado", c.caixa)}${fld("pApp", "Pre\xe7o app / digital", c.app)}</div>\n   <label class="f">Qtd. m\xednima no atacado / un. na caixa<input class="in mono" id="pCxQ" inputmode="numeric" value="${esc(c.caixaQtd || "")}"></label>\n   <div class="row"><label class="chk of ${c.oferta ? "on" : ""}"><input type="checkbox" id="pOf" ${c.oferta ? "checked" : ""}> Oferta</label><label class="chk ${c.naoEnc ? "on" : ""}"><input type="checkbox" id="pNe" ${c.naoEnc ? "checked" : ""}> N\xe3o encontrado</label></div>\n   <p class="err" id="cErr"></p>\n   <div class="row"><button class="btn sm" data-act="concFim">Concluir este concorrente</button>${c.upd ? `<button class="btn sm bad" data-act="limparCol">Apagar coleta</button>` : ""}</div>`, {
-  foot: `<button class="btn" data-act="prev" aria-label="Anterior">\u2039</button><button class="btn" data-act="skip">Pular</button><button class="btn pri" style="flex:2" data-act="saveNext">Salvar e pr\xf3ximo \u203a</button>`
+ const fld = (id, lab, v) => `<label class="f">${lab}<input class="in price" id="${id}" type="text" inputmode="numeric" pattern="[0-9]*" lang="pt-BR" placeholder="0,00" value="${v != null ? esc(money(v)) : ""}" autocomplete="off" enterkeyhint="next"></label>`;
+ return shell(concNome(V.conc), `<div class="row" style="justify-content:space-between"><span class="muted small">${esc(l.nome)} \xb7 ${esc(lojaNome(l.loja))}</span><span class="mono small">${extra ? "EXTRA" : items.indexOf(+seq) + 1 + "/" + items.length} \xb7 ${done} feitos</span></div>\n   <div class="bar"><i style="width:${done * 100 / items.length}%"></i></div>\n   <div class="row"><button class="btn grow" data-act="buscar">Buscar</button><button class="btn grow" data-act="itens">Itens</button><button class="btn grow" data-act="colFoto" aria-label="Tirar foto para confer\xeancia">Foto${nF ? " (" + nF + ")" : ""}</button></div>\n   <div class="tagcard"><div class="row" style="justify-content:space-between;align-items:flex-start"><span class="meta">SEQ ${esc(p.seq)} \xb7 ${esc([ p.n2, p.n3, p.n4 ].filter(Boolean).join(" \u203a "))}</span>${c.upd ? `<span class="pill ok">Coletado</span>` : extra ? `<span class="pill warn">Extra</span>` : ""}</div>\n     <div class="nm">${esc(p.nome)}</div><div class="meta">${esc(p.n5)}${ean ? " \xb7 EAN " + esc(ean) : " \xb7 sem EAN na base"}</div>${ean ? `<div class="ean">${eanSvg(ean)}</div>` : ""}${nF ? `<div class="row">${fotosItem.slice(-4).map((f => fotoTag(f.foto, "Foto de confer\xeancia", "width:56px;height:56px;object-fit:cover;border-radius:6px"))).join("")}</div>` : ""}</div>\n   <div class="f2">${fld("pReg", "Pre\xe7o regular", c.reg)}${fld("pClub", "Pre\xe7o club / fidelidade", c.club)}${fld("pCx", "Pre\xe7o caixa / atacado", c.caixa)}${fld("pApp", "Pre\xe7o app / digital", c.app)}</div>\n   <label class="f">Qtd. m\xednima no atacado / un. na caixa<input class="in mono" id="pCxQ" inputmode="numeric" pattern="[0-9]*" value="${esc(c.caixaQtd || "")}"></label>\n   <div class="row"><label class="chk of ${c.oferta ? "on" : ""}"><input type="checkbox" id="pOf" ${c.oferta ? "checked" : ""}> Oferta</label><label class="chk ${c.naoEnc ? "on" : ""}"><input type="checkbox" id="pNe" ${c.naoEnc ? "checked" : ""}> N\xe3o encontrado</label></div>\n   <p class="err" id="cErr"></p>\n   <div class="row"><button class="btn sm" data-act="concFim">Concluir este concorrente</button>${c.upd ? `<button class="btn sm bad" data-act="limparCol">Apagar coleta</button>` : ""}</div>`, {
+  foot: `<button class="btn" style="flex:0 0 44px;padding:0" data-act="prev" aria-label="Item anterior">\u2039</button><button class="btn" style="flex:0 0 auto;padding:10px" data-act="skip">Pular</button><button class="btn pri" style="flex:1;padding:10px 8px" data-act="saveNext">Salvar \u203a</button><button class="fab" data-act="scan" aria-label="Escanear c\xf3digo de barras">${ico("scan")}<span>Escanear</span></button>`
  });
 };
 
@@ -1590,7 +1638,15 @@ function editForm(t, k) {
  };
 }
 
+VIEWS.conta = () => {
+ const u = S.user;
+ return shell("Conta", `<div class="card"><div class="hello"><div class="avatar" aria-hidden="true">${esc((String(u.nome || u.login).match(/[A-Za-z\u00c0-\u00fa]/) || [ "?" ])[0].toUpperCase())}</div><div style="min-width:0"><h3>${esc(u.nome)}</h3><div class="muted small mono">${esc(u.login)} \xb7 ${esc(u.perfil)}</div></div></div>\n   ${u.perfil === "LOJA" ? `<p class="small">Lojas: ${esc(userLojas(u).map(lojaNome).join(", "))}</p>` : ""}</div>\n  <div class="card"><h3>Sincroniza\xe7\xe3o</h3><p class="small">${esc(syncLabel())}${S.cfg.lastPull ? " \xb7 \xfaltima atualiza\xe7\xe3o " + fmtDT(S.cfg.lastPull) : ""}</p><p class="muted small">Os pre\xe7os coletados ficam guardados no aparelho e v\xe3o sozinhos para a planilha do Google Drive sempre que houver internet.</p><button class="btn" data-act="syncinfo">Ver detalhes e atualizar</button></div>\n  <div class="card"><p class="muted small">Vers\xe3o ${APPV} \xb7 ${S.prodArr.length.toLocaleString("pt-BR")} produtos no aparelho</p><button class="btn bad" data-act="logout">Sair do app</button></div>`, {
+  backBtn: false
+ });
+};
+
 VIEWS.exportar = () => {
+ if (!isPricing()) return VIEWS.home();
  const u = S.user;
  const ls = Object.values(S.listas).filter((l => u.perfil !== "LOJA" || userLojas(u).includes(+l.loja))).sort(((a, b) => (b.criada || 0) - (a.criada || 0)));
  return shell("Exportar", `<div class="card"><h3>Coletas</h3><label class="f">Lista<select class="in" id="exL"><option value="">Todas as listas vis\xedveis</option>${ls.map((l => `<option value="${esc(l.id)}">${esc(l.nome)} \xb7 ${esc(lojaNome(l.loja))}</option>`)).join("")}</select></label>\n   <div class="row"><button class="btn pri grow" data-act="exCol" data-fmt="xlsx">Excel .xlsx</button><button class="btn grow" data-act="exCol" data-fmt="csv">CSV</button><button class="btn tag grow" data-act="exTxt">TXT (layout)</button></div>\n   <p class="muted small">TXT: um arquivo por concorrente, linha = concorrente (6) + EAN/DUN (14) + pre\xe7o sem v\xedrgula (8) + S/N oferta + 1. Ex.: 027300 07898279790394 00000699 N1.</p></div>\n   <div class="card"><h3>WhatsApp do Pricing</h3><label class="f">N\xfamero com DDD (opcional, para abrir a conversa)<input class="in mono" id="waN" inputmode="tel" placeholder="67999999999" value="${esc(S.cfg.wa || "")}"></label><button class="btn sm" data-act="saveWa">Salvar n\xfamero</button>\n   <p class="muted small">No celular, o bot\xe3o de exportar abre o compartilhamento do sistema para escolher o WhatsApp. Quando o compartilhamento n\xe3o estiver dispon\xedvel, o arquivo \xe9 salvo e voc\xea o anexa na conversa.</p></div>\n   ${isPricing() ? `<div class="card"><h3>Base auxiliar</h3><button class="btn" data-act="expAux">Exportar base auxiliar com fotos</button></div>` : ""}\n   <div class="card"><h3>Sincroniza\xe7\xe3o</h3><p class="small">${HAS_GS ? "Cada pre\xe7o \xe9 gravado no aparelho e enviado sozinho para a planilha do Google Drive, em segundo plano. Sem internet, fica na fila e sobe quando a conex\xe3o voltar." : "Modo teste: aberto fora do link do Google, nada \xe9 enviado."}${S.cfg.lastPull ? " \xdaltima atualiza\xe7\xe3o: " + fmtDT(S.cfg.lastPull) + "." : ""}</p><p class="mono small">${S.queue.length} registro(s) na fila${syncErr ? " \xb7 " + esc(syncErr) : ""}</p></div>`);
@@ -1756,6 +1812,7 @@ async function payloadFiles(files) {
 }
 
 function sendFiles(files, o) {
+ if (!isPricing()) return toast("Envio de arquivos \xe9 exclusivo do Pricing");
  V._sf = {
   files: files,
   ...o
@@ -2104,7 +2161,7 @@ function auxForm(pre = {}) {
   fotoF: null,
   fotoE: null
  };
- modal(`<h3>Produto sem cadastro</h3><p class="muted small">N\xe3o existe na base de fam\xedlias. Ser\xe1 enviado para a base auxiliar com as duas fotos.</p>\n   <form id="fax" class="card" style="padding:0;border:0;background:transparent"><label class="f">EAN<input class="in mono" name="ean" inputmode="numeric" value="${esc(pre.ean || "")}" required></label>\n   <label class="f">Descri\xe7\xe3o do produto<input class="in" name="desc" value="${esc(pre.desc || "")}" placeholder="Marca, tipo, sabor" required></label>\n   <label class="f">Gramagem / unidade<input class="in" name="unid" placeholder="Ex.: 1L, 500G, 12UN"></label>\n   <div class="f2"><label class="f">Pre\xe7o regular<input class="in price" name="reg" inputmode="decimal"></label><label class="f">Pre\xe7o club<input class="in price" name="club" inputmode="decimal"></label><label class="f">Pre\xe7o caixa<input class="in price" name="caixa" inputmode="decimal"></label><label class="f">Pre\xe7o app<input class="in price" name="app" inputmode="decimal"></label></div>\n   <label class="chk of"><input type="checkbox" name="oferta"> Oferta</label>\n   <div class="ph"><label id="lfF">Foto da frente do produto<input type="file" accept="image/&#42;" capture="environment" id="fF"></label><label id="lfE">Foto do c\xf3digo de barras na g\xf4ndola<input type="file" accept="image/&#42;" capture="environment" id="fE"></label></div>\n   <p class="err" id="axErr"></p><div class="row"><button type="button" class="btn grow" data-act="mclose">Cancelar</button><button class="btn pri grow">Salvar na base auxiliar</button></div></form>`);
+ modal(`<h3>Produto sem cadastro</h3><p class="muted small">N\xe3o existe na base de fam\xedlias. Ser\xe1 enviado para a base auxiliar com as duas fotos.</p>\n   <form id="fax" class="card" style="padding:0;border:0;background:transparent"><label class="f">EAN<input class="in mono" name="ean" inputmode="numeric" value="${esc(pre.ean || "")}" required></label>\n   <label class="f">Descri\xe7\xe3o do produto<input class="in" name="desc" value="${esc(pre.desc || "")}" placeholder="Marca, tipo, sabor" required></label>\n   <label class="f">Gramagem / unidade<input class="in" name="unid" placeholder="Ex.: 1L, 500G, 12UN"></label>\n   <div class="f2"><label class="f">Pre\xe7o regular<input class="in price" name="reg" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0,00"></label><label class="f">Pre\xe7o club<input class="in price" name="club" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0,00"></label><label class="f">Pre\xe7o caixa<input class="in price" name="caixa" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0,00"></label><label class="f">Pre\xe7o app<input class="in price" name="app" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0,00"></label></div>\n   <label class="chk of"><input type="checkbox" name="oferta"> Oferta</label>\n   <div class="ph"><label id="lfF">Foto da frente do produto<input type="file" accept="image/&#42;" capture="environment" id="fF"></label><label id="lfE">Foto do c\xf3digo de barras na g\xf4ndola<input type="file" accept="image/&#42;" capture="environment" id="fE"></label></div>\n   <p class="err" id="axErr"></p><div class="row"><button type="button" class="btn grow" data-act="mclose">Cancelar</button><button class="btn pri grow">Salvar na base auxiliar</button></div></form>`);
  const ph = (inp, lab, k) => {
   $(inp).onchange = async e => {
    const f = e.target.files[0];
@@ -2192,6 +2249,19 @@ const ACT = {
   syncErr = "";
   mclose();
   renderSync();
+ },
+ tab: el => {
+  const v = el.dataset.v;
+  if (V.name === v) return;
+  hist.length = 0;
+  if (v !== "home") hist.push({
+   name: "home"
+  });
+  V = {
+   name: v
+  };
+  render();
+  window.scrollTo(0, 0);
  },
  mclose: mclose,
  "mclose-bg": (el, e) => {
@@ -2340,14 +2410,16 @@ const ACT = {
   l.finalizadaPor = S.user.login;
   saveLista(l);
   render();
-  modal(`<h3>Lista finalizada</h3><p class="small">${HAS_GS ? "Os dados j\xe1 est\xe3o sendo enviados para a planilha no Google Drive. " : ""}Envie tamb\xe9m a planilha pelo WhatsApp se o Pricing pedir.</p><div class="row"><button class="btn grow" data-act="mclose">Fechar</button><button class="btn pri grow" data-act="expLista">Enviar .xlsx</button></div>`);
+  modal(`<h3>Pesquisa finalizada</h3><p class="small">Os pre\xe7os ${navigator.onLine ? "est\xe3o sendo enviados" : "ser\xe3o enviados assim que houver internet"} para a planilha do Pricing. N\xe3o \xe9 preciso mandar arquivo.</p><div class="row"><button class="btn grow" data-act="mclose">Fechar</button>${isPricing() ? `<button class="btn pri grow" data-act="expLista">Exportar e enviar</button>` : ""}</div>`);
  },
  expLista: () => {
   mclose();
+  if (!isPricing()) return;
   exportColetas(V.id || V.lista, "xlsx");
  },
  expTxt: () => {
   mclose();
+  if (!isPricing()) return;
   exportTxt([ V.id || V.lista ]);
  },
  exTxt: () => {
@@ -2956,6 +3028,36 @@ document.addEventListener("submit", (async e => {
  }
  KV.save("cfg");
  afterLogin();
+}));
+
+const fmtCent = d => {
+ d = String(d).replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 8);
+ if (!d) return "";
+ return (Number(d) / 100).toLocaleString("pt-BR", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+ });
+};
+
+document.addEventListener("focusin", (e => {
+ const el = e.target;
+ if (el.classList && el.classList.contains("price") && el.value) setTimeout((() => {
+  try {
+   el.select();
+  } catch (x) {}
+ }), 0);
+}));
+
+document.addEventListener("input", (e => {
+ const el = e.target;
+ if (!el.classList || !el.classList.contains("price")) return;
+ const v = fmtCent(el.value);
+ if (el.value !== v) {
+  el.value = v;
+  try {
+   el.setSelectionRange(v.length, v.length);
+  } catch (x) {}
+ }
 }));
 
 document.addEventListener("keydown", (e => {
