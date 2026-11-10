@@ -190,7 +190,7 @@ window.addEventListener("unhandledrejection", (function(e) {
 })();</script>
 <script>"use strict";
 
-const APPV = "G3.2";
+const APPV = "G3.3";
 
 const $ = s => document.querySelector(s);
 
@@ -927,7 +927,80 @@ function render() {
  renderSync();
  (AFTER[V.name] || (() => {}))();
  hydrateFotos();
+ if (V.name !== "conc") geoStop();
 }
+
+const GEO = {
+ pos: null,
+ err: "",
+ id: null
+};
+
+function geoTxt() {
+ if (GEO.pos && now() - GEO.pos.t < 3e5) return `Localiza\xe7\xe3o ativa \xb7 precis\xe3o ${GEO.pos.acc} m`;
+ return GEO.err ? `Localiza\xe7\xe3o ${GEO.err}` : "Buscando localiza\xe7\xe3o\u2026";
+}
+
+function geoShow() {
+ const e = $("#geoInfo");
+ if (e) {
+  e.textContent = geoTxt();
+  e.className = "small " + (GEO.pos && now() - GEO.pos.t < 3e5 ? "muted" : "err");
+ }
+}
+
+function geoStart() {
+ geoShow();
+ if (GEO.id != null) return;
+ if (!navigator.geolocation) {
+  GEO.err = "indispon\xedvel neste aparelho";
+  return geoShow();
+ }
+ try {
+  GEO.id = navigator.geolocation.watchPosition((p => {
+   GEO.pos = {
+    lat: +p.coords.latitude.toFixed(6),
+    lng: +p.coords.longitude.toFixed(6),
+    acc: Math.round(p.coords.accuracy),
+    t: now()
+   };
+   GEO.err = "";
+   geoShow();
+  }), (e => {
+   GEO.err = e.code === 1 ? "bloqueada: permita o acesso \xe0 localiza\xe7\xe3o" : IN_FRAME ? "indispon\xedvel pelo link do Google; use o app instalado" : "indispon\xedvel no momento";
+   geoShow();
+  }), {
+   enableHighAccuracy: true,
+   maximumAge: 6e4,
+   timeout: 3e4
+  });
+ } catch (e) {
+  GEO.err = "indispon\xedvel";
+  geoShow();
+ }
+}
+
+function geoStop() {
+ if (GEO.id != null) {
+  try {
+   navigator.geolocation.clearWatch(GEO.id);
+  } catch (e) {}
+  GEO.id = null;
+ }
+}
+
+const geoNow = () => GEO.pos && now() - GEO.pos.t < 3e5 ? {
+ lat: GEO.pos.lat,
+ lng: GEO.pos.lng,
+ acc: GEO.pos.acc
+} : {};
+
+const mapaUrl = x => x && x.lat != null && x.lat !== "" ? `https:/\/www.google.com/maps?q=${x.lat},${x.lng}` : "";
+
+const hora = t => t ? new Date(t).toLocaleTimeString("pt-BR", {
+ hour: "2-digit",
+ minute: "2-digit"
+}) : "";
 
 const FOTO = {};
 
@@ -1415,7 +1488,7 @@ VIEWS.conc = () => {
  const extra = !items.includes(+seq);
  const ean = String(p.ean || "").split(/[,;\s]+/)[0] || c.ean || "";
  const fld = (id, lab, v) => `<label class="f">${lab}<input class="in price" id="${id}" type="text" inputmode="numeric" pattern="[0-9]*" lang="pt-BR" placeholder="0,00" value="${v != null ? esc(money(v)) : ""}" autocomplete="off" enterkeyhint="next"></label>`;
- return shell(concNome(V.conc), `<div class="row" style="justify-content:space-between"><span class="muted small">${esc(l.nome)} \xb7 ${esc(lojaNome(l.loja))}</span><span class="mono small">${extra ? "EXTRA" : items.indexOf(+seq) + 1 + "/" + items.length} \xb7 ${done} feitos</span></div>\n   <div class="bar"><i style="width:${done * 100 / items.length}%"></i></div>\n   <div class="row"><button class="btn grow" data-act="buscar">Buscar</button><button class="btn grow" data-act="itens">Itens</button><button class="btn grow" data-act="colFoto" aria-label="Tirar foto para confer\xeancia">Foto${nF ? " (" + nF + ")" : ""}</button></div>\n   <div class="tagcard"><div class="row" style="justify-content:space-between;align-items:flex-start"><span class="meta">SEQ ${esc(p.seq)} \xb7 ${esc([ p.n2, p.n3, p.n4 ].filter(Boolean).join(" \u203a "))}</span>${c.upd ? `<span class="pill ok">Coletado</span>` : extra ? `<span class="pill warn">Extra</span>` : ""}</div>\n     <div class="nm">${esc(p.nome)}</div><div class="meta">${esc(p.n5)}${ean ? " \xb7 EAN " + esc(ean) : " \xb7 sem EAN na base"}</div>${ean ? `<div class="ean">${eanSvg(ean)}</div>` : ""}${nF ? `<div class="row">${fotosItem.slice(-4).map((f => fotoTag(f.foto, "Foto de confer\xeancia", "width:56px;height:56px;object-fit:cover;border-radius:6px"))).join("")}</div>` : ""}</div>\n   <div class="f2">${fld("pReg", "Pre\xe7o regular", c.reg)}${fld("pClub", "Pre\xe7o club / fidelidade", c.club)}${fld("pCx", "Pre\xe7o caixa / atacado", c.caixa)}${fld("pApp", "Pre\xe7o app / digital", c.app)}</div>\n   <label class="f">Qtd. m\xednima no atacado / un. na caixa<input class="in mono" id="pCxQ" inputmode="numeric" pattern="[0-9]*" value="${esc(c.caixaQtd || "")}"></label>\n   <div class="row"><label class="chk of ${c.oferta ? "on" : ""}"><input type="checkbox" id="pOf" ${c.oferta ? "checked" : ""}> Oferta</label><label class="chk ${c.naoEnc ? "on" : ""}"><input type="checkbox" id="pNe" ${c.naoEnc ? "checked" : ""}> N\xe3o encontrado</label></div>\n   <p class="err" id="cErr"></p>\n   <div class="row"><button class="btn sm" data-act="concFim">Concluir este concorrente</button>${c.upd ? `<button class="btn sm bad" data-act="limparCol">Apagar coleta</button>` : ""}</div>`, {
+ return shell(concNome(V.conc), `<div class="row" style="justify-content:space-between"><span class="muted small">${esc(l.nome)} \xb7 ${esc(lojaNome(l.loja))}</span><span class="mono small">${extra ? "EXTRA" : items.indexOf(+seq) + 1 + "/" + items.length} \xb7 ${done} feitos</span></div>\n   <div class="bar"><i style="width:${done * 100 / items.length}%"></i></div>\n   <div id="geoInfo" class="small muted">${esc(geoTxt())}</div>\n   <div class="row"><button class="btn grow" data-act="buscar">Buscar</button><button class="btn grow" data-act="itens">Itens</button><button class="btn grow" data-act="colFoto" aria-label="Tirar foto para confer\xeancia">Foto${nF ? " (" + nF + ")" : ""}</button></div>\n   <div class="tagcard"><div class="row" style="justify-content:space-between;align-items:flex-start"><span class="meta">SEQ ${esc(p.seq)} \xb7 ${esc([ p.n2, p.n3, p.n4 ].filter(Boolean).join(" \u203a "))}</span>${c.upd ? `<span class="pill ok">Coletado ${esc(hora(c.dt))}</span>` : extra ? `<span class="pill warn">Extra</span>` : ""}</div>${c.upd ? `<div class="meta">Coletado em ${esc(fmtDT(c.dt))}${c.lat != null && c.lat !== "" ? ` \xb7 <a href="${esc(mapaUrl(c))}" target="_blank" rel="noopener" style="color:inherit">ver local no mapa (\xb1${esc(c.acc)} m)</a>` : " \xb7 sem localiza\xe7\xe3o"}</div>` : ""}\n     <div class="nm">${esc(p.nome)}</div><div class="meta">${esc(p.n5)}${ean ? " \xb7 EAN " + esc(ean) : " \xb7 sem EAN na base"}</div>${ean ? `<div class="ean">${eanSvg(ean)}</div>` : ""}${nF ? `<div class="row">${fotosItem.slice(-4).map((f => fotoTag(f.foto, "Foto de confer\xeancia", "width:56px;height:56px;object-fit:cover;border-radius:6px"))).join("")}</div>` : ""}</div>\n   <div class="f2">${fld("pReg", "Pre\xe7o regular", c.reg)}${fld("pClub", "Pre\xe7o club / fidelidade", c.club)}${fld("pCx", "Pre\xe7o caixa / atacado", c.caixa)}${fld("pApp", "Pre\xe7o app / digital", c.app)}</div>\n   <label class="f">Qtd. m\xednima no atacado / un. na caixa<input class="in mono" id="pCxQ" inputmode="numeric" pattern="[0-9]*" value="${esc(c.caixaQtd || "")}"></label>\n   <div class="row"><label class="chk of ${c.oferta ? "on" : ""}"><input type="checkbox" id="pOf" ${c.oferta ? "checked" : ""}> Oferta</label><label class="chk ${c.naoEnc ? "on" : ""}"><input type="checkbox" id="pNe" ${c.naoEnc ? "checked" : ""}> N\xe3o encontrado</label></div>\n   <p class="err" id="cErr"></p>\n   <div class="row"><button class="btn sm" data-act="concFim">Concluir este concorrente</button>${c.upd ? `<button class="btn sm bad" data-act="limparCol">Apagar coleta</button>` : ""}</div>`, {
   foot: `<button class="btn" style="flex:0 0 44px;padding:0" data-act="prev" aria-label="Item anterior">\u2039</button><button class="btn" style="flex:0 0 auto;padding:10px" data-act="skip">Pular</button><button class="btn pri" style="flex:1;padding:10px 8px" data-act="saveNext">Salvar \u203a</button><button class="fab" data-act="scan" aria-label="Escanear c\xf3digo de barras">${ico("scan")}<span>Escanear</span></button>`
  });
 };
@@ -1428,6 +1501,7 @@ AFTER.login = () => {
 };
 
 AFTER.conc = () => {
+ geoStart();
  const r = $("#pReg");
  if (r && !r.value && !("ontouchstart" in window)) r.focus();
  document.querySelectorAll(".chk input").forEach((i => i.onchange = () => i.parentElement.classList.toggle("on", i.checked)));
@@ -1603,7 +1677,7 @@ VIEWS.prodLista = () => {
   if (!x) return `<td class="n muted">\u2013</td>`;
   if (x.naoEnc) return `<td class="n muted">N/E</td>`;
   const v = x.reg ?? x.club ?? x.caixa ?? x.app;
-  return `<td class="n">${money(v)}${x.oferta ? " \u2605" : ""}</td>`;
+  return `<td class="n">${money(v)}${x.oferta ? " \u2605" : ""}<div class="muted" style="font-size:11px">${esc(fmtD(x.dt).slice(0, 5))} ${esc(hora(x.dt))}${x.lat != null && x.lat !== "" ? ` \xb7 <a href="${esc(mapaUrl(x))}" target="_blank" rel="noopener">mapa</a>` : ""}</div></td>`;
  };
  return shell("Produtos da pesquisa", `<p class="small"><b>${esc(l.nome)}</b> \xb7 ${esc(lojaNome(l.loja))} \xb7 <span class="mono">${esc(codigoOf(l))}</span></p>\n   <label class="f">Buscar produto<input class="in" id="plQ" value="${esc(P.q)}" placeholder="Nome, SEQ, EAN ou gramagem" autocomplete="off"></label>\n   <div class="tabs">${[ [ "todos", "Todos" ], [ "pend", "Pendentes" ], [ "parc", "Parciais" ], [ "ok", "Coletados" ] ].map((([k, t]) => `<button class="${P.f === k ? "on" : ""}" data-act="plF" data-f="${k}">${t}</button>`)).join("")}</div>\n   <p class="muted small">${it.length.toLocaleString("pt-BR")} produto(s)${isTodos(l.todos) || l.modelo && !l.itensProprios && isTodos((pesqBy(l.modelo) || {}).todos) ? " \xb7 pesquisa com todos os produtos da base" : ""}. \u2605 = oferta, N/E = n\xe3o encontrado.</p>\n   <div class="tw"><table><thead><tr><th>SEQ</th><th>Produto</th><th>EAN</th>${cs.map((c => `<th>${esc(concNome(c))}</th>`)).join("")}</tr></thead><tbody>${page.map((s => {
   const p = S.prods.get(s) || {};
@@ -1861,7 +1935,12 @@ function colRows(lid) {
   const p = S.prods.get(+c.seq) || {};
   const l = S.listas[c.lista] || {};
   return {
-   DATA_COLETA: fmtDT(c.dt),
+   DATA_COLETA: c.dt ? fmtD(c.dt) : "",
+   HORA: c.dt ? new Date(c.dt).toLocaleTimeString("pt-BR") : "",
+   LATITUDE: c.lat ?? "",
+   LONGITUDE: c.lng ?? "",
+   PRECISAO_M: c.acc ?? "",
+   MAPA: mapaUrl(c),
    PESQUISA: c.pesquisa || l.modeloNome || l.nome || c.listaNome || c.lista,
    TIPO: c.modelo || l.modelo ? "FIXA" : "AVULSA",
    INICIO: fmtYmd(c.inicio || l.inicio || l.prevista || ""),
@@ -2163,7 +2242,10 @@ async function exportColetas(lid, fmt) {
   SEQ_PRODUTO: f.seq,
   PRODUTO: f.nome,
   USUARIO: f.user,
-  LINK: String(f.foto || "").startsWith("http") ? f.foto : "(enviando)"
+  LINK: String(f.foto || "").startsWith("http") ? f.foto : "(enviando)",
+  LATITUDE: f.lat ?? "",
+  LONGITUDE: f.lng ?? "",
+  MAPA: mapaUrl(f)
  })));
  const more = [];
  if (ax.length) more.push([ "Sem cadastro", ax ]);
@@ -2300,6 +2382,7 @@ $("#fileFoto").onchange = async e => {
  const l = getLista(V.lista);
  const p = S.prods.get(+V.seq) || {};
  saveFotoCol({
+  ...geoNow(),
   id: "F" + uid(),
   lista: l.id,
   listaNome: l.nome,
@@ -2385,6 +2468,7 @@ function auxForm(pre = {}) {
   const reg = pnum(fd.reg), club = pnum(fd.club), cx = pnum(fd.caixa), app = pnum(fd.app);
   if ([ reg, club, cx, app ].every((x => x == null))) return err("Informe pelo menos um pre\xe7o.");
   saveAux({
+   ...geoNow(),
    id: uid(),
    ean: fd.ean.replace(/\D/g, ""),
    desc: norm(fd.desc),
@@ -2555,6 +2639,7 @@ const ACT = {
   const extra = !itensOf(l).includes(+V.seq);
   if (expirada(l)) return err("Pesquisa vencida em " + fmtYmd(l.validade) + ". O pre\xe7o n\xe3o foi salvo.");
   saveColeta({
+   ...geoNow(),
    id: colKey(),
    lista: l.id,
    listaNome: l.nome,
