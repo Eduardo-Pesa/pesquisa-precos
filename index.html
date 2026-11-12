@@ -50,6 +50,7 @@ h3{font:600 15px/1.3 var(--f-body);margin:0}
 .grid{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
 @media (min-width:640px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .tile{background:var(--surface);border:0;box-shadow:var(--sh);border-radius:var(--r);padding:14px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-height:92px;min-width:0}
+.audg td{background:var(--surface2);font-weight:600}
 .tile b{font:700 18px/1.1 var(--f-display);letter-spacing:.03em;text-transform:uppercase;color:var(--brand);overflow-wrap:anywhere}
 .tile span{font-size:13px;color:var(--muted)}
 .tile:active,.btn:active,.li:active{box-shadow:var(--sh-in)}
@@ -190,7 +191,7 @@ window.addEventListener("unhandledrejection", (function(e) {
 })();</script>
 <script>"use strict";
 
-const APPV = "G3.4";
+const APPV = "G3.5";
 
 const $ = s => document.querySelector(s);
 
@@ -984,6 +985,7 @@ function tabbar() {
  } else t.push([ "bases", "box", "Produtos" ]);
  t.push([ "conta", "user", "Conta" ]);
  const cur = {
+  auditoria: "home",
   lista: "listas",
   analise: "listas",
   listaEdit: "listas",
@@ -1164,6 +1166,7 @@ VIEWS.home = () => {
  if (isPricing()) tiles.push(`<button class="tile" data-act="nav" data-v="novaLista"><b>Lista avulsa</b><span>Pesquisa \xfanica, fora da rotina</span></button>`);
  if (isPricing()) tiles.push(`<button class="tile" data-act="nav" data-v="aux"><b>Base auxiliar</b><span>${auxP} produto(s) sem cadastro</span></button>`);
  tiles.push(`<button class="tile" data-act="nav" data-v="bases"><b>${isPricing() ? "Bases" : "Produtos"}</b><span>${isAdm() ? "Incluir, editar e excluir" : isPricing() ? "Produtos, v\xednculos e envios" : "Consultar produtos"}</span></button>`);
+ if (isPricing()) tiles.push(`<button class="tile" data-act="nav" data-v="auditoria"><b>Auditoria</b><span>Geradas, realizadas e aproveitamento por gerente</span></button>`);
  if (isPricing()) tiles.push(`<button class="tile" data-act="nav" data-v="exportar"><b>Exportar e enviar</b><span>TXT, Excel, e-mail e WhatsApp</span></button>`);
  return shell("In\xedcio", `<div class="hello"><div class="avatar" aria-hidden="true">${esc((String(u.nome || u.login).match(/[A-Za-z\u00c0-\u00fa]/) || [ "?" ])[0].toUpperCase())}</div><div style="min-width:0"><h2 style="margin:0">Ol\xe1, ${esc(u.nome)}</h2><div class="muted small">${esc(p)}${p === "LOJA" ? " \xb7 " + userLojas(u).map(lojaNome).join(", ") : ""}</div></div></div>\n  <div class="grid">${tiles.join("")}</div>\n  ${listCards(abertas.sort(((a, b) => (a.validade || a.prevista || "").localeCompare(b.validade || b.prevista || "") || lojaNome(a.loja).localeCompare(lojaNome(b.loja)))).slice(0, p === "LOJA" ? 20 : 8), "Para pesquisar" + (p !== "LOJA" && abertas.length > 8 ? " (" + abertas.length + ", veja todas em Pesquisas)" : ""))}`, {
   backBtn: false
@@ -1368,9 +1371,31 @@ function pesqFromData(d) {
   todos: d.todos,
   concs: d.concs,
   pesq: d.pesq,
-  ativa: d.ativa
+  ativa: d.ativa,
+  tipo: d.tipo || "",
+  criada: d.criada || ""
  };
 }
+
+const TIPOS = [ "N\xedvel 1", "N\xedvel 2", "Rota", "Presidente", "Back Light", "Sortimento", "Super Sens\xedveis", "Se\xe7\xf5es", "Pontual", "Fornecedor", "Outras" ];
+
+function tipoPesq(l) {
+ const m = l.modelo ? pesqBy(l.modelo) : null;
+ const t = l.tipoPesq || m && m.tipo || "";
+ if (t) return t;
+ const n = norm((l.modeloNome || "") + " " + (l.nome || ""));
+ if (/PRESID/.test(n)) return "Presidente";
+ if (/BACK ?LIGHT|BACKLIGHT/.test(n)) return "Back Light";
+ if (/ROTA/.test(n)) return "Rota";
+ if (/NIVEL ?1|N1\b/.test(n)) return "N\xedvel 1";
+ if (/NIVEL ?2|N2\b/.test(n)) return "N\xedvel 2";
+ if (/SORTIMENTO/.test(n)) return "Sortimento";
+ if (/SENSIV/.test(n)) return "Super Sens\xedveis";
+ if (/SECA|LIQUIDA|PERFUMARIA|LIMPEZA|PERECIVEIS|BAZAR|SECAO|SECOES/.test(n)) return "Se\xe7\xf5es";
+ return "Outras";
+}
+
+const tipoSel = v => `<label class="f">Tipo de pesquisa<select class="in" id="nlTipo"><option value="">Definir pelo nome</option>${TIPOS.map((t => `<option ${v === t ? "selected" : ""}>${t}</option>`)).join("")}</select></label>`;
 
 const pesqBy = id => S.pesq.find((m => String(m.id) === String(id)));
 
@@ -1435,6 +1460,7 @@ function rodadasAtuais() {
     modelo: m.id,
     modeloNome: m.nome,
     nome: m.nome,
+    tipoPesq: m.tipo || "",
     loja: +loja,
     concs: cs,
     inicio: c.ini,
@@ -1659,7 +1685,7 @@ VIEWS.novaLista = () => {
  const byB = {};
  S.lojas.filter((l => l.status !== "Desativado")).forEach((l => (byB[l.bandeira] = byB[l.bandeira] || []).push(l)));
  const pes = [ ...new Set(S.vinc.flatMap((v => String(v.pesquisador).split("/").map((s => s.trim())))).filter(Boolean)) ].sort();
- return shell("Nova lista", `<div class="card"><label class="f">Nome da lista<input class="in" id="nlNome" value="${esc(d.nome)}" placeholder="Ex.: Ofertas semana 45 \u2013 Mercearia"></label>\n   <div class="f2"><label class="f">Data da pesquisa<input class="in" type="date" id="nlPrev" value="${esc(d.prev)}"></label><label class="f">Validade (dias)<input class="in mono" id="nlVal" inputmode="numeric" value="${esc(d.val)}"></label>\n   <label class="f">Pesquisador dos concorrentes<select class="in" id="nlPesq"><option value="">Todos os v\xednculos</option>${pes.map((p => `<option ${d.pesq === p ? "selected" : ""}>${esc(p)}</option>`)).join("")}</select></label></div></div>\n   <div class="card"><h3>Lojas (${d.lojas.length})</h3>${Object.keys(byB).sort().map((b => `<div><div class="row" style="justify-content:space-between"><span class="pill">${esc(b)}</span><button class="btn sm" data-act="nlBand" data-b="${esc(b)}">Marcar bandeira</button></div><div class="chips" style="margin-top:6px">${byB[b].map((l => {
+ return shell("Nova lista", `<div class="card"><label class="f">Nome da lista<input class="in" id="nlNome" value="${esc(d.nome)}" placeholder="Ex.: Ofertas semana 45 \u2013 Mercearia"></label>\n   <div class="f2"><label class="f">Data da pesquisa<input class="in" type="date" id="nlPrev" value="${esc(d.prev)}"></label><label class="f">Validade (dias)<input class="in mono" id="nlVal" inputmode="numeric" value="${esc(d.val)}"></label></div><div class="f2">${tipoSel(d.tipo)}\n   <label class="f">Pesquisador dos concorrentes<select class="in" id="nlPesq"><option value="">Todos os v\xednculos</option>${pes.map((p => `<option ${d.pesq === p ? "selected" : ""}>${esc(p)}</option>`)).join("")}</select></label></div></div>\n   <div class="card"><h3>Lojas (${d.lojas.length})</h3>${Object.keys(byB).sort().map((b => `<div><div class="row" style="justify-content:space-between"><span class="pill">${esc(b)}</span><button class="btn sm" data-act="nlBand" data-b="${esc(b)}">Marcar bandeira</button></div><div class="chips" style="margin-top:6px">${byB[b].map((l => {
   const nc = S.vinc.filter((v => +v.loja === +l.cod)).length;
   return `<button class="chip ${d.lojas.includes(+l.cod) ? "on" : ""}" data-act="nlLoja" data-c="${l.cod}" ${nc ? "" : "title='Sem concorrentes vinculados'"}>${esc(l.empresa)}${nc ? "" : " \u26a0"}</button>`;
  })).join("")}</div></div>`)).join("")}</div>\n   ${pickerHtml(d)}<p class="err" id="nlErr"></p>`, {
@@ -1691,6 +1717,7 @@ function nlSync() {
  g("nlTodos", "todos", 1);
  g("peDia", "dia");
  g("elIni", "inicio");
+ g("nlTipo", "tipo");
  g("elFim", "fim");
  g("elSt", "status");
  g("peAtiva", "ativa", 1);
@@ -1760,7 +1787,7 @@ VIEWS.listaEdit = () => {
  const d = V.d;
  const l = getLista(d.id) || {};
  const cs = [ ...new Set(S.vinc.filter((v => +v.loja === +d.lojaE)).map((v => +v.conc)).concat(d.concs)) ];
- return shell("Editar pesquisa", `<div class="card"><div class="small mono" style="color:var(--brand)">${esc(codigoOf(l))} \xb7 ${esc(lojaNome(d.lojaE))}${l.modelo ? " \xb7 rodada da pesquisa fixa \u201c" + esc(l.modeloNome || "") + "\u201d" : ""}</div>\n   <label class="f">Nome<input class="in" id="nlNome" value="${esc(d.nome)}"></label>\n   <div class="f2"><label class="f">Data de in\xedcio<input class="in" type="date" id="elIni" value="${esc(d.inicio)}"></label><label class="f">Data de t\xe9rmino<input class="in" type="date" id="elFim" value="${esc(d.fim)}"></label></div>\n   <label class="f">Status<select class="in" id="elSt">${[ "Pendente", "Em andamento", "Conclu\xedda", "Cancelada" ].map((x => `<option ${d.status === x ? "selected" : ""}>${x}</option>`)).join("")}</select></label>\n   <p class="muted small">Conclu\xedda = realizada. Voltar para Pendente ou Em andamento reabre a pesquisa para as lojas. Cancelada some das listas em aberto.</p></div>\n   <div class="card"><h3>Concorrentes (${d.concs.length})</h3><div class="chips">${cs.map((c => `<button class="chip ${d.concs.includes(c) ? "on" : ""}" data-act="elConc" data-c="${c}">${esc(concNome(c))}</button>`)).join("")}</div></div>\n   ${pickerHtml(d)}${l.modelo ? `<p class="muted small">Mudar os produtos aqui vale s\xf3 para esta rodada. Para mudar todas as pr\xf3ximas, edite a pesquisa fixa.</p>` : ""}<p class="err" id="nlErr"></p>`, {
+ return shell("Editar pesquisa", `<div class="card"><div class="small mono" style="color:var(--brand)">${esc(codigoOf(l))} \xb7 ${esc(lojaNome(d.lojaE))}${l.modelo ? " \xb7 rodada da pesquisa fixa \u201c" + esc(l.modeloNome || "") + "\u201d" : ""}</div>\n   <label class="f">Nome<input class="in" id="nlNome" value="${esc(d.nome)}"></label>\n   <div class="f2"><label class="f">Data de in\xedcio<input class="in" type="date" id="elIni" value="${esc(d.inicio)}"></label><label class="f">Data de t\xe9rmino<input class="in" type="date" id="elFim" value="${esc(d.fim)}"></label></div>\n   ${tipoSel(d.tipo)}<label class="f">Status<select class="in" id="elSt">${[ "Pendente", "Em andamento", "Conclu\xedda", "Cancelada" ].map((x => `<option ${d.status === x ? "selected" : ""}>${x}</option>`)).join("")}</select></label>\n   <p class="muted small">Conclu\xedda = realizada. Voltar para Pendente ou Em andamento reabre a pesquisa para as lojas. Cancelada some das listas em aberto.</p></div>\n   <div class="card"><h3>Concorrentes (${d.concs.length})</h3><div class="chips">${cs.map((c => `<button class="chip ${d.concs.includes(c) ? "on" : ""}" data-act="elConc" data-c="${c}">${esc(concNome(c))}</button>`)).join("")}</div></div>\n   ${pickerHtml(d)}${l.modelo ? `<p class="muted small">Mudar os produtos aqui vale s\xf3 para esta rodada. Para mudar todas as pr\xf3ximas, edite a pesquisa fixa.</p>` : ""}<p class="err" id="nlErr"></p>`, {
   foot: `<button class="btn" data-act="back">Cancelar</button><button class="btn pri" style="flex:2" data-act="elSave">Salvar altera\xe7\xf5es</button>`
  });
 };
@@ -1822,6 +1849,218 @@ AFTER.prodLista = () => {
  };
 };
 
+function modeloInicio(m) {
+ if (m.criada) return String(m.criada).slice(0, 10);
+ let d = "";
+ for (const l of Object.values(S.listas)) if (l.modelo === m.id && (l.inicio || l.prevista) && (!d || (l.inicio || l.prevista) < d)) d = l.inicio || l.prevista;
+ return d || cicloAtual(m).ini || hojeS();
+}
+
+function rodadasPeriodo(de, ate) {
+ const out = new Map;
+ const hj = hojeS();
+ for (const l of Object.values(S.listas)) {
+  const d0 = l.inicio || l.prevista || ymdOf(l.criada);
+  if (d0 && d0 <= ate && (l.validade || d0) >= de) out.set(l.id, l);
+ }
+ for (const m of S.pesq) {
+  if (String(m.ativa).toUpperCase() === "N") continue;
+  const desde = modeloInicio(m);
+  const fim = ate < hj ? ate : hj;
+  const vistos = new Set;
+  for (let d = de < desde ? desde : de; d <= fim; d = addDays(d, 1)) {
+   const c = cicloAtual(m, d);
+   if (!c.ini || vistos.has(c.ini)) continue;
+   vistos.add(c.ini);
+   if (c.ini < desde) continue;
+   for (const loja of [ ...new Set(pesqLojas(m).map(mestreOf)) ]) {
+    const id = `R-${m.id}-${loja}-${c.ini.replace(/-/g, "")}`;
+    if (out.has(id)) continue;
+    if (S.listas[id]) {
+     out.set(id, S.listas[id]);
+     continue;
+    }
+    const cs = pesqConcs(m, loja);
+    if (!cs.length) continue;
+    out.set(id, {
+     id: id,
+     virtual: true,
+     modelo: m.id,
+     modeloNome: m.nome,
+     nome: m.nome,
+     tipoPesq: m.tipo || "",
+     loja: +loja,
+     concs: cs,
+     inicio: c.ini,
+     validade: c.fim,
+     prevista: c.ini,
+     status: "Pendente",
+     finConcs: []
+    });
+   }
+  }
+ }
+ return [ ...out.values() ].filter((l => l.status !== "Cancelada"));
+}
+
+const segNome = l => {
+ const x = lojaBy(l) || {};
+ return `Seg. ${x.segmento || "?"} \xb7 ${x.bandeira || ""}`.trim();
+};
+
+function audDados(F) {
+ const ls = rodadasPeriodo(F.de, F.ate).filter((l => {
+  const lj = lojaBy(l.loja) || {};
+  return (!F.ger || lj.ger === F.ger) && (!F.seg || String(lj.segmento) === F.seg) && (!F.tipo || tipoPesq(l) === F.tipo);
+ }));
+ const rows = new Map;
+ for (const l of ls) {
+  const lj = lojaBy(l.loja) || {};
+  const k = l.loja;
+  let r = rows.get(k);
+  if (!r) {
+   r = {
+    ger: lj.ger || "(sem gerente)",
+    seg: segNome(l.loja),
+    loja: l.loja,
+    nome: lojaNome(l.loja),
+    repl: replicasOf(l.loja),
+    ger_: 0,
+    real: 0,
+    fin: 0,
+    tot: 0,
+    done: 0,
+    tipos: {}
+   };
+   rows.set(k, r);
+  }
+  r.ger_++;
+  const g = listaProg(l);
+  const t = tipoPesq(l);
+  const tp = r.tipos[t] || (r.tipos[t] = {
+   ger: 0,
+   real: 0,
+   tot: 0,
+   done: 0
+  });
+  tp.ger++;
+  if (g.done > 0 || l.status === "Conclu\xedda") {
+   r.real++;
+   tp.real++;
+   r.tot += g.tot;
+   r.done += g.done;
+   tp.tot += g.tot;
+   tp.done += g.done;
+  }
+  if (l.status === "Conclu\xedda") r.fin++;
+ }
+ const porGer = new Map;
+ for (const r of [ ...rows.values() ].sort(((a, b) => a.ger.localeCompare(b.ger) || a.seg.localeCompare(b.seg) || a.loja - b.loja))) {
+  (porGer.get(r.ger) || porGer.set(r.ger, []).get(r.ger)).push(r);
+ }
+ return {
+  ls: ls,
+  porGer: porGer
+ };
+}
+
+const pct = (a, b) => b ? Math.round(a * 1e3 / b) / 10 : 0;
+
+const fmtP = (a, b) => pct(a, b).toLocaleString("pt-BR", {
+ maximumFractionDigits: 1
+}) + "%";
+
+const fmtN = n => Number(n || 0).toLocaleString("pt-BR");
+
+function somaAud(rs) {
+ const t = {
+  ger_: 0,
+  real: 0,
+  fin: 0,
+  tot: 0,
+  done: 0,
+  tipos: {}
+ };
+ for (const r of rs) {
+  [ "ger_", "real", "fin", "tot", "done" ].forEach((k => t[k] += r[k]));
+  for (const [k, v] of Object.entries(r.tipos)) {
+   const x = t.tipos[k] || (t.tipos[k] = {
+    ger: 0,
+    real: 0,
+    tot: 0,
+    done: 0
+   });
+   x.ger += v.ger;
+   x.real += v.real;
+   x.tot += v.tot;
+   x.done += v.done;
+  }
+ }
+ return t;
+}
+
+function audLinha(r, cls, label) {
+ return `<tr class="${cls || ""}"><td style="white-space:normal;min-width:120px">${label}</td><td class="n">${fmtN(r.ger_)}</td><td class="n">${fmtN(r.real)}</td><td class="n">${fmtP(r.real, r.ger_)}</td><td class="n">${fmtN(r.tot)}</td><td class="n">${fmtN(r.done)}</td><td class="n">${fmtN(Math.max(0, r.tot - r.done))}</td><td class="n"><b>${fmtP(r.done, r.tot)}</b></td></tr>`;
+}
+
+VIEWS.auditoria = () => {
+ if (!isPricing()) return VIEWS.home();
+ const h = hojeS();
+ const F = V.A || (V.A = {
+  de: h.slice(0, 8) + "01",
+  ate: h,
+  ger: "",
+  seg: "",
+  tipo: ""
+ });
+ const {ls: ls, porGer: porGer} = audDados(F);
+ const gers = [ ...new Set(S.lojas.map((l => l.ger)).filter(Boolean)) ].sort();
+ const segs = [ ...new Set(S.lojas.map((l => String(l.segmento))).filter(Boolean)) ].sort();
+ const all = somaAud([ ...porGer.values() ].flat());
+ const tiposUsados = TIPOS.filter((t => all.tipos[t]));
+ let tb = "";
+ for (const [g, rs] of porGer) {
+  const tg = somaAud(rs);
+  tb += audLinha(tg, "audg", `<b>${esc(g)}</b> <span class="muted small">(${rs.length} loja${rs.length > 1 ? "s" : ""})</span>`);
+  let seg = "";
+  for (const r of rs) {
+   if (r.seg !== seg) {
+    seg = r.seg;
+    tb += `<tr><td colspan="8" class="muted small" style="padding-top:4px;padding-bottom:4px">${esc(seg)}</td></tr>`;
+   }
+   tb += audLinha(r, "", `${esc(r.nome)}${r.repl.length ? `<div class="muted small">replica p/ ${r.repl.map((x => String(x).padStart(3, "0"))).join(", ")}</div>` : ""}`);
+  }
+ }
+ let an = "";
+ for (const [g, rs] of porGer) {
+  const tg = somaAud(rs);
+  an += `<tr class="audg"><td><b>${esc(g)}</b></td>${tiposUsados.map((t => {
+   const x = tg.tipos[t];
+   return `<td class="n">${x ? fmtN(x.done) + `<div class="muted small">${fmtP(x.done, x.tot)}</div>` : "\u2013"}</td>`;
+  })).join("")}<td class="n"><b>${fmtN(tg.done)}</b></td></tr>`;
+  for (const r of rs) an += `<tr><td style="white-space:normal;min-width:120px">${esc(r.nome)}</td>${tiposUsados.map((t => {
+   const x = r.tipos[t];
+   return `<td class="n">${x ? fmtN(x.done) + `<div class="muted small">de ${fmtN(x.tot)}</div>` : "\u2013"}</td>`;
+  })).join("")}<td class="n">${fmtN(r.done)}</td></tr>`;
+ }
+ return shell("Auditoria", `<div class="card"><div class="f2"><label class="f">De<input class="in" type="date" id="auDe" value="${esc(F.de)}"></label><label class="f">At\xe9<input class="in" type="date" id="auAte" value="${esc(F.ate)}"></label></div>\n    <div class="f2"><label class="f">Gerente operacional<select class="in" id="auGer"><option value="">Todos</option>${gers.map((g => `<option ${F.ger === g ? "selected" : ""}>${esc(g)}</option>`)).join("")}</select></label>\n    <label class="f">Segmento<select class="in" id="auSeg"><option value="">Todos</option>${segs.map((x => `<option value="${esc(x)}" ${F.seg === x ? "selected" : ""}>Seg. ${esc(x)} \xb7 ${esc([ ...new Set(S.lojas.filter((l => String(l.segmento) === x)).map((l => l.bandeira))) ].join("/"))}</option>`)).join("")}</select></label></div>\n    <label class="f">Tipo de pesquisa<select class="in" id="auTipo"><option value="">Todos</option>${TIPOS.map((t => `<option ${F.tipo === t ? "selected" : ""}>${t}</option>`)).join("")}</select></label></div>\n   <div class="grid"><div class="tile"><span>Pesquisas geradas</span><b class="mono">${fmtN(all.ger_)}</b></div><div class="tile"><span>Realizadas \xb7 aproveitamento</span><b class="mono">${fmtN(all.real)} \xb7 ${fmtP(all.real, all.ger_)}</b></div>\n    <div class="tile"><span>Pre\xe7os a pesquisar (nas realizadas)</span><b class="mono">${fmtN(all.tot)}</b></div><div class="tile"><span>Pesquisados \xb7 n\xe3o pesquisados</span><b class="mono">${fmtN(all.done)} \xb7 ${fmtN(Math.max(0, all.tot - all.done))}</b></div>\n    <div class="tile"><span>% de produtos pesquisados</span><b class="mono">${fmtP(all.done, all.tot)}</b></div><div class="tile"><span>Finalizadas</span><b class="mono">${fmtN(all.fin)}</b></div></div>\n   <h2>Por gerente, segmento e loja</h2>\n   <div class="tw"><table><thead><tr><th>Gerente / loja</th><th>Geradas</th><th>Realizadas</th><th>Aproveit.</th><th>A pesquisar</th><th>Pesquisados</th><th>N\xe3o pesquis.</th><th>% pesquis.</th></tr></thead><tbody>${tb || `<tr><td colspan="8" class="muted">Nenhuma pesquisa no per\xedodo.</td></tr>`}${porGer.size ? audLinha(all, "audg", "<b>TOTAL GERAL</b>") : ""}</tbody></table></div>\n   <h2>Anal\xedtico por tipo de pesquisa</h2><p class="muted small">Pre\xe7os pesquisados em cada tipo (e % do que havia para pesquisar).</p>\n   <div class="tw"><table><thead><tr><th>Gerente / loja</th>${tiposUsados.map((t => `<th>${esc(t)}</th>`)).join("")}<th>Total</th></tr></thead><tbody>${an || `<tr><td class="muted">Sem dados.</td></tr>`}</tbody></table></div>\n   <details class="card"><summary class="small" style="cursor:pointer;font-weight:600">Como os n\xfameros s\xe3o calculados</summary><p class="small">Geradas: pesquisas fixas e avulsas com in\xedcio ou validade dentro do per\xedodo (as fixas contam mesmo que a loja n\xe3o tenha aberto). Realizadas: tiveram ao menos um pre\xe7o coletado ou foram finalizadas. Aproveitamento = realizadas \xf7 geradas. A pesquisar = produtos \xd7 concorrentes das pesquisas realizadas. Pesquisados = pre\xe7os coletados (inclui \u201cn\xe3o encontrado\u201d e pre\xe7os replicados do mesmo SEQ-ALT). Lojas replicadas aparecem junto da loja onde a pesquisa \xe9 feita. O tipo vem do campo \u201cTipo de pesquisa\u201d ou, se vazio, do nome (Presidente, Back Light, Rota, N\xedvel 1, N\xedvel 2\u2026).</p></details>\n   <button class="btn pri" data-act="audExp">Exportar auditoria (Excel)</button>`);
+};
+
+AFTER.auditoria = () => {
+ const set = (id, k) => {
+  const e = $("#" + id);
+  if (e) e.onchange = () => {
+   V.A[k] = e.value;
+   render();
+  };
+ };
+ set("auDe", "de");
+ set("auAte", "ate");
+ set("auGer", "ger");
+ set("auSeg", "seg");
+ set("auTipo", "tipo");
+};
+
 VIEWS.pesqs = () => {
  const arr = [ ...S.pesq ].sort(((a, b) => String(a.nome).localeCompare(String(b.nome))));
  return shell("Pesquisas fixas", `<button class="btn pri" data-act="peNew">+ Nova pesquisa fixa</button><p class="muted small">Cadastre uma vez e s\xf3 fa\xe7a a manuten\xe7\xe3o dos itens. Cada pesquisa abre sozinha para as lojas no dia escolhido e vale pelo n\xfamero de dias definido; depois disso uma nova rodada come\xe7a e os pre\xe7os de cada semana ficam separados.</p>\n  ${arr.length ? `<div class="list">${arr.map((m => {
@@ -1839,7 +2078,7 @@ function pesqEditView(d) {
  S.lojas.filter((l => l.status !== "Desativado")).forEach((l => (byB[l.bandeira] = byB[l.bandeira] || []).push(l)));
  const pes = [ ...new Set(S.vinc.flatMap((v => String(v.pesquisador).split("/").map((s => s.trim())))).filter(Boolean)) ].sort();
  const nC = d.todasLojas ? S.lojas.filter((l => l.status !== "Desativado")).length : d.lojas.length;
- return shell(d.id ? "Editar pesquisa fixa" : "Nova pesquisa fixa", `<div class="card"><label class="f">Nome da pesquisa<input class="in" id="nlNome" value="${esc(d.nome)}" placeholder="Ex.: Padr\xe3o segunda-feira"></label>\n   <div class="f2"><label class="f">Dia da pesquisa<select class="in" id="peDia">${[ "SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM", "QUALQUER" ].map((x => `<option value="${x}" ${d.dia === x ? "selected" : ""}>${DIAS_N[x][0].toUpperCase() + DIAS_N[x].slice(1)}</option>`)).join("")}</select></label>\n   <label class="f">Validade (dias)<input class="in mono" id="nlVal" inputmode="numeric" value="${esc(d.val)}"></label></div>\n   <label class="f">Pesquisador dos concorrentes<select class="in" id="nlPesq"><option value="">Todos os v\xednculos da loja</option>${pes.map((p => `<option ${d.pesq === p ? "selected" : ""}>${esc(p)}</option>`)).join("")}</select></label>\n   <label class="row small"><input type="checkbox" id="peAtiva" ${d.ativa ? "checked" : ""}> Pesquisa ativa</label></div>\n   <div class="card"><h3>Lojas (${nC})</h3><label class="chk ${d.todasLojas ? "on" : ""}" style="flex:none"><input type="checkbox" id="peTodasLojas" ${d.todasLojas ? "checked" : ""}> Todas as lojas (inclui lojas novas automaticamente)</label>\n   ${d.todasLojas ? "" : Object.keys(byB).sort().map((b => `<div><div class="row" style="justify-content:space-between"><span class="pill">${esc(b)}</span><button class="btn sm" data-act="nlBand" data-b="${esc(b)}">Marcar bandeira</button></div><div class="chips" style="margin-top:6px">${byB[b].map((l => {
+ return shell(d.id ? "Editar pesquisa fixa" : "Nova pesquisa fixa", `<div class="card"><label class="f">Nome da pesquisa<input class="in" id="nlNome" value="${esc(d.nome)}" placeholder="Ex.: Padr\xe3o segunda-feira"></label>\n   <div class="f2"><label class="f">Dia da pesquisa<select class="in" id="peDia">${[ "SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM", "QUALQUER" ].map((x => `<option value="${x}" ${d.dia === x ? "selected" : ""}>${DIAS_N[x][0].toUpperCase() + DIAS_N[x].slice(1)}</option>`)).join("")}</select></label>\n   <label class="f">Validade (dias)<input class="in mono" id="nlVal" inputmode="numeric" value="${esc(d.val)}"></label></div><div class="f2">${tipoSel(d.tipo)}</div>\n   <label class="f">Pesquisador dos concorrentes<select class="in" id="nlPesq"><option value="">Todos os v\xednculos da loja</option>${pes.map((p => `<option ${d.pesq === p ? "selected" : ""}>${esc(p)}</option>`)).join("")}</select></label>\n   <label class="row small"><input type="checkbox" id="peAtiva" ${d.ativa ? "checked" : ""}> Pesquisa ativa</label></div>\n   <div class="card"><h3>Lojas (${nC})</h3><label class="chk ${d.todasLojas ? "on" : ""}" style="flex:none"><input type="checkbox" id="peTodasLojas" ${d.todasLojas ? "checked" : ""}> Todas as lojas (inclui lojas novas automaticamente)</label>\n   ${d.todasLojas ? "" : Object.keys(byB).sort().map((b => `<div><div class="row" style="justify-content:space-between"><span class="pill">${esc(b)}</span><button class="btn sm" data-act="nlBand" data-b="${esc(b)}">Marcar bandeira</button></div><div class="chips" style="margin-top:6px">${byB[b].map((l => {
   const nc = S.vinc.filter((v => +v.loja === +l.cod)).length;
   return `<button class="chip ${d.lojas.includes(+l.cod) ? "on" : ""}" data-act="nlLoja" data-c="${l.cod}">${esc(l.empresa)}${nc ? "" : " \u26a0"}</button>`;
  })).join("")}</div></div>`)).join("")}</div>\n   ${Object.keys(replMap()).length ? `<p class="muted small">Lojas replicadas: ${esc(Object.entries(replMap()).reduce(((a, [r, m]) => {
@@ -2700,6 +2939,64 @@ const ACT = {
   render();
   scrollTo(0, 0);
  },
+ audExp: () => {
+  const F = V.A;
+  const {ls: ls, porGer: porGer} = audDados(F);
+  const res = [], ana = [], det = [];
+  const lin = (g, seg, nome, r) => ({
+   GERENTE: g,
+   SEGMENTO: seg,
+   LOJA: nome,
+   GERADAS: r.ger_,
+   REALIZADAS: r.real,
+   APROVEITAMENTO_PCT: pct(r.real, r.ger_),
+   FINALIZADAS: r.fin,
+   A_PESQUISAR: r.tot,
+   PESQUISADOS: r.done,
+   NAO_PESQUISADOS: Math.max(0, r.tot - r.done),
+   PCT_PESQUISADO: pct(r.done, r.tot)
+  });
+  for (const [g, rs] of porGer) {
+   for (const r of rs) {
+    res.push(lin(g, r.seg, r.nome + (r.repl.length ? " (replica p/ " + r.repl.join(",") + ")" : ""), r));
+    for (const [t, x] of Object.entries(r.tipos)) ana.push({
+     GERENTE: g,
+     SEGMENTO: r.seg,
+     LOJA: r.nome,
+     TIPO_PESQUISA: t,
+     GERADAS: x.ger,
+     REALIZADAS: x.real,
+     A_PESQUISAR: x.tot,
+     PESQUISADOS: x.done,
+     PCT_PESQUISADO: pct(x.done, x.tot)
+    });
+   }
+   res.push(lin(g, "", "TOTAL " + g, somaAud(rs)));
+  }
+  res.push(lin("TOTAL GERAL", "", "", somaAud([ ...porGer.values() ].flat())));
+  for (const l of ls) {
+   const lj = lojaBy(l.loja) || {};
+   const gp = listaProg(l);
+   det.push({
+    CODIGO: codigoOf(l),
+    PESQUISA: l.nome,
+    TIPO_PESQUISA: tipoPesq(l),
+    FIXA_AVULSA: l.modelo ? "FIXA" : "AVULSA",
+    GERENTE: lj.ger || "",
+    SEGMENTO: segNome(l.loja),
+    LOJA: lojaNome(l.loja),
+    INICIO: fmtYmd(l.inicio || l.prevista),
+    TERMINO: fmtYmd(l.validade),
+    STATUS: stOf(l),
+    REALIZADA: gp.done > 0 || l.status === "Conclu\xedda" ? "S" : "N",
+    A_PESQUISAR: gp.tot,
+    PESQUISADOS: gp.done,
+    PCT: pct(gp.done, gp.tot)
+   });
+  }
+  const blob = toBlob(res, "xlsx", "Resumo", [ [ "Analitico por tipo", ana ], [ "Pesquisas", det ] ]);
+  deliver(`auditoria_pesquisas_${F.de}_a_${F.ate}.${window.XLSX ? "xlsx" : "csv"}`, blob, `Auditoria de pesquisas de ${fmtYmd(F.de)} a ${fmtYmd(F.ate)}`, [], "AUD");
+ },
  tab: el => {
   const v = el.dataset.v;
   if (V.name === v) return;
@@ -3058,6 +3355,7 @@ const ACT = {
   go("listaEdit", {
    d: {
     edit: true,
+    tipo: l.tipoPesq || "",
     id: l.id,
     nome: l.nome,
     inicio: l.inicio || l.prevista || hojeS(),
@@ -3092,6 +3390,7 @@ const ACT = {
   let l = materializa(getLista(d.id));
   const o = {
    ...l,
+   tipoPesq: d.tipo || "",
    nome: String(d.nome).trim(),
    inicio: d.inicio,
    prevista: d.inicio,
@@ -3198,6 +3497,7 @@ const ACT = {
   go("pesqEdit", {
    d: {
     edit: true,
+    tipo: m.tipo || "",
     id: m.id,
     nome: m.nome,
     dia: String(m.dia || "SEG").toUpperCase(),
@@ -3232,7 +3532,9 @@ const ACT = {
    todos: d.todos ? "S" : "N",
    concs: d.concs || "",
    pesq: d.pesq || "",
-   ativa: d.ativa ? "S" : "N"
+   ativa: d.ativa ? "S" : "N",
+   tipo: d.tipo || "",
+   criada: (pesqBy(id) || {}).criada || ymd(new Date)
   };
   savePesq(m, d.itens);
   toast("Pesquisa salva. As lojas recebem na pr\xf3xima atualiza\xe7\xe3o.", 3500);
@@ -3329,6 +3631,7 @@ const ACT = {
    }
    saveLista({
     id: uid(),
+    tipoPesq: d.tipo || "",
     nome: d.nome.trim(),
     loja: c,
     concs: cs,
