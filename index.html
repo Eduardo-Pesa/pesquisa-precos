@@ -141,7 +141,6 @@ tr.click{cursor:pointer} tr.click:hover td{background:var(--surface2)}
 <div id="app"><div class="boot"><div class="brandmark">Pesquisa de <em>Pre&#xe7;os</em></div><p class="muted" id="bootMsg">Carregando bases&#x2026;</p></div></div>
 <div id="modal"></div>
 <div id="toast" hidden></div>
-<input type="file" id="fileScan" accept="image/&#42;" capture="environment" hidden>
 <input type="file" id="fileFoto" accept="image/&#42;" capture="environment" hidden>
 <input type="file" id="fileImport" accept=".csv,.txt,.xlsx,.xls" hidden>
 
@@ -195,7 +194,7 @@ window.addEventListener("unhandledrejection", (function(e) {
 })();</script>
 <script>"use strict";
 
-const APPV = "G3.6";
+const APPV = "G3.7";
 
 const $ = s => document.querySelector(s);
 
@@ -2671,7 +2670,7 @@ const ZX = () => {
 
 function openScanner(cb) {
  SCAN.cb = cb;
- modal(`<h3>Escanear c\xf3digo de barras</h3><div class="video" id="vbox"><video id="vid" playsinline muted></video></div><p class="muted small" id="scMsg">Aponte a c\xe2mera para o c\xf3digo de barras.</p>\n   <div class="row"><button class="btn tag grow" data-act="scanPhoto">Tirar foto do c\xf3digo</button></div>\n   <form class="row" id="fean"><input class="in mono" style="flex:1" id="eanIn" inputmode="numeric" placeholder="Digitar EAN ou usar leitor" autocomplete="off"><button class="btn pri">OK</button></form>\n   <button class="btn" data-act="mclose">Cancelar</button>`);
+ modal(`<h3>Escanear c\xf3digo de barras</h3><div class="video" id="vbox"><video id="vid" playsinline muted></video></div><p class="muted small" id="scMsg">Aponte a c\xe2mera para o c\xf3digo de barras.</p>\n   <form class="row" id="fean"><input class="in mono" style="flex:1" id="eanIn" inputmode="numeric" placeholder="Digitar EAN ou usar leitor" autocomplete="off"><button class="btn pri">OK</button></form>\n   <button class="btn" data-act="mclose">Cancelar</button>`);
  $("#fean").onsubmit = e => {
   e.preventDefault();
   const v = $("#eanIn").value.replace(/\D/g, "");
@@ -2687,7 +2686,7 @@ async function startLive() {
   const b = $("#vbox");
   if (b) b.hidden = true;
   const m = $("#scMsg");
-  if (m) m.textContent = "C\xe2mera ao vivo indispon\xedvel aqui. Use \u201cTirar foto do c\xf3digo\u201d ou digite o EAN.";
+  if (m) m.textContent = "C\xe2mera ao vivo indispon\xedvel aqui. Digite o EAN no campo abaixo.";
  };
  try {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return fail();
@@ -2793,16 +2792,6 @@ $("#fileFoto").onchange = async e => {
  });
  toast("Foto salva com loja, concorrente e data");
  render();
-};
-
-$("#fileScan").onchange = async e => {
- const f = e.target.files[0];
- e.target.value = "";
- if (!f) return;
- const m = $("#scMsg");
- if (m) m.textContent = "Lendo a foto\u2026";
- const c = await decodePhoto(f);
- if (c) scanDone(c); else if (m) m.textContent = "N\xe3o consegui ler o c\xf3digo nessa foto. Tente de novo mais perto e com luz, ou digite o EAN.";
 };
 
 async function compress(file, max = 800) {
@@ -3448,7 +3437,6 @@ const ACT = {
   back();
  },
  scan: () => openScanner(handleCode),
- scanPhoto: () => $("#fileScan").click(),
  buscar: () => {
   const l = getLista(V.lista);
   modal(`<h3>Buscar produto</h3><input class="in" id="sq" placeholder="EAN, parte do nome ou gramagem (ex.: LEITE INTEGRAL 1L)" autocomplete="off"><label class="row small"><input type="checkbox" id="sAll"> Buscar tamb\xe9m na base geral</label><div id="sres"></div><button class="btn" data-act="mclose">Fechar</button>`);
