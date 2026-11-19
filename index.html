@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0f3b3a"><link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><title>Pesquisa de Pre&#xe7;os</title>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0f3b3a"><link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><title>Pesquisa de Pre&#xe7;os</title>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
 <meta name="theme-color" content="#efe9df">
@@ -50,6 +50,10 @@ h3{font:600 15px/1.3 var(--f-body);margin:0}
 .grid{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
 @media (min-width:640px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .tile{background:var(--surface);border:0;box-shadow:var(--sh);border-radius:var(--r);padding:14px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-height:92px;min-width:0}
+.kbar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 61px);z-index:4;display:flex;gap:6px;background:var(--bg);padding-block:8px;margin-block:-8px 0}
+.kbar .btn{flex:1;min-height:44px;padding:8px 6px;font-size:14px}
+.sheet:has(.kbar){padding-top:0}
+.sheet .kbar{top:0;margin-top:0;padding-top:14px;padding-bottom:10px;border-bottom:1px solid var(--line);z-index:2}
 .audg td{background:var(--surface2);font-weight:600}
 .tile b{font:700 18px/1.1 var(--f-display);letter-spacing:.03em;text-transform:uppercase;color:var(--brand);overflow-wrap:anywhere}
 .tile span{font-size:13px;color:var(--muted)}
@@ -191,7 +195,7 @@ window.addEventListener("unhandledrejection", (function(e) {
 })();</script>
 <script>"use strict";
 
-const APPV = "G3.5";
+const APPV = "G3.6";
 
 const $ = s => document.querySelector(s);
 
@@ -1622,8 +1626,8 @@ VIEWS.conc = () => {
  const done = items.filter((s => S.coletas[`${l.id}-${V.conc}-${s}`])).length;
  const extra = !items.includes(+seq);
  const ean = String(p.ean || "").split(/[,;\s]+/)[0] || c.ean || "";
- const fld = (id, lab, v) => `<label class="f">${lab}<input class="in price" id="${id}" type="text" inputmode="numeric" pattern="[0-9]*" lang="pt-BR" placeholder="0,00" value="${v != null ? esc(money(v)) : ""}" autocomplete="off" enterkeyhint="next"></label>`;
- return shell(concNome(V.conc), `<div class="row" style="justify-content:space-between"><span class="muted small">${esc(l.nome)} \xb7 ${esc(lojaNome(l.loja))}</span><span class="mono small">${extra ? "EXTRA" : items.indexOf(+seq) + 1 + "/" + items.length} \xb7 ${done} feitos</span></div>\n   <div class="bar"><i style="width:${done * 100 / items.length}%"></i></div>\n   ${(() => {
+ const fld = (id, lab, v) => `<label class="f">${lab}<input class="in price" id="${id}" type="text" inputmode="numeric" lang="pt-BR" placeholder="0,00" value="${v != null ? esc(money(v)) : ""}" autocomplete="off" enterkeyhint="next"></label>`;
+ return shell(concNome(V.conc), `<div class="kbar" role="toolbar" aria-label="A\xe7\xf5es da coleta"><button class="btn" data-act="proxCampo">Pr\xf3x. campo</button><button class="btn" data-act="skip">Pular</button><button class="btn pri" data-act="saveNext">Salvar \u203a</button></div><div class="row" style="justify-content:space-between"><span class="muted small">${esc(l.nome)} \xb7 ${esc(lojaNome(l.loja))}</span><span class="mono small">${extra ? "EXTRA" : items.indexOf(+seq) + 1 + "/" + items.length} \xb7 ${done} feitos</span></div>\n   <div class="bar"><i style="width:${done * 100 / items.length}%"></i></div>\n   ${(() => {
   const rl = relacionados(seq);
   if (!rl.length) return "";
   const po = S.prods.get(+seq);
@@ -1633,7 +1637,7 @@ VIEWS.conc = () => {
    const prev = base != null ? rnd2(base * pPerc(r) / pPerc(po)) : null;
    return `<div class="li"><div class="t"><div class="small">${esc(r.nome)}</div><div class="muted small mono">SEQ ${r.seq} \xb7 FAM ${esc(r.fam)} \xb7 ${pPerc(r)}%</div></div><span class="mono small">${x && !x.naoEnc ? money(x.reg ?? x.club ?? x.caixa ?? x.app) + (x.relDe ? " (rep.)" : "") : prev != null ? "\u2248 " + money(prev) : "\u2013"}</span></div>`;
   })).join("")}</div></details>`;
- })()}\n   <div id="geoInfo" class="small muted">${esc(geoTxt())}</div>\n   <div class="row"><button class="btn grow" data-act="buscar">Buscar</button><button class="btn grow" data-act="itens">Itens</button><button class="btn grow" data-act="colFoto" aria-label="Tirar foto para confer\xeancia">Foto${nF ? " (" + nF + ")" : ""}</button></div>\n   <div class="tagcard"><div class="row" style="justify-content:space-between;align-items:flex-start"><span class="meta">${esc([ p.n1, p.n2, p.n3 ].filter(Boolean).join(" \u203a "))}<br>AV\xd4 ${esc(p.avo)} \xb7 ALT ${esc(p.alt)} \xb7 FAM ${esc(p.fam)} \xb7 SEQ ${esc(p.seq)} \xb7 ${esc(pPerc(p))}%</span>${c.upd ? `<span class="pill ok">Coletado ${esc(hora(c.dt))}</span>` : extra ? `<span class="pill warn">Extra</span>` : ""}</div>${c.upd ? `<div class="meta">Coletado em ${esc(fmtDT(c.dt))}${c.lat != null && c.lat !== "" ? ` \xb7 <a href="${esc(mapaUrl(c))}" target="_blank" rel="noopener" style="color:inherit">ver local no mapa (\xb1${esc(c.acc)} m)</a>` : " \xb7 sem localiza\xe7\xe3o"}</div>` : ""}\n     <div class="nm">${esc(p.nome)}</div><div class="meta">${esc(p.n5)}${ean ? " \xb7 EAN " + esc(ean) : " \xb7 sem EAN na base"}</div>${c.relDe ? `<div class="meta"><b>Pre\xe7o replicado</b> do relacionado SEQ ${esc(c.relDe)} (propor\xe7\xe3o ${esc(pPerc(p))}%). Salve para corrigir.</div>` : ""}${ean ? `<div class="ean">${eanSvg(ean)}</div>` : ""}${nF ? `<div class="row">${fotosItem.slice(-4).map((f => fotoTag(f.foto, "Foto de confer\xeancia", "width:56px;height:56px;object-fit:cover;border-radius:6px"))).join("")}</div>` : ""}</div>\n   <div class="f2">${fld("pReg", "Pre\xe7o regular", c.reg)}${fld("pClub", "Pre\xe7o club / fidelidade", c.club)}${fld("pCx", "Pre\xe7o caixa / atacado", c.caixa)}${fld("pApp", "Pre\xe7o app / digital", c.app)}</div>\n   <label class="f">Qtd. m\xednima no atacado / un. na caixa<input class="in mono" id="pCxQ" inputmode="numeric" pattern="[0-9]*" value="${esc(c.caixaQtd || "")}"></label>\n   <div class="row"><label class="chk of ${c.oferta ? "on" : ""}"><input type="checkbox" id="pOf" ${c.oferta ? "checked" : ""}> Oferta</label><label class="chk ${c.naoEnc ? "on" : ""}"><input type="checkbox" id="pNe" ${c.naoEnc ? "checked" : ""}> N\xe3o encontrado</label></div>\n   <p class="err" id="cErr"></p>\n   <div class="row"><button class="btn sm" data-act="concFim">Concluir este concorrente</button>${c.upd ? `<button class="btn sm bad" data-act="limparCol">Apagar coleta</button>` : ""}</div>`, {
+ })()}\n   <div id="geoInfo" class="small muted">${esc(geoTxt())}</div>\n   <div class="row"><button class="btn grow" data-act="buscar">Buscar</button><button class="btn grow" data-act="itens">Itens</button><button class="btn grow" data-act="colFoto" aria-label="Tirar foto para confer\xeancia">Foto${nF ? " (" + nF + ")" : ""}</button></div>\n   <div class="tagcard"><div class="row" style="justify-content:space-between;align-items:flex-start"><span class="meta">${esc([ p.n1, p.n2, p.n3 ].filter(Boolean).join(" \u203a "))}<br>AV\xd4 ${esc(p.avo)} \xb7 ALT ${esc(p.alt)} \xb7 FAM ${esc(p.fam)} \xb7 SEQ ${esc(p.seq)} \xb7 ${esc(pPerc(p))}%</span>${c.upd ? `<span class="pill ok">Coletado ${esc(hora(c.dt))}</span>` : extra ? `<span class="pill warn">Extra</span>` : ""}</div>${c.upd ? `<div class="meta">Coletado em ${esc(fmtDT(c.dt))}${c.lat != null && c.lat !== "" ? ` \xb7 <a href="${esc(mapaUrl(c))}" target="_blank" rel="noopener" style="color:inherit">ver local no mapa (\xb1${esc(c.acc)} m)</a>` : " \xb7 sem localiza\xe7\xe3o"}</div>` : ""}\n     <div class="nm">${esc(p.nome)}</div><div class="meta">${esc(p.n5)}${ean ? " \xb7 EAN " + esc(ean) : " \xb7 sem EAN na base"}</div>${c.relDe ? `<div class="meta"><b>Pre\xe7o replicado</b> do relacionado SEQ ${esc(c.relDe)} (propor\xe7\xe3o ${esc(pPerc(p))}%). Salve para corrigir.</div>` : ""}${ean ? `<div class="ean">${eanSvg(ean)}</div>` : ""}${nF ? `<div class="row">${fotosItem.slice(-4).map((f => fotoTag(f.foto, "Foto de confer\xeancia", "width:56px;height:56px;object-fit:cover;border-radius:6px"))).join("")}</div>` : ""}</div>\n   <div class="f2">${fld("pReg", "Pre\xe7o regular", c.reg)}${fld("pClub", "Pre\xe7o club / fidelidade", c.club)}${fld("pCx", "Pre\xe7o caixa / atacado", c.caixa)}${fld("pApp", "Pre\xe7o app / digital", c.app)}</div>\n   <label class="f">Qtd. m\xednima no atacado / un. na caixa<input class="in mono" id="pCxQ" inputmode="numeric" value="${esc(c.caixaQtd || "")}"></label>\n   <div class="row"><label class="chk of ${c.oferta ? "on" : ""}"><input type="checkbox" id="pOf" ${c.oferta ? "checked" : ""}> Oferta</label><label class="chk ${c.naoEnc ? "on" : ""}"><input type="checkbox" id="pNe" ${c.naoEnc ? "checked" : ""}> N\xe3o encontrado</label></div>\n   <p class="err" id="cErr"></p>\n   <div class="row"><button class="btn sm" data-act="concFim">Concluir este concorrente</button>${c.upd ? `<button class="btn sm bad" data-act="limparCol">Apagar coleta</button>` : ""}</div>`, {
   foot: `<button class="btn" style="flex:0 0 44px;padding:0" data-act="prev" aria-label="Item anterior">\u2039</button><button class="btn" style="flex:0 0 auto;padding:10px" data-act="skip">Pular</button><button class="btn pri" style="flex:1;padding:10px 8px" data-act="saveNext">Salvar \u203a</button><button class="fab" data-act="scan" aria-label="Escanear c\xf3digo de barras">${ico("scan")}<span>Escanear</span></button>`
  });
 };
@@ -2236,7 +2240,7 @@ function editForm(t, k) {
  const D = DEFS[t];
  const r = k == null ? {} : D.rows().find((x => String(x[D.key]) === String(k))) || {};
  const can = D.can();
- modal(`<h3>${k == null ? "Incluir" : can ? "Editar" : "Detalhe"} \xb7 ${esc(D.t)}</h3><form id="fed" class="card" style="border:0;padding:0;background:transparent">${D.fields.map((([f, lab, ty]) => `<label class="f">${esc(lab)}<input class="in ${ty === "n" ? "mono" : ""}" name="${f}" ${ty === "n" ? 'inputmode="decimal"' : ""} value="${esc(r[f] ?? "")}" ${can ? "" : "readonly"} ${(f === D.key || t === "vinc" && (f === "loja" || f === "conc")) && k != null ? "readonly" : ""}></label>`)).join("")}\n  ${t === "produtos" && k != null && r.fam !== "" ? `<p class="muted small">Fam\xedlia ${esc(r.fam)}: ${(S.famIdx.get(r.fam) || []).length} produto(s).</p>` : ""}<p class="err" id="edErr"></p>\n  <div class="row">${can && k != null ? `<button type="button" class="btn bad" data-act="bdel" data-t="${t}" data-k="${esc(k)}">Excluir</button>` : ""}<button type="button" class="btn grow" data-act="mclose">Fechar</button>${can ? `<button class="btn pri grow" type="submit">Salvar</button>` : ""}</div></form>`);
+ modal(`<h3>${k == null ? "Incluir" : can ? "Editar" : "Detalhe"} \xb7 ${esc(D.t)}</h3><form id="fed" novalidate class="card" style="border:0;padding:0;background:transparent">${D.fields.map((([f, lab, ty]) => `<label class="f">${esc(lab)}<input class="in ${ty === "n" ? "mono" : ""}" name="${f}" ${ty === "n" ? 'inputmode="decimal"' : ""} value="${esc(r[f] ?? "")}" ${can ? "" : "readonly"} ${(f === D.key || t === "vinc" && (f === "loja" || f === "conc")) && k != null ? "readonly" : ""}></label>`)).join("")}\n  ${t === "produtos" && k != null && r.fam !== "" ? `<p class="muted small">Fam\xedlia ${esc(r.fam)}: ${(S.famIdx.get(r.fam) || []).length} produto(s).</p>` : ""}<p class="err" id="edErr"></p>\n  <div class="row">${can && k != null ? `<button type="button" class="btn bad" data-act="bdel" data-t="${t}" data-k="${esc(k)}">Excluir</button>` : ""}<button type="button" class="btn grow" data-act="mclose">Fechar</button>${can ? `<button class="btn pri grow" type="submit">Salvar</button>` : ""}</div></form>`);
  $("#fed").onsubmit = e => {
   e.preventDefault();
   const fd = Object.fromEntries(new FormData(e.target));
@@ -2839,7 +2843,7 @@ function auxForm(pre = {}) {
   fotoF: null,
   fotoE: null
  };
- modal(`<h3>Produto sem cadastro</h3><p class="muted small">N\xe3o existe na base de fam\xedlias. Ser\xe1 enviado para a base auxiliar com as duas fotos.</p>\n   <form id="fax" class="card" style="padding:0;border:0;background:transparent"><label class="f">EAN<input class="in mono" name="ean" inputmode="numeric" value="${esc(pre.ean || "")}" required></label>\n   <label class="f">Descri\xe7\xe3o do produto<input class="in" name="desc" value="${esc(pre.desc || "")}" placeholder="Marca, tipo, sabor" required></label>\n   <label class="f">Gramagem / unidade<input class="in" name="unid" placeholder="Ex.: 1L, 500G, 12UN"></label>\n   <div class="f2"><label class="f">Pre\xe7o regular<input class="in price" name="reg" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0,00"></label><label class="f">Pre\xe7o club<input class="in price" name="club" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0,00"></label><label class="f">Pre\xe7o caixa<input class="in price" name="caixa" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0,00"></label><label class="f">Pre\xe7o app<input class="in price" name="app" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="0,00"></label></div>\n   <label class="chk of"><input type="checkbox" name="oferta"> Oferta</label>\n   <div class="ph"><label id="lfF">Foto da frente do produto<input type="file" accept="image/&#42;" capture="environment" id="fF"></label><label id="lfE">Foto do c\xf3digo de barras na g\xf4ndola<input type="file" accept="image/&#42;" capture="environment" id="fE"></label></div>\n   <p class="err" id="axErr"></p><div class="row"><button type="button" class="btn grow" data-act="mclose">Cancelar</button><button class="btn pri grow">Salvar na base auxiliar</button></div></form>`);
+ modal(`<div class="kbar" role="toolbar" aria-label="A\xe7\xf5es"><button type="button" class="btn" data-act="mclose">Cancelar</button><button type="button" class="btn" data-act="proxCampo">Pr\xf3x. campo</button><button type="button" class="btn pri" data-act="axSalvar">Salvar</button></div><h3>Produto sem cadastro</h3><p class="muted small">N\xe3o existe na base de fam\xedlias. Ser\xe1 enviado para a base auxiliar com as duas fotos.</p>\n   <form id="fax" novalidate class="card" style="padding:0;border:0;background:transparent"><label class="f">EAN<input class="in mono" name="ean" inputmode="numeric" value="${esc(pre.ean || "")}" required></label>\n   <label class="f">Descri\xe7\xe3o do produto<input class="in" name="desc" value="${esc(pre.desc || "")}" placeholder="Marca, tipo, sabor" required></label>\n   <label class="f">Gramagem / unidade<input class="in" name="unid" placeholder="Ex.: 1L, 500G, 12UN"></label>\n   <div class="f2"><label class="f">Pre\xe7o regular<input class="in price" name="reg" type="text" inputmode="numeric" placeholder="0,00"></label><label class="f">Pre\xe7o club<input class="in price" name="club" type="text" inputmode="numeric" placeholder="0,00"></label><label class="f">Pre\xe7o caixa<input class="in price" name="caixa" type="text" inputmode="numeric" placeholder="0,00"></label><label class="f">Pre\xe7o app<input class="in price" name="app" type="text" inputmode="numeric" placeholder="0,00"></label></div>\n   <label class="chk of"><input type="checkbox" name="oferta"> Oferta</label>\n   <div class="ph"><label id="lfF">Foto da frente do produto<input type="file" accept="image/&#42;" capture="environment" id="fF"></label><label id="lfE">Foto do c\xf3digo de barras na g\xf4ndola<input type="file" accept="image/&#42;" capture="environment" id="fE"></label></div>\n   <p class="err" id="axErr"></p><div class="row"><button type="button" class="btn grow" data-act="mclose">Cancelar</button><button class="btn pri grow">Salvar na base auxiliar</button></div></form>`);
  const ph = (inp, lab, k) => {
   $(inp).onchange = async e => {
    const f = e.target.files[0];
@@ -2996,6 +3000,28 @@ const ACT = {
   }
   const blob = toBlob(res, "xlsx", "Resumo", [ [ "Analitico por tipo", ana ], [ "Pesquisas", det ] ]);
   deliver(`auditoria_pesquisas_${F.de}_a_${F.ate}.${window.XLSX ? "xlsx" : "csv"}`, blob, `Auditoria de pesquisas de ${fmtYmd(F.de)} a ${fmtYmd(F.ate)}`, [], "AUD");
+ },
+ proxCampo: () => {
+  const root = $("#modal").innerHTML ? $("#modal .sheet") : $("main");
+  if (!root) return;
+  const ins = [ ...root.querySelectorAll("input.in:not([readonly]):not([type=file]),select.in,textarea.in") ].filter((x => x.offsetParent !== null));
+  if (!ins.length) return;
+  const i = ins.indexOf(ins.includes(document.activeElement) ? document.activeElement : LASTIN);
+  const n = ins[(i + 1) % ins.length];
+  n.focus();
+  try {
+   n.scrollIntoView({
+    block: "center",
+    behavior: "smooth"
+   });
+  } catch (e) {}
+ },
+ axSalvar: () => {
+  const f = $("#fax");
+  if (!f) return;
+  if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event("submit", {
+   cancelable: true
+  }));
  },
  tab: el => {
   const v = el.dataset.v;
@@ -3918,6 +3944,28 @@ const fmtCent = d => {
  });
 };
 
+let LASTIN = null;
+
+document.addEventListener("pointerdown", (e => {
+ const b = e.target.closest && e.target.closest(".kbar [data-act=proxCampo]");
+ if (b) e.preventDefault();
+}));
+
+document.addEventListener("focusin", (e => {
+ const t = e.target;
+ if (t && t.matches && t.matches("input.in,select.in,textarea.in")) {
+  LASTIN = t;
+  setTimeout((() => {
+   try {
+    t.scrollIntoView({
+     block: "center",
+     behavior: "smooth"
+    });
+   } catch (x) {}
+  }), 300);
+ }
+}));
+
 document.addEventListener("focusin", (e => {
  const el = e.target;
  if (el.classList && el.classList.contains("price") && el.value) setTimeout((() => {
@@ -3936,6 +3984,13 @@ document.addEventListener("input", (e => {
   try {
    el.setSelectionRange(v.length, v.length);
   } catch (x) {}
+ }
+}));
+
+document.addEventListener("keydown", (e => {
+ if (e.key === "Enter" && e.target.closest && e.target.closest("#fax") && e.target.tagName === "INPUT") {
+  e.preventDefault();
+  ACT.proxCampo();
  }
 }));
 
