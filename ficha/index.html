@@ -330,13 +330,16 @@ function pview(m){const P=curP(),E=curE();const rec=P?P.get(m.prod):null;const s
   if(o.sc==="-"&&st)o.sc=st.c||"-";if(o.sv==="-"&&st){o.sv=st.v||"-";o.svSrc="estoque"}
   o.mix=o.sc==="A"||!!st;
   return o}
-function groupOf(prod,forceMix){prod=+prod;const fr=S.fam?.byProd.get(prod);let metas;
+function groupOf(prod,forceMix,all){prod=+prod;const fr=S.fam?.byProd.get(prod);let metas;
   if(fr)metas=S.fam.byAlt.get(fr[2]??fr[1]??fr[0]).map(metaFromRow);
   else{const P=curP();const rec=P&&P.get(prod);const f=rec?rec.f:null;metas=[];
     if(f!=null)for(const [p,x] of P)if(x.f===f)metas.push({prod:p,fam:f,alt:f,pct:100,desc:"",sec:""});
     if(!metas.length)metas=[{prod,fam:f,alt:f,pct:100,desc:"",sec:""}]}
   metas.sort((a,b)=>(a.fam===a.alt?0:1)-(b.fam===b.alt?0:1)||a.fam-b.fam||a.prod-b.prod);
-  const items=metas.map(pview);if(forceMix)items.forEach(p=>{if(p.prod===prod&&p.has&&!p.mix){p.mix=true;p.mixForced=true}});return{alt:metas[0].alt,inFam:!!fr,items,ev:evalGroup(items)}}
+  let items=metas.map(pview);if(forceMix)items.forEach(p=>{if(p.prod===prod&&p.has&&!p.mix){p.mix=true;p.mixForced=true}});
+  const total=items.length;const F=baseF();let filt=false;
+  if(!all&&baseOn(F)){filt=true;items.forEach(p=>{p.fora=!matchP(p,F)});items=items.filter(p=>!p.fora||p.prod===prod)}
+  return{alt:metas[0].alt,inFam:!!fr,items,total,filt,hidden:total-items.length,ev:evalGroup(items)}}
 
 /* ================= regras de divergência ================= */
 function evalGroup(items){
@@ -427,10 +430,11 @@ VIEWS.home=()=>{const pend=S.corr.filter(c=>c.st==="Pendente").length;
   if(GMODE&&S.cfg.loja==null)return shell("Ficha de Preços",pickLojaCard(),{backBtn:false});
   const body=`${GMODE?syncLine():""}${GMODE&&!S.preco?`<div class="status warn"><h3>Base de preços ainda não disponível</h3><div class="small">${navigator.onLine?"O Pricing ainda não publicou a base de preços desta loja, ou ela está sendo baixada.":"Sem internet. Conecte uma vez para baixar as bases; depois o app funciona offline."}</div><div class="row" style="margin-top:8px"><button class="btn pri" data-act="gsync">Atualizar agora</button></div></div>`:""}${!GMODE&&!S.preco?`<div class="status warn"><h3>Carregue a base de preços</h3><div class="small">Toque em <b>Bases</b> e selecione o arquivo BASE_PREÇO_LOJA (xlsx ou csv). Pode selecionar também a base de estoque junto.</div><div class="row" style="margin-top:8px"><button class="btn pri" data-act="pickBase">Carregar bases agora</button></div></div>`:""}
   <button class="btn tag scanbtn" data-act="scan">▮▯▮ Escanear produto</button>
+  <div class="row small" style="margin-top:8px"><span class="b ${baseOn(baseF())?"info":""}">Filtro: ${esc(filterDesc(baseF()))}</span><button class="btn sm" data-act="nav" data-v="filtro">Alterar filtro</button></div>
   <form class="row" id="fbusca" style="margin:10px 0 14px"><input class="in grow" id="qIn" placeholder="EAN, DUN, seq. produto ou descrição" autocomplete="off" enterkeyhint="search" style="flex:1"><button class="btn pri">Buscar</button></form>
   <div class="tiles">
    <button class="tile" data-act="nav" data-v="div"><b>Divergências da loja</b><span>Varre todas as famílias SEQ-ALT</span></button>
-   <button class="tile" data-act="nav" data-v="filtro"><b>Filtrar produtos</b><span>Status, estoque, preço, embalagem, segmento, oferta</span></button>
+   <button class="tile" data-act="nav" data-v="filtro"><b>Filtro de produtos</b><span>Vale para o scanner, a correção e as divergências</span></button>
    <button class="tile ${pend?"alert":""}" data-act="nav" data-v="corr"><b>Correções</b><span>${pend} pendente(s) de envio</span></button>
    <button class="tile" data-act="nav" data-v="bases"><b>Bases</b><span>Preço, estoque, famílias, lojas</span></button>
    <button class="tile" data-act="nav" data-v="cfg"><b>Configurações</b><span>Usuário, loja, regras, envio</span></button>
@@ -467,19 +471,19 @@ function fichaTable(g,meProd){const dmap=new Map();for(const d of g.ev.D){let a=
     ${td(p,"of",p.unO>0?`<span class="ofv">${brl(p.unO)}</span>`:"–")}
     <td class="n ${p.est<0?"dv":""}">${p.est==null?"–":`<b>${fnum(p.est)}</b>${p.st&&p.st.mvd?`<br><small>${fnum(r2(p.st.mvd))}/dia</small>`:""}`}</td></tr>`).join("");
   return `<div class="tw"><table class="fx"><thead><tr><th>Status C/V</th><th>SEQ-ALT</th><th>SEQ-FAM</th><th>SEQ-PROD</th><th>Prop.</th><th>Descrição</th><th>Preço UN</th><th>Preço AP</th><th>Preço TV</th><th>Preço CX</th><th>Preço AC</th>${hasOu?"<th>Outras emb.</th>":""}<th>Oferta</th><th>Estoque</th></tr></thead><tbody>${rows}</tbody></table></div>`}
-VIEWS.ficha=()=>{const prod=+V.prod;const g=groupOf(prod,true);const p=g.items.find(x=>x.prod===prod)||pview({prod});V._g=g;pushHist(prod);
+VIEWS.ficha=()=>{const prod=+V.prod;const g=groupOf(prod,true,V.all);const p=g.items.find(x=>x.prod===prod)||pview({prod});V._g=g;pushHist(prod);
   const myD=g.ev.D.filter(d=>d.prod===prod);const isD=k=>myD.some(d=>colKeys[k](d.key));
   const codeInfo=V.code?`<span class="b info mono">Lido: ${esc(V.code)}${V.cemb&&!(V.cq===1&&(V.cemb==="UN"||V.cemb==="KG"))?` · ${esc(V.cemb)} c/${V.cq}`:""}</span>`:"";
   const aps=p.packs.filter(x=>x.emb==="AP"),cxs=p.packs.filter(x=>x.emb==="CX"),acs=p.packs.filter(x=>x.emb==="AC"),ous=p.packs.filter(x=>!["AP","CX","AC"].includes(x.emb));
   const packTile=(lbl,arr,k)=>`<div class="pt ${isD(k)?"dv":""}"><div class="k">${lbl}</div>${arr.length?arr.map(x=>`<div class="pl ${x.sv!=="A"?"muted":""}">${x.emb==="AP"?`A partir de ${x.q} un`:`${x.emb} c/${x.q}`}: <b>${brl((x.o>0?x.o:x.p)/x.q)}</b>/un${x.o>0?` <span class="strike">${brl(x.p/x.q)}</span><span class="ofl">OFERTA</span>`:""}<br><small class="muted">total ${brl(x.o>0?x.o:x.p)}${x.sv!=="A"?" · inativo venda":""}</small></div>`).join(""):`<div class="v"><small>não cadastrado</small></div>`}</div>`;
   const off=p.unO>0;const nD=g.ev.D.length,nA=g.ev.A.length;
   const pnome=pp=>{const x=g.items.find(i=>i.prod===pp);return x?`${x.prod} ${x.desc}`:pp};
-  const statusBox=!nD&&!nA?`<div class="status ok"><h3>Família OK</h3><div class="small">${g.items.length>1?`Os ${g.items.length} produtos do SEQ-ALT ${g.alt} estão com preços coerentes (UN, AP, TV, CX, AC e oferta, respeitando a proporção).`:"Produto sem outros itens no SEQ-ALT e sem inconsistências."}</div></div>`
+  const statusBox=!nD&&!nA?`<div class="status ok"><h3>Família OK</h3><div class="small">${g.items.length>1?`Os ${g.items.length} produtos do SEQ-ALT ${g.alt} estão com preços coerentes (UN, AP, TV, CX, AC e oferta, respeitando a proporção).`:(g.total>1?"Nenhum outro produto da família dentro do filtro; sem inconsistências.":"Produto sem outros itens no SEQ-ALT e sem inconsistências.")}</div></div>`
     :`${nD?`<div class="status bad"><h3>${nD} divergência(s) na família</h3><ul>${g.ev.D.map(d=>`<li><b>${esc(pnome(d.prod))}</b> · ${esc(keyMeta(g.items.find(i=>i.prod===d.prod)||p,d.key).label)}: ${brl(d.atual)}${d.esp!=null?` → esperado <b>${brl(d.esp)}</b>`:""} <span class="muted">(${esc(d.motivo)})</span></li>`).join("")}</ul></div>`:""}
       ${nA?`<div class="status warn"><h3>${nA} alerta(s)</h3><ul>${g.ev.A.map(a=>`<li><b>${esc(pnome(a.prod))}</b> · ${esc(a.msg)}</li>`).join("")}</ul></div>`:""}`;
   const body=`<div class="card hero"><div class="sec">${esc(p.sec||"")} ${p.sec?"·":""} SEQ-ALT ${g.alt??"–"} · SEQ-FAM ${p.fam??"–"}</div>
     <div class="desc">${esc(p.desc)}</div>
-    <div class="chips"><span class="b mono">SEQ-PROD ${p.prod}</span>${codeInfo}${stChip(p.sc,"Compra")}${stChip(p.sv,"Venda")}${off?`<span class="b of">EM OFERTA</span>`:""}${p.tvO>0?`<span class="b of">OFERTA TV</span>`:""}${p.pct!==100?`<span class="b info">Proporção ${fnum(p.pct)}%</span>`:""}${!p.has?`<span class="b bad">fora da base de preços</span>`:p.mixForced?`<span class="b warn">sem status de compra e sem estoque na loja</span>`:""}</div></div>
+    <div class="chips"><span class="b mono">SEQ-PROD ${p.prod}</span>${codeInfo}${stChip(p.sc,"Compra")}${stChip(p.sv,"Venda")}${off?`<span class="b of">EM OFERTA</span>`:""}${p.tvO>0?`<span class="b of">OFERTA TV</span>`:""}${p.pct!==100?`<span class="b info">Proporção ${fnum(p.pct)}%</span>`:""}${!p.has?`<span class="b bad">fora da base de preços</span>`:p.mixForced?`<span class="b warn">sem status de compra e sem estoque na loja</span>`:""}${p.fora&&!V.all?`<span class="b warn">fora do filtro (${esc(filterDesc(baseF()))})</span>`:""}</div></div>
    <div class="board">
     <div class="pt main ${isD("un")||isD("of")?"dv":""}"><div class="k">Preço unidade${p.emb==="KG"?" (kg)":""}${off?'<span class="ofl">OFERTA</span>':""}</div><div class="v">${p.un>0?brl(off?p.unO:p.un):"–"}</div><div class="s">${off?`de <span class="strike">${brl(p.un)}</span>`:p.un>0?"preço normal":"sem preço cadastrado"}</div></div>
     ${packTile("Preço a partir (AP)",aps,"ap")}
@@ -490,14 +494,15 @@ VIEWS.ficha=()=>{const prod=+V.prod;const g=groupOf(prod,true);const p=g.items.f
     <div class="pt ${p.est<0?"dv":""}"><div class="k">Estoque</div><div class="v">${p.est==null?"–":fnum(p.est)} <small>${esc(p.st?.emb||"")}</small></div><div class="s">${p.st?`${fnum(r2(p.st.mvd))}/dia · ${p.st.de!=null?fnum(r2(p.st.de))+" dias":"– dias"}${p.st.pend?` · ped. ${fnum(p.st.pend)}`:""}`:(S.est?"sem registro":"base de estoque não carregada")}</div></div>
    </div>
    ${statusBox}
-   <div class="sec-t">Ficha da família · SEQ-ALT ${g.alt??"–"} · ${g.items.length} produto(s)${g.inFam?"":" <span class='b warn'>fora da base de famílias (agrupado pela família de preço)</span>"}</div>
+   ${baseOn(baseF())?`<div class="row small" style="margin:14px 2px -4px"><span class="b ${V.all?"warn":"info"}">${V.all?"Mostrando todos (filtro desligado nesta ficha)":"Filtro: "+esc(filterDesc(baseF()))}</span><span class="muted grow">${V.all?"":g.hidden?`${g.hidden} produto(s) da família ocultos`:"nenhum produto oculto"}</span><button class="btn sm" data-act="fichaAll">${V.all?"Aplicar filtro":"Mostrar todos"}</button><button class="btn sm" data-act="nav" data-v="filtro">Alterar</button></div>`:""}
+   <div class="sec-t">Ficha da família · SEQ-ALT ${g.alt??"–"} · ${g.items.length}${g.filt?" de "+g.total:""} produto(s)${g.inFam?"":" <span class='b warn'>fora da base de famílias (agrupado pela família de preço)</span>"}</div>
    ${fichaTable(g,prod)}
    <p class="muted small">Status C/V = compra/venda (A ativo, I inativo). AP, CX e AC mostram o preço por unidade e, abaixo, o total da embalagem. Células em vermelho divergem do restante da família; “esp.” é o valor esperado pela proporção.</p>`;
   const foot=`<button class="btn" data-act="scan">Nova leitura</button><button class="btn" data-act="expFicha">Exportar ficha</button><button class="btn ${nD?"bad":"pri"}" data-act="edit">${nD?`Corrigir divergências (${nD})`:"Solicitar correção"}</button>`;
   return shell("Ficha do produto",body,{foot})};
 
 /* ---------- edição / correção ---------- */
-VIEWS.edit=()=>{const g=groupOf(+V.prod,true);V._g=g;const dmap=new Map();g.ev.D.forEach(d=>dmap.set(d.prod+"|"+d.key,d));
+VIEWS.edit=()=>{const g=groupOf(+V.prod,true,V.all);V._g=g;const dmap=new Map();g.ev.D.forEach(d=>dmap.set(d.prod+"|"+d.key,d));
   const items=[...g.items].sort((a,b)=>(g.ev.D.some(d=>d.prod===b.prod)?1:0)-(g.ev.D.some(d=>d.prod===a.prod)?1:0)||(a.sv==="A"?0:1)-(b.sv==="A"?0:1));
   const fld=(p,key)=>{const m=keyMeta(p,key);const d=dmap.get(p.prod+"|"+key);const cur=getVal(p,key);
     if(key==="SC"||key==="SV")return `<div class="fld"><div class="l"><span>${m.label}</span></div><select class="in" data-ed="${p.prod}|${key}">${["A","I"].map(o=>`<option value="${o}" ${cur===o?"selected":""}>${o==="A"?"A – Ativo":"I – Inativo"}</option>`).join("")}${cur!=="A"&&cur!=="I"?`<option value="${esc(cur)}" selected>${esc(cur||"-")} (atual)</option>`:""}</select></div>`;
@@ -596,7 +601,7 @@ async function expFicha(){const g=V._g;if(!g)return;const rows=fichaRows(g);cons
   await deliver(name,toBlob([["Ficha",rows],...(ad.length?[["Alertas",ad]]:[])],"xlsx"),`Ficha SEQ-ALT ${g.alt} – ${lojaNome(curLoja())}`,`Ficha SEQ-ALT ${g.alt} – ${g.items[0]?.desc||""}\n${g.ev.D.length} divergência(s), ${g.ev.A.length} alerta(s).`)}
 
 /* ---------- divergências da loja ---------- */
-VIEWS.div=()=>{const c=S.divCache;const ok=c&&c.loja===curLoja()&&c.pk===(S.preco?.loaded||0)+"|"+(S.est?.loaded||0)+"|"+S.fam.n+"|"+S.cfg.tol+S.cfg.tvRule+S.cfg.tvOfRule+S.cfg.foraMix;
+VIEWS.div=()=>{const c=S.divCache;const ok=divFresh();
   if(!S.preco)return shell("Divergências da loja",`<div class="empty">Carregue a base de preços primeiro.</div>`);
   if(!ok)return shell("Divergências da loja",`<div class="card"><p>Vou analisar todas as famílias SEQ-ALT da loja <b>${esc(lojaNome(curLoja()))}</b> e listar onde há divergência de preço, oferta ou proporção.</p><div class="bar"><i id="dvBar"></i></div><p class="muted small" id="dvMsg">Iniciando…</p></div>`);
   const f=V.f||"fam";const sec=V.sec||"";const fl=c.res.filter(r=>(f==="alert"?r.A.length:r.D.some(d=>f==="all"||(f==="fam"?d.tp==="fam":f==="of"?d.tp==="of":f==="sem"?d.tp==="sem":d.tp==="regra")))&&(!sec||r.sec===sec));
@@ -604,7 +609,7 @@ VIEWS.div=()=>{const c=S.divCache;const ok=c&&c.loja===curLoja()&&c.pk===(S.prec
   const cnt=k=>c.res.filter(r=>k==="alert"?r.A.length:r.D.some(d=>k==="all"||d.tp===k)).length;
   const body=`<div class="chipsel">${[["fam","Preço/proporção"],["of","Oferta"],["sem","Sem preço"],["regra","Regras"],["all","Todas div."],["alert","Alertas"]].map(([k,l])=>`<button class="${f===k?"on":""}" data-act="divF" data-f="${k}">${l} (${cnt(k)})</button>`).join("")}</div>
    <div class="row" style="margin-bottom:10px"><select class="in grow" id="dvSec" style="flex:1"><option value="">Todas as seções</option>${secs.map(s=>`<option ${s===sec?"selected":""}>${esc(s)}</option>`).join("")}</select><button class="btn" data-act="divRecalc">Recalcular</button></div>
-   <p class="muted small">${fl.length} família(s) · análise de ${fmtDT(c.at)}</p>
+   <p class="muted small">${fl.length} família(s) · análise de ${fmtDT(c.at)} · filtro: <b>${esc(filterDesc(baseF()))}</b> <button class="btn sm" data-act="nav" data-v="filtro">alterar</button></p>
    ${fl.length?`<div class="list">${fl.slice(0,400).map(r=>`<button class="li" data-act="open" data-p="${r.prod}"><div class="t"><b>${esc(r.desc)}</b><small class="mono">ALT ${r.alt} · ${r.n} prod. · ${esc(r.sec)}</small><br><small>${esc([...new Set((f==="alert"?r.A.map(a=>a.msg):r.D.map(d=>d.motivo)))].slice(0,3).join(" · "))}</small></div>${r.D.length?`<span class="b bad">${r.D.length}</span>`:""}${r.A.length?` <span class="b warn">${r.A.length}</span>`:""}</button>`).join("")}</div>${fl.length>400?`<p class="muted small">Mostrando 400. Use o filtro de seção ou exporte a lista completa.</p>`:""}`:`<div class="empty">Nada encontrado neste filtro.</div>`}`;
   return shell("Divergências da loja",body,{foot:`<button class="btn pri" data-act="expDiv">Exportar lista (${fl.length})</button>`})};
 AFTER.div=()=>{const s=$("#dvSec");if(s)s.onchange=()=>{V.sec=s.value;render()};if($("#dvBar"))computeDiv()};
@@ -612,11 +617,11 @@ async function computeDiv(o={}){if(computeDiv.running)return;computeDiv.running=
   const P=curP();const res=[];const alts=[...S.fam.byAlt.keys()];let i=0;const seenP=new Set();
   for(const alt of alts){const rows=S.fam.byAlt.get(alt);i++;if(i%600===0){const b=$("#dvBar"),m=$("#dvMsg");if(b)b.style.width=Math.round(i/alts.length*100)+"%";if(m)m.textContent=`${i.toLocaleString("pt-BR")} de ${alts.length.toLocaleString("pt-BR")} famílias…`;await tick();if(!o.bg&&V.name!=="div")return;if(o.prog)o.prog(i/alts.length)}
     if(!rows.some(r=>P.has(r[0])))continue;rows.forEach(r=>seenP.add(r[0]));
-    const items=rows.map(r=>pview(metaFromRow(r)));const ev=evalGroup(items);
+    let items=rows.map(r=>pview(metaFromRow(r)));const BF=baseF();if(baseOn(BF)){items=items.filter(p=>matchP(p,BF));if(!items.length)continue}const ev=evalGroup(items);
     if(ev.D.length||ev.A.length){const l=ev.leader||items[0];res.push({alt,prod:(items.find(p=>ev.D.some(d=>d.prod===p.prod))||l).prod,desc:l.desc,sec:l.sec,n:items.length,D:ev.D,A:ev.A,items:items.map(p=>({prod:p.prod,fam:p.fam,desc:p.desc,pct:p.pct}))})}}
-  S.divCache={loja:curLoja(),pk:(S.preco?.loaded||0)+"|"+(S.est?.loaded||0)+"|"+S.fam.n+"|"+S.cfg.tol+S.cfg.tvRule+S.cfg.tvOfRule+S.cfg.foraMix,at:Date.now(),res};
+  S.divCache={loja:curLoja(),pk:(S.preco?.loaded||0)+"|"+(S.est?.loaded||0)+"|"+S.fam.n+"|"+S.cfg.tol+S.cfg.tvRule+S.cfg.tvOfRule+S.cfg.foraMix+JSON.stringify(baseF()),at:Date.now(),res};
   if(V.name==="div"&&!o.bg)render()}finally{computeDiv.running=false}}
-const divFresh=()=>{const c=S.divCache;return !!(c&&c.loja===curLoja()&&c.pk===(S.preco?.loaded||0)+"|"+(S.est?.loaded||0)+"|"+S.fam.n+"|"+S.cfg.tol+S.cfg.tvRule+S.cfg.tvOfRule+S.cfg.foraMix)};
+const divFresh=()=>{const c=S.divCache;return !!(c&&c.loja===curLoja()&&c.pk===(S.preco?.loaded||0)+"|"+(S.est?.loaded||0)+"|"+S.fam.n+"|"+S.cfg.tol+S.cfg.tvRule+S.cfg.tvOfRule+S.cfg.foraMix+JSON.stringify(baseF()))};
 async function expDiv(){const c=S.divCache;if(!c)return;const f=V.f||"fam",sec=V.sec||"";
   const rows=[];for(const r of c.res){if(sec&&r.sec!==sec)continue;const nm=p=>r.items.find(x=>x.prod===p)||{};
     if(f==="alert"){r.A.forEach(a=>rows.push({LOJA:c.loja,SECAO:r.sec,SEQ_ALT:r.alt,SEQ_FAMILIA:nm(a.prod).fam??"",SEQ_PRODUTO:a.prod,DESCRICAO:nm(a.prod).desc||"",TIPO:"ALERTA",CAMPO:"",ATUAL:"",ESPERADO:"",MOTIVO:a.msg}));continue}
@@ -642,6 +647,20 @@ function slotsOf(p,embs,segs){const out=[];
     else{const L=(sg==="AT"?p.packs:p.tvPacks).filter(x=>e==="OU"?["DP","FD","PC"].includes(x.emb):x.emb===e);
       out.push({has:L.length>0,p:Math.max(0,...L.map(x=>x.p)),o:Math.max(0,...L.map(x=>x.o))})}}
   return out}
+const defF=()=>({...newF(),sc:["A"]});
+const baseF=()=>S.cfg.baseF||(S.cfg.baseF=defF());
+const baseOn=F=>!!F&&["sc","sv","est","pr","emb","seg","of"].some(k=>F[k]&&F[k].length);
+function matchP(p,F){
+  if(F.sc.length&&!F.sc.includes(p.sc==="A"||p.sc==="I"?p.sc:"-"))return false;
+  if(F.sv.length&&!F.sv.includes(p.sv))return false;
+  if(F.est.length){const e=p.est;const k=e==null||e===0?"zero":e<0?"neg":"com";if(!F.est.includes(k))return false}
+  const embs=F.emb.length?F.emb:["UN"],segs=F.seg.length?F.seg:["AT"];const explicit=F.emb.length||F.seg.length;
+  const sl=slotsOf(p,embs,segs);
+  if(F.pr.length===1){if(F.pr[0]==="sem"?!sl.some(x=>!(x.p>0)):!sl.some(x=>x.p>0))return false}
+  else if(explicit&&!F.of.length&&!F.pr.length&&!sl.some(x=>x.has))return false;
+  if(F.of.length===1){if(F.of[0]==="sim"?!sl.some(x=>x.o>0):!sl.some(x=>x.p>0&&!(x.o>0)))return false}
+  return true}
+function filterDesc(F){if(!baseOn(F))return "sem filtro";return FGRP.filter(([k])=>k!=="dv"&&F[k].length).map(([k,t,o])=>(k==="sc"?"Compra":k==="sv"?"Venda":t)+" "+F[k].map(v=>o.find(x=>x[0]===v)[1].toLowerCase()).join("/")).join(" · ")}
 function runFiltro(F){const P=curP();if(!P)return[];const E=curE();const terms=norm(F.q).split(/\s+/).filter(Boolean);
   const embs=F.emb.length?F.emb:["UN"],segs=F.seg.length?F.seg:["AT"];const explicit=F.emb.length||F.seg.length;
   let dset=null;if(F.dv.length===1){dset=new Set();for(const r of S.divCache.res)for(const d of r.D)dset.add(d.prod)}
@@ -650,30 +669,26 @@ function runFiltro(F){const P=curP();if(!P)return[];const E=curE();const terms=n
     if(F.sec&&(!fr||S.fam.secs[fr[6]]!==F.sec))continue;
     if(terms.length){const d=fr?fr[7]:norm(E?.get(prod)?.d||"");if(!terms.every(t=>d.includes(t)||String(prod)===t))continue}
     const p=pview(fr?metaFromRow(fr):{prod});
-    if(F.sc.length&&!F.sc.includes(p.sc==="A"||p.sc==="I"?p.sc:"-"))continue;
-    if(F.sv.length&&!F.sv.includes(p.sv))continue;
-    if(F.est.length){const e=p.est;const k=e==null||e===0?"zero":e<0?"neg":"com";if(!F.est.includes(k))continue}
-    const sl=slotsOf(p,embs,segs);
-    if(F.pr.length===1){if(F.pr[0]==="sem"?!sl.some(x=>!(x.p>0)):!sl.some(x=>x.p>0))continue}
-    else if(explicit&&!F.of.length&&!F.pr.length&&!sl.some(x=>x.has))continue;
-    if(F.of.length===1){if(F.of[0]==="sim"?!sl.some(x=>x.o>0):!sl.some(x=>x.p>0&&!(x.o>0)))continue}
+    if(!matchP(p,F))continue;
     if(dset&&(F.dv[0]==="sim")!==dset.has(prod))continue;
     out.push(p)}
   return out}
-VIEWS.filtro=()=>{const F=V.F||(V.F=S.lastF?JSON.parse(JSON.stringify(S.lastF)):newF());const secs=[...new Set(S.fam.secs)].filter(Boolean).sort();
-  if(!S.preco)return shell("Filtrar produtos",`<div class="empty">Carregue a base de preços primeiro.</div>`);
+VIEWS.filtro=()=>{const F=V.F||(V.F=JSON.parse(JSON.stringify({...newF(),...baseF()})));const secs=[...new Set(S.fam.secs)].filter(Boolean).sort();
+  if(!S.preco)return shell("Filtro de produtos",`<div class="empty">Carregue a base de preços primeiro.</div>`);
   const nsel=FGRP.reduce((a,[k])=>a+F[k].length,0)+(F.sec?1:0)+(F.q?1:0);
   const res=V.res;
-  const body=`<div class="card">
+  const body=`<div class="status ${baseOn(baseF())?"warn":"ok"}" style="margin-bottom:12px"><h3>Filtro em uso: ${esc(filterDesc(baseF()))}</h3><div class="small">Vale para a <b>ficha do scanner</b>, a correção e as divergências da loja: só aparecem os produtos da família que batem com o filtro. Fica salvo até você alterar ou limpar.</div></div>
+   <div class="card">
    ${FGRP.map(([k,t,opts])=>`<div style="margin-bottom:8px"><div class="small muted" style="margin-bottom:4px">${t}</div><div class="chipsel" style="margin:0">${opts.map(([v,l])=>`<button class="${F[k].includes(v)?"on":""}" data-act="fTog" data-k="${k}" data-v="${v}">${l}</button>`).join("")}</div></div>`).join("")}
    <div class="row"><select class="in" id="fSec" style="flex:1;min-width:160px"><option value="">Todas as seções</option>${secs.map(x=>`<option ${x===F.sec?"selected":""}>${esc(x)}</option>`).join("")}</select><input class="in" id="fQ" style="flex:2;min-width:160px" placeholder="Descrição ou seq. (opcional)" value="${esc(F.q)}"></div>
    <p class="small muted" style="margin:8px 0 0">Marque quantas opções quiser. Dentro de um grupo vale qualquer uma das marcadas; entre grupos, todas precisam bater. Preço e oferta olham a <b>embalagem</b> e o <b>segmento</b> marcados (sem marcar: UN no Atacarejo). Ex.: <i>Venda Ativo + Sem preço + AP</i> = ativos sem preço AP; <i>Sem preço + UN + Televendas</i> = sem preço no Televendas.</p>
-   <div class="row" style="margin-top:10px"><button class="btn" data-act="fClear">Limpar (${nsel})</button><button class="btn pri grow" data-act="fRun">Aplicar filtros</button></div></div>
+   <div class="row" style="margin-top:10px"><button class="btn" data-act="fClear">Limpar (volta ao padrão)</button><button class="btn tag grow" data-act="fScan">Aplicar e escanear</button><button class="btn pri grow" data-act="fRun">Aplicar e listar</button></div></div>
    <div id="fOut">${res?`<p class="small muted">${res.length.toLocaleString("pt-BR")} produto(s) encontrados${res.length>300?" · mostrando 300 (exporte para ver todos)":""}</p>
    ${res.length?`<div class="list">${res.slice(0,300).map(p=>`<button class="li" data-act="open" data-p="${p.prod}"><div class="t"><b>${esc(p.desc)}</b><small class="mono">${p.prod} · ALT ${p.alt??"–"} · ${fnum(p.pct)}%</small> ${stChip(p.sc,"C")}${stChip(p.sv,"V")}${p.unO>0?` <span class="b of">OFERTA</span>`:""}${p.tvO>0?` <span class="b of">OF. TV</span>`:""}<br><small>UN ${p.un>0?brl(p.un):"sem preço"} · TV ${p.tv>0?brl(p.tv):"–"} · ${p.packs.filter(x=>x.p>0).map(x=>x.emb+x.q+" "+brl(x.p/x.q)).slice(0,3).join(" · ")||"sem emb."}</small></div><div style="text-align:right"><small class="muted">estoque</small><br><b>${p.est==null?"–":fnum(p.est)}</b></div></button>`).join("")}</div>`:`<div class="empty">Nenhum produto com esses filtros.</div>`}`:""}</div>`;
-  return shell("Filtrar produtos",body,{foot:res&&res.length?`<button class="btn" data-act="fTop">Filtros</button><button class="btn pri" data-act="fExp">Exportar (${res.length.toLocaleString("pt-BR")})</button>`:""})};
+  return shell("Filtro de produtos",body,{foot:res&&res.length?`<button class="btn" data-act="fTop">Filtros</button><button class="btn pri" data-act="fExp">Exportar (${res.length.toLocaleString("pt-BR")})</button>`:""})};
 AFTER.filtro=()=>{const s1=$("#fSec");if(s1)s1.onchange=()=>{V.F.sec=s1.value};const q=$("#fQ");if(q){q.oninput=()=>{V.F.q=q.value};q.onkeydown=e=>{if(e.key==="Enter")fRun()}}};
-async function fRun(){const F=V.F;S.lastF=JSON.parse(JSON.stringify(F));
+function fSave(){const F=V.F;S.cfg.baseF=JSON.parse(JSON.stringify(F));S.lastF=S.cfg.baseF;S.divCache=null;saveCfg()}
+async function fRun(){const F=V.F;fSave();
   if(F.dv.length===1&&!divFresh()){modal(`<h3>Analisando famílias</h3><p class="small" id="fMsg">Calculando divergências da loja…</p><div class="bar"><i id="fBar"></i></div>`);
     await computeDiv({bg:true,prog:p=>{const b=$("#fBar");if(b)b.style.width=Math.round(p*100)+"%"}});mclose()}
   toast("Filtrando…");await tick();V.res=runFiltro(F);render();const o=$("#fOut");if(o)o.scrollIntoView({behavior:"smooth"})}
@@ -755,7 +770,7 @@ document.addEventListener("click",async e=>{const el=e.target.closest("[data-act
   if(a==="scan")return openScanner(onScan);
   if(a==="open")return go("ficha",{prod:+el.dataset.p});
   if(a==="pickBase")return $("#fileBase").click();
-  if(a==="edit")return go("edit",{prod:V.prod});
+  if(a==="edit")return go("edit",{prod:V.prod,all:V.all});
   if(a==="applySg"){const i=$(`[data-ed="${el.dataset.k}"]`);if(i){i.value=brl(+el.dataset.v);markChg(i)}return}
   if(a==="applyAll"){V._g.ev.D.forEach(d=>{if(d.esp==null)return;const i=$(`[data-ed="${d.prod}|${d.key}"]`);if(i){i.value=brl(d.esp);markChg(i)}});return toast("Sugestões aplicadas — revise antes de enviar")}
   if(a==="saveEdit")return saveEdit();
@@ -771,7 +786,9 @@ document.addEventListener("click",async e=>{const el=e.target.closest("[data-act
   if(a==="expFicha")return expFicha();
   if(a==="divF"){V.f=el.dataset.f;return render()}
   if(a==="fTog"){const F=V.F,k=el.dataset.k,v=el.dataset.v;F[k]=F[k].includes(v)?F[k].filter(x=>x!==v):[...F[k],v];el.classList.toggle("on");return}
-  if(a==="fClear"){V.F=newF();V.res=null;S.lastF=null;return render()}
+  if(a==="fClear"){V.F=defF();V.res=null;fSave();toast("Filtro voltou ao padrão: compra ativo");return render()}
+  if(a==="fScan"){fSave();toast("Filtro aplicado: "+filterDesc(baseF()));go("home");return openScanner(onScan)}
+  if(a==="fichaAll"){V.all=!V.all;return render()}
   if(a==="fRun")return fRun();
   if(a==="fExp")return fExp();
   if(a==="fTop")return window.scrollTo({top:0,behavior:"smooth"});
