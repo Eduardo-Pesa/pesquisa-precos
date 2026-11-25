@@ -23,7 +23,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .top h1{font:700 22px/1.1 var(--f-display);letter-spacing:.02em;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
 .top .back{background:transparent;border:1px solid rgba(255,255,255,.35);color:var(--brand-ink);border-radius:8px;width:38px;height:38px;font-size:24px;line-height:1;cursor:pointer}
 .top .chip{background:rgba(255,255,255,.14);border:0;color:var(--brand-ink);border-radius:999px;padding:5px 10px;font-size:12px;white-space:nowrap;cursor:pointer}
-main{max-width:1100px;margin:0 auto;padding:14px max(14px,env(safe-area-inset-left,0px)) 110px}
+main{max-width:1100px;margin:0 auto;padding:14px max(14px,env(safe-area-inset-left,0px)) 130px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
 .card h2,.sec-t{font:700 18px/1.15 var(--f-display);text-transform:uppercase;letter-spacing:.03em;margin:0 0 8px}
 .sec-t{margin:18px 2px 8px;color:var(--muted);font-size:16px}
@@ -91,8 +91,19 @@ table.fx{border-collapse:separate;border-spacing:0;width:100%;font-size:13px;min
 .st{display:inline-block;min-width:34px;text-align:center;font:600 11.5px var(--f-mono);padding:2px 4px;border-radius:5px;margin:1px 2px 1px 0}
 .st.A{background:var(--ok-bg);color:var(--ok)}.st.I{background:var(--bad-bg);color:var(--bad)}.st.x{background:var(--surface2);color:var(--muted)}
 .ofv{color:var(--bad);font-weight:700}
-.foot{position:fixed;left:0;right:0;bottom:0;z-index:4;background:var(--surface);border-top:1px solid var(--line);padding:10px max(14px,env(safe-area-inset-left,0px));padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.foot .btn{flex:1;max-width:340px}
+.foot{position:fixed;left:0;right:0;bottom:0;z-index:4;background:var(--surface);border-top:1px solid var(--line);padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));display:flex;gap:8px;align-items:center}
+.foot .fb{flex:1;min-width:0;display:flex;gap:8px;flex-wrap:wrap}
+.foot .fb .btn{flex:1 1 110px;max-width:340px;min-height:46px;font-size:14px;padding:6px 10px}
+.navb,.fab{border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex:none;font:700 11px var(--f-body)}
+.navb{width:54px;height:54px;border-radius:50%;background:var(--surface2);color:var(--ink)}
+.fab{width:74px;height:74px;border-radius:50%;margin-top:-30px;background:var(--tag);color:var(--tag-ink);box-shadow:0 6px 18px rgba(0,0,0,.28)}
+.navb svg,.fab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fab svg{width:30px;height:30px}
+.fab:active,.navb:active{transform:scale(.95)}
+.mg,.dsc{display:inline-block;font:600 11.5px var(--f-body);padding:1px 5px;border-radius:5px;white-space:nowrap;margin-top:2px}
+.mg{background:var(--info-bg);color:var(--ink)}.mg.low{background:var(--bad-bg);color:var(--bad)}
+.mg.big{font-size:12.5px}.pt.main .mg{background:rgba(255,255,255,.55);color:#1b1a10}.pt.main .mg.low{background:#fff;color:var(--bad)}
+.dsc{background:var(--ok-bg);color:var(--ok)}.dsc.neg{background:var(--bad-bg);color:var(--bad)}
 /* edição */
 .ed{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);margin-bottom:10px;overflow:hidden}
 .ed.has{border-color:var(--bad)}
@@ -169,9 +180,9 @@ const IDB={db:null,
 
 /* ================= estado ================= */
 const S={cfg:{user:"",loja:null,tol:0.01,tvRule:false,tvOfRule:false,foraMix:false,emails:"grupo.pricing@grupoabv.com.br;paulo.assis@grupoabv.com.br",wa:""},
-  fam:null,famInfo:{src:"embutida",dt:null,file:""},lojas:[],lojasSrc:"embutida",preco:null,est:null,corr:[],hist:[],divCache:null};
+  fam:null,famInfo:{src:"embutida",dt:null,file:""},corrImg:{},lojas:[],lojasSrc:"embutida",preco:null,est:null,corr:[],hist:[],divCache:null};
 const saveCfg=()=>IDB.set("cfg",S.cfg);
-const saveCorr=()=>IDB.set("corr",S.corr);
+const saveCorr=()=>{const used=new Set(S.corr.map(c=>c.img));let ch=false;for(const k of Object.keys(S.corrImg))if(!used.has(k)){delete S.corrImg[k];ch=true}if(ch)IDB.set("corrImg",S.corrImg);return IDB.set("corr",S.corr)};
 const saveHist=()=>IDB.set("hist",S.hist);
 /* modo Google (Apps Script): mesma tela, com bases e correções sincronizadas pela planilha */
 const GRUN=!!(window.google&&google.script&&google.script.run);
@@ -259,14 +270,15 @@ const dateFromName=n=>{const m=/(\d{4})-(\d{2})-(\d{2})/.exec(n)||/(\d{2})[._-](
 const EMB_ORD={UN:0,KG:0,AP:1,DP:2,FD:3,PC:4,CX:5,AC:6};
 const BUILD={
   preco(H,file){const ix={loja:idxOf(H,["LOJA","NROEMPRESA","CODEMPRESA"]),fam:idxOf(H,["CODFAM","SEQFAMILIA"]),seg:idxOf(H,["DESCSEGMENTO","SEGMENTO"]),prod:idxOf(H,["CODPROD","SEQPRODUTO"]),
-      sc:idxOf(H,["STATUSCOMPRA"]),sv:idxOf(H,["STATUSVENDA"]),emb:idxOf(H,["EMB","EMBALAGEM"]),q:idxOf(H,["QTDEMB","QTDEMBALAGEM"]),pb:idxOf(H,["PRECOBASE"]),po:idxOf(H,["PRECOOFERTA"],["PRECOOFERTA"]),code:idxOf(H,[],["CODIGOPRODUTO","EAN","CODACESSO"])};
+      sc:idxOf(H,["STATUSCOMPRA"]),sv:idxOf(H,["STATUSVENDA"]),emb:idxOf(H,["EMB","EMBALAGEM"]),q:idxOf(H,["QTDEMB","QTDEMBALAGEM"]),pb:idxOf(H,["PRECOBASE"]),po:idxOf(H,["PRECOOFERTA"],["PRECOOFERTA"]),code:idxOf(H,[],["CODIGOPRODUTO","EAN","CODACESSO"]),pmz:idxOf(H,["PMZ"]),mgc:idxOf(H,["MGCAD","MARGEMCADASTRO"])};
     if(ix.prod<0||ix.pb<0)throw new Error("Base de preços sem as colunas Cod Prod. / Preço Base");
     const byLoja=new Map(),codes=new Map(),segs=new Map();let n=0;
     return{add(r){const prod=toInt(r[ix.prod]);if(prod==null)return;const emb=String(r[ix.emb]??"UN").trim().toUpperCase();if(emb==="CL")return;
         const loja=toInt(r[ix.loja])||0;let P=byLoja.get(loja);if(!P)byLoja.set(loja,P=new Map());
         const segRaw=norm(r[ix.seg]??"").trim()||"GERAL";const seg=/TELE/.test(segRaw)?"T":segRaw;segs.set(seg,(segs.get(seg)||0)+1);
         const q=toInt(r[ix.q])||1,pb=r2(num(r[ix.pb])),po=r2(num(r[ix.po])),sv=String(r[ix.sv]??"").trim().toUpperCase()||"-",sc=String(r[ix.sc]??"").trim().toUpperCase()||"-";
-        let rec=P.get(prod);if(!rec)P.set(prod,rec={f:toInt(r[ix.fam]),sc:"-",r:[]});
+        let rec=P.get(prod);if(!rec)P.set(prod,rec={f:toInt(r[ix.fam]),sc:"-",r:[],z:0,mc:0});
+        if(!rec.z){const z=num(r[ix.pmz]);if(z>0)rec.z=Math.round(z*10000)/10000}if(!rec.mc){const m=num(r[ix.mgc]);if(m>0)rec.mc=m>1?m/100:m}
         if((sc==="A"||sc==="I")&&(rec.sc==="-"||(seg!=="T"&&q===1&&sc==="A")))rec.sc=sc;
         const ex=rec.r.find(x=>x[0]===seg&&x[1]===emb&&x[2]===q);
         if(ex){if(pb>ex[3])ex[3]=pb;if(po>ex[4])ex[4]=po;if(sv==="A")ex[5]="A"}else rec.r.push([seg,emb,q,pb,po,sv]);
@@ -322,7 +334,7 @@ const MAIN=()=>S.preco?.main||"ATACAREJO";
 function metaFromRow(r){return{prod:r[0],fam:r[1],alt:r[2],avo:r[3],pct:r[4]||100,desc:r[5],sec:S.fam.secs[r[6]]||""}}
 function pview(m){const P=curP(),E=curE();const rec=P?P.get(m.prod):null;const st=E?E.get(m.prod):null;const main=MAIN();
   const o={prod:m.prod,fam:m.fam??rec?.f??null,alt:m.alt??m.fam??rec?.f??null,avo:m.avo,pct:m.pct||100,desc:m.desc||st?.d||"(sem descrição)",sec:m.sec||"",has:!!rec,
-    st,est:st?st.e:null,packs:[],tvPacks:[],un:0,unO:0,sv:"-",emb:"UN",tv:0,tvO:0,tvsv:"-",sc:rec?rec.sc:"-",svSrc:"preço"};
+    st,est:st?st.e:null,packs:[],tvPacks:[],un:0,unO:0,sv:"-",emb:"UN",tv:0,tvO:0,tvsv:"-",sc:rec?rec.sc:"-",svSrc:"preço",pmz:rec?rec.z||0:0,mgc:rec?rec.mc||0:0};
   if(rec){let gotUN=false;for(const x of rec.r){const [seg,emb,q,pb,po,sv]=x;const isUN=(emb==="UN"||emb==="KG")&&q===1;
       if(seg==="T"){if(isUN&&(o.tvsv==="-"||emb==="UN")){o.tv=pb;o.tvO=po;o.tvsv=sv;o.hasTV=true}else if(!isUN)o.tvPacks.push({emb,q,p:pb,o:po,sv,k:emb+q})}
       else if(seg===main){if(isUN){if(!gotUN||emb==="UN"){o.un=pb;o.unO=po;o.sv=sv;o.emb=emb;gotUN=true;o.hasUN=true}}else o.packs.push({emb,q,p:pb,o:po,sv,k:emb+q})}}
@@ -390,9 +402,20 @@ function keyMeta(p,key){const main=MAIN();
   if(key==="SC")return{label:"Status compra",seg:"",emb:"",q:"",campo:"STATUS_COMPRA"};
   if(key==="SV")return{label:"Status venda",seg:main,emb:"",q:"",campo:"STATUS_VENDA"};
   const m=/^(O?)([A-Z]+?)(\d+)$/.exec(key);const of=!!m&&m[1]==="O"&&!["OF"].includes(key);const emb=m?m[2]:key,q=m?+m[3]:1;
-  return{label:`${of?"Oferta ":""}${emb==="AP"?"AP (a partir de) "+q+" un":emb+" c/"+q} – total`,seg:main,emb,q,campo:of?"PRECO_OFERTA":"PRECO_BASE",pack:true}}
+  return{label:`${of?"Oferta ":""}${emb==="AP"?"AP (a partir de) "+q+" un":emb+" c/"+q} – unitário`,seg:main,emb,q,campo:of?"PRECO_OFERTA":"PRECO_BASE",pack:true}}
 function getVal(p,key){if(key==="UN")return p.un;if(key==="OF")return p.unO;if(key==="TV")return p.tv;if(key==="TVO")return p.tvO;if(key==="SC")return p.sc;if(key==="SV")return p.sv;
   const of=key[0]==="O";const k=of?key.slice(1):key;const x=p.packs.find(y=>y.k===k);return x?(of?x.o:x.p):null}
+
+const qOf=key=>{const m=/^O?(AP|CX|AC|DP|FD|PC)(\d+)$/.exec(key);return m?+m[2]:1};
+const isPack=key=>qOf(key)>1||/^O?(AP|CX|AC|DP|FD|PC)\d+$/.test(key);
+function getValU(p,key){const v=getVal(p,key);if(typeof v!=="number")return v;return isPack(key)?r2(v/qOf(key)):v}
+const pctf=v=>(v*100).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+"%";
+const mgOf=(p,u)=>p.pmz>0&&u>0?(u-p.pmz)/u:null;
+function mgH(p,u,cls="mg"){const m=mgOf(p,u);if(m==null)return "";const low=p.mgc>0&&m<p.mgc-1e-6;return `<span class="${cls} ${low?"low":""}" title="Margem sobre o preço (PMZ ${brl(p.pmz)}${p.mgc?" · margem cadastro "+pctf(p.mgc):""})">Mg ${pctf(m)}</span>`}
+function discRef(p,x){const act=e=>p.packs.filter(y=>y.emb===e&&y.p>0&&y.sv==="A"&&y.q<x.q).sort((a,b)=>b.q-a.q)[0];
+  let r=null,lbl="UN";if(x.emb==="AC"){r=act("CX");lbl=r?"CX":null;if(!r){r=act("AP");lbl=r?"AP":null}}else if(x.emb==="CX"){r=act("AP");lbl=r?"AP":null}
+  if(!r)return p.un>0?{u:p.un,lbl:"UN"}:null;return{u:r.p/r.q,lbl}}
+function discH(p,x){if(!(x.p>0))return "";const r=discRef(p,x);if(!r)return "";const d=1-(x.p/x.q)/r.u;return `<span class="dsc ${d<0?"neg":""}">${d>=0?"−":"+"}${pctf(Math.abs(d))} vs ${r.lbl}</span>`}
 
 /* ================= busca ================= */
 function findCode(raw){const c=String(raw??"").replace(/\D/g,"");if(!c)return null;const k=c.replace(/^0+/,"");
@@ -413,8 +436,11 @@ function pushHist(prod){S.hist=[prod,...S.hist.filter(x=>x!==prod)].slice(0,25);
 let V={name:"home"};const hist=[];
 function go(name,p={},push=true){if(push)hist.push(V);V={name,...p};render();window.scrollTo(0,0)}
 function back(){V=hist.pop()||{name:"home"};render()}
-function shell(title,body,{backBtn=true,foot=""}={}){const l=curLoja();
-  return `<header class="top">${backBtn?`<button class="back" data-act="back" aria-label="Voltar">‹</button>`:""}<h1>${esc(title)}</h1>${l!=null?`<button class="chip" data-act="nav" data-v="cfg">${esc(lojaNome(l))}</button>`:""}</header><main>${body}</main>${foot?`<div class="foot">${foot}</div>`:""}`}
+const SCANICO=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>`;
+const HOMEICO=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>`;
+function shell(title,body,{backBtn=true,foot=""}={}){const l=curLoja();const isHome=V.name==="home";
+  return `<header class="top">${backBtn?`<button class="back" data-act="back" aria-label="Voltar">‹</button>`:""}<h1>${esc(title)}</h1>${l!=null?`<button class="chip" data-act="nav" data-v="cfg">${esc(lojaNome(l))}</button>`:""}</header><main>${body}</main>
+  <div class="foot"><div class="fb">${foot}</div>${isHome?"":`<button class="navb" data-act="home" aria-label="Início">${HOMEICO}<span>Início</span></button>`}<button class="fab" data-act="scan" aria-label="Nova leitura">${SCANICO}<span>Ler</span></button></div>`}
 function render(){const f=VIEWS[V.name]||VIEWS.home;$("#app").innerHTML=f();(AFTER[V.name]||(()=>{}))()}
 const AFTER={};
 function modal(html){$("#modal").innerHTML=`<div class="modal" data-act="mclose-bg"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`}
@@ -453,41 +479,41 @@ AFTER.busca=AFTER.home;
 function stChip(v,lbl){const c=v==="A"?"A":v==="I"?"I":"x";return `<span class="st ${c}" title="${lbl} ${v==="A"?"ativo":v==="I"?"inativo":"sem informação"}">${lbl}:${esc(v||"-")}</span>`}
 const colKeys={un:k=>k==="UN",of:k=>k==="OF",tv:k=>k==="TV"||k==="TVO",ap:k=>/^O?AP\d/.test(k),cx:k=>/^O?CX\d/.test(k),ac:k=>/^O?AC\d/.test(k),ou:k=>/^O?(DP|FD|PC)\d/.test(k),sv:k=>k==="SV"||k==="SC"};
 function packCell(p,embs,isTV){const ps=(isTV?p.tvPacks:p.packs).filter(x=>embs.includes(x.emb));if(!ps.length)return "–";
-  return ps.map(x=>`<div class="${x.sv!=="A"?"off":""}">${x.emb==="AP"?`${x.q}+`:`${x.emb!=="CX"&&x.emb!=="AC"?x.emb+" ":""}c/${x.q}`}: <b>${brl(x.p/x.q)}</b>${x.o>0?` <span class="ofv">${brl(x.o/x.q)}</span>`:""}<br><small>${x.p>0?"tot. "+brl(x.p):"sem preço"}${x.sv!=="A"?" · inat.":""}</small></div>`).join("")}
+  return ps.map(x=>`<div class="pk ${x.sv!=="A"?"off":""}">${x.emb==="AP"?`${x.q}+`:`${x.emb!=="CX"&&x.emb!=="AC"?x.emb+" ":""}c/${x.q}`}: <b>${brl(x.p/x.q)}</b>${x.o>0?` <span class="ofv">${brl(x.o/x.q)}</span>`:""}<br><small>${x.p>0?"tot. "+brl(x.p):"sem preço"}${x.sv!=="A"?" · inat.":""}</small>${!isTV&&x.p>0?`<br>${discH(p,x)} ${mgH(p,(x.o>0?x.o:x.p)/x.q)}`:""}</div>`).join("")}
 function fichaTable(g,meProd){const dmap=new Map();for(const d of g.ev.D){let a=dmap.get(d.prod);if(!a)dmap.set(d.prod,a=[]);a.push(d)}
   const hasOu=g.items.some(p=>p.packs.some(x=>["DP","FD","PC"].includes(x.emb)));
   const dv=(p,col)=>(dmap.get(p.prod)||[]).filter(d=>colKeys[col](d.key));
-  const td=(p,col,html,cls="n")=>{const ds=dv(p,col);return `<td class="${cls}${ds.length?" dv":""}" ${ds.length?`title="${esc(ds.map(d=>d.motivo).join(" | "))}"`:""}>${html}${ds.map(d=>d.esp!=null?`<span class="exp">esp. ${brl(d.esp)}${d.key.length>3||/^O?[A-Z]{2}\d/.test(d.key)?" ("+esc(d.key.replace(/^O/,"of."))+")":""}</span>`:"").join("")}</td>`};
+  const td=(p,col,html,cls="n")=>{const ds=dv(p,col);return `<td class="${cls}${ds.length?" dv":""}" ${ds.length?`title="${esc(ds.map(d=>d.motivo).join(" | "))}"`:""}>${html}${ds.map(d=>d.esp!=null?`<span class="exp">esp. ${brl(d.esp/qOf(d.key))}${isPack(d.key)?"/un ("+esc(d.key.replace(/^O/,"of."))+")":""}</span>`:"").join("")}</td>`};
   const rows=g.items.map(p=>`<tr class="${p.prod===meProd?"me":""} ${p.sv!=="A"?"ina":""}" data-act="open" data-p="${p.prod}">
     <td style="white-space:nowrap">${stChip(p.sc,"C")}${stChip(p.sv,"V")}${!p.has?`<br><small>sem preço cad.</small>`:!p.mix?`<br><small>fora do mix</small>`:""}</td>
     <td class="mono">${p.alt??"–"}</td><td class="mono">${p.fam??"–"}</td><td class="mono"><b>${p.prod}</b></td><td class="n">${fnum(p.pct)}%</td>
     <td style="min-width:220px">${esc(p.desc)}${(dmap.get(p.prod)||[]).length?` <span class="b bad">${dmap.get(p.prod).length} div.</span>`:""}</td>
-    ${td(p,"un",p.un>0?`<b>${brl(p.un)}</b>${p.emb==="KG"?" <small>kg</small>":""}`:`<span class="muted">sem preço</span>`)}
+    ${td(p,"un",p.un>0?`<b>${brl(p.un)}</b>${p.emb==="KG"?" <small>kg</small>":""}<br>${mgH(p,p.un)}`:`<span class="muted">sem preço</span>`)}
     ${td(p,"ap",packCell(p,["AP"]))}
-    ${td(p,"tv",p.tv>0?`<b>${brl(p.tv)}</b>${p.tvO>0?`<br><span class="ofv">of. ${brl(p.tvO)}</span>`:""}${p.tvsv!=="A"?"<br><small>inat.</small>":""}`:`<span class="muted">${p.tvsv==="A"?"sem preço":"–"}</span>`)}
+    ${td(p,"tv",p.tv>0?`<b>${brl(p.tv)}</b><br>${mgH(p,p.tvO>0?p.tvO:p.tv)}${p.tvO>0?`<br><span class="ofv">of. ${brl(p.tvO)}</span>`:""}${p.tvsv!=="A"?"<br><small>inat.</small>":""}`:`<span class="muted">${p.tvsv==="A"?"sem preço":"–"}</span>`)}
     ${td(p,"cx",packCell(p,["CX"]))}
     ${td(p,"ac",packCell(p,["AC"]))}
     ${hasOu?td(p,"ou",packCell(p,["DP","FD","PC"])):""}
-    ${td(p,"of",p.unO>0?`<span class="ofv">${brl(p.unO)}</span>`:"–")}
+    ${td(p,"of",p.unO>0?`<span class="ofv">${brl(p.unO)}</span><br>${mgH(p,p.unO)}`:"–")}
     <td class="n ${p.est<0?"dv":""}">${p.est==null?"–":`<b>${fnum(p.est)}</b>${p.st&&p.st.mvd?`<br><small>${fnum(r2(p.st.mvd))}/dia</small>`:""}`}</td></tr>`).join("");
   return `<div class="tw"><table class="fx"><thead><tr><th>Status C/V</th><th>SEQ-ALT</th><th>SEQ-FAM</th><th>SEQ-PROD</th><th>Prop.</th><th>Descrição</th><th>Preço UN</th><th>Preço AP</th><th>Preço TV</th><th>Preço CX</th><th>Preço AC</th>${hasOu?"<th>Outras emb.</th>":""}<th>Oferta</th><th>Estoque</th></tr></thead><tbody>${rows}</tbody></table></div>`}
 VIEWS.ficha=()=>{const prod=+V.prod;const g=groupOf(prod,true,V.all);const p=g.items.find(x=>x.prod===prod)||pview({prod});V._g=g;pushHist(prod);
   const myD=g.ev.D.filter(d=>d.prod===prod);const isD=k=>myD.some(d=>colKeys[k](d.key));
   const codeInfo=V.code?`<span class="b info mono">Lido: ${esc(V.code)}${V.cemb&&!(V.cq===1&&(V.cemb==="UN"||V.cemb==="KG"))?` · ${esc(V.cemb)} c/${V.cq}`:""}</span>`:"";
   const aps=p.packs.filter(x=>x.emb==="AP"),cxs=p.packs.filter(x=>x.emb==="CX"),acs=p.packs.filter(x=>x.emb==="AC"),ous=p.packs.filter(x=>!["AP","CX","AC"].includes(x.emb));
-  const packTile=(lbl,arr,k)=>`<div class="pt ${isD(k)?"dv":""}"><div class="k">${lbl}</div>${arr.length?arr.map(x=>`<div class="pl ${x.sv!=="A"?"muted":""}">${x.emb==="AP"?`A partir de ${x.q} un`:`${x.emb} c/${x.q}`}: <b>${brl((x.o>0?x.o:x.p)/x.q)}</b>/un${x.o>0?` <span class="strike">${brl(x.p/x.q)}</span><span class="ofl">OFERTA</span>`:""}<br><small class="muted">total ${brl(x.o>0?x.o:x.p)}${x.sv!=="A"?" · inativo venda":""}</small></div>`).join(""):`<div class="v"><small>não cadastrado</small></div>`}</div>`;
+  const packTile=(lbl,arr,k)=>`<div class="pt ${isD(k)?"dv":""}"><div class="k">${lbl}</div>${arr.length?arr.map(x=>`<div class="pl ${x.sv!=="A"?"muted":""}">${x.emb==="AP"?`A partir de ${x.q} un`:`${x.emb} c/${x.q}`}: <b>${brl((x.o>0?x.o:x.p)/x.q)}</b>/un${x.o>0?` <span class="strike">${brl(x.p/x.q)}</span><span class="ofl">OFERTA</span>`:""}<br><small class="muted">total ${brl(x.o>0?x.o:x.p)}${x.sv!=="A"?" · inativo venda":""}</small><br>${discH(p,x)} ${mgH(p,(x.o>0?x.o:x.p)/x.q)}</div>`).join(""):`<div class="v"><small>não cadastrado</small></div>`}</div>`;
   const off=p.unO>0;const nD=g.ev.D.length,nA=g.ev.A.length;
   const pnome=pp=>{const x=g.items.find(i=>i.prod===pp);return x?`${x.prod} ${x.desc}`:pp};
   const statusBox=!nD&&!nA?`<div class="status ok"><h3>Família OK</h3><div class="small">${g.items.length>1?`Os ${g.items.length} produtos do SEQ-ALT ${g.alt} estão com preços coerentes (UN, AP, TV, CX, AC e oferta, respeitando a proporção).`:(g.total>1?"Nenhum outro produto da família dentro do filtro; sem inconsistências.":"Produto sem outros itens no SEQ-ALT e sem inconsistências.")}</div></div>`
-    :`${nD?`<div class="status bad"><h3>${nD} divergência(s) na família</h3><ul>${g.ev.D.map(d=>`<li><b>${esc(pnome(d.prod))}</b> · ${esc(keyMeta(g.items.find(i=>i.prod===d.prod)||p,d.key).label)}: ${brl(d.atual)}${d.esp!=null?` → esperado <b>${brl(d.esp)}</b>`:""} <span class="muted">(${esc(d.motivo)})</span></li>`).join("")}</ul></div>`:""}
+    :`${nD?`<div class="status bad"><h3>${nD} divergência(s) na família</h3><ul>${g.ev.D.map(d=>`<li><b>${esc(pnome(d.prod))}</b> · ${esc(keyMeta(g.items.find(i=>i.prod===d.prod)||p,d.key).label)}: ${d.atual==null?"–":brl(d.atual/qOf(d.key))}${d.esp!=null?` → esperado <b>${brl(d.esp/qOf(d.key))}</b>`:""} <span class="muted">(${esc(d.motivo)})</span></li>`).join("")}</ul></div>`:""}
       ${nA?`<div class="status warn"><h3>${nA} alerta(s)</h3><ul>${g.ev.A.map(a=>`<li><b>${esc(pnome(a.prod))}</b> · ${esc(a.msg)}</li>`).join("")}</ul></div>`:""}`;
   const body=`<div class="card hero"><div class="sec">${esc(p.sec||"")} ${p.sec?"·":""} SEQ-ALT ${g.alt??"–"} · SEQ-FAM ${p.fam??"–"}</div>
     <div class="desc">${esc(p.desc)}</div>
     <div class="chips"><span class="b mono">SEQ-PROD ${p.prod}</span>${codeInfo}${stChip(p.sc,"Compra")}${stChip(p.sv,"Venda")}${off?`<span class="b of">EM OFERTA</span>`:""}${p.tvO>0?`<span class="b of">OFERTA TV</span>`:""}${p.pct!==100?`<span class="b info">Proporção ${fnum(p.pct)}%</span>`:""}${!p.has?`<span class="b bad">fora da base de preços</span>`:p.mixForced?`<span class="b warn">sem status de compra e sem estoque na loja</span>`:""}${p.fora&&!V.all?`<span class="b warn">fora do filtro (${esc(filterDesc(baseF()))})</span>`:""}</div></div>
    <div class="board">
-    <div class="pt main ${isD("un")||isD("of")?"dv":""}"><div class="k">Preço unidade${p.emb==="KG"?" (kg)":""}${off?'<span class="ofl">OFERTA</span>':""}</div><div class="v">${p.un>0?brl(off?p.unO:p.un):"–"}</div><div class="s">${off?`de <span class="strike">${brl(p.un)}</span>`:p.un>0?"preço normal":"sem preço cadastrado"}</div></div>
+    <div class="pt main ${isD("un")||isD("of")?"dv":""}"><div class="k">Preço unidade${p.emb==="KG"?" (kg)":""}${off?'<span class="ofl">OFERTA</span>':""}</div><div class="v">${p.un>0?brl(off?p.unO:p.un):"–"}</div><div class="s">${off?`de <span class="strike">${brl(p.un)}</span>`:p.un>0?"preço normal":"sem preço cadastrado"} ${mgH(p,off?p.unO:p.un,"mg big")}</div></div>
     ${packTile("Preço a partir (AP)",aps,"ap")}
-    <div class="pt ${isD("tv")?"dv":""}"><div class="k">Televendas${p.tvO>0?'<span class="ofl">OFERTA</span>':""}</div><div class="v">${p.tv>0?brl(p.tvO>0?p.tvO:p.tv):"–"}</div><div class="s">${p.tvO>0?`de <span class="strike">${brl(p.tv)}</span>`:p.tv>0?(p.un>0&&Math.abs(p.tv-p.un)>0.005?`${p.tv<p.un?"abaixo":"acima"} do UN (${brl(p.un)})`:"igual ao UN"):p.tvsv==="A"?"ativo sem preço":"não cadastrado"}${p.tvsv==="I"?" · inativo":""}</div></div>
+    <div class="pt ${isD("tv")?"dv":""}"><div class="k">Televendas${p.tvO>0?'<span class="ofl">OFERTA</span>':""}</div><div class="v">${p.tv>0?brl(p.tvO>0?p.tvO:p.tv):"–"}</div><div class="s">${p.tvO>0?`de <span class="strike">${brl(p.tv)}</span>`:p.tv>0?(p.un>0&&Math.abs(p.tv-p.un)>0.005?`${p.tv<p.un?"abaixo":"acima"} do UN (${brl(p.un)})`:"igual ao UN"):p.tvsv==="A"?"ativo sem preço":"não cadastrado"}${p.tvsv==="I"?" · inativo":""}${p.tv>0?"<br>"+mgH(p,p.tvO>0?p.tvO:p.tv):""}</div></div>
     ${packTile("Preço caixa (CX)",cxs,"cx")}
     ${packTile("Preço AC",acs,"ac")}
     ${ous.length?packTile("Outras embalagens",ous,"ou"):""}
@@ -498,17 +524,17 @@ VIEWS.ficha=()=>{const prod=+V.prod;const g=groupOf(prod,true,V.all);const p=g.i
    <div class="sec-t">Ficha da família · SEQ-ALT ${g.alt??"–"} · ${g.items.length}${g.filt?" de "+g.total:""} produto(s)${g.inFam?"":" <span class='b warn'>fora da base de famílias (agrupado pela família de preço)</span>"}</div>
    ${fichaTable(g,prod)}
    <p class="muted small">Status C/V = compra/venda (A ativo, I inativo). AP, CX e AC mostram o preço por unidade e, abaixo, o total da embalagem. Células em vermelho divergem do restante da família; “esp.” é o valor esperado pela proporção.</p>`;
-  const foot=`<button class="btn" data-act="scan">Nova leitura</button><button class="btn" data-act="expFicha">Exportar ficha</button><button class="btn ${nD?"bad":"pri"}" data-act="edit">${nD?`Corrigir divergências (${nD})`:"Solicitar correção"}</button>`;
+  const foot=`<button class="btn" data-act="share">Compartilhar</button><button class="btn ${nD?"bad":"pri"}" data-act="edit">${nD?`Corrigir (${nD})`:"Solicitar correção"}</button>`;
   return shell("Ficha do produto",body,{foot})};
 
 /* ---------- edição / correção ---------- */
 VIEWS.edit=()=>{const g=groupOf(+V.prod,true,V.all);V._g=g;const dmap=new Map();g.ev.D.forEach(d=>dmap.set(d.prod+"|"+d.key,d));
   const items=[...g.items].sort((a,b)=>(g.ev.D.some(d=>d.prod===b.prod)?1:0)-(g.ev.D.some(d=>d.prod===a.prod)?1:0)||(a.sv==="A"?0:1)-(b.sv==="A"?0:1));
-  const fld=(p,key)=>{const m=keyMeta(p,key);const d=dmap.get(p.prod+"|"+key);const cur=getVal(p,key);
+  const fld=(p,key)=>{const m=keyMeta(p,key);const d=dmap.get(p.prod+"|"+key);const cur=getValU(p,key);const espU=d&&d.esp!=null?r2(d.esp/qOf(key)):null;
     if(key==="SC"||key==="SV")return `<div class="fld"><div class="l"><span>${m.label}</span></div><select class="in" data-ed="${p.prod}|${key}">${["A","I"].map(o=>`<option value="${o}" ${cur===o?"selected":""}>${o==="A"?"A – Ativo":"I – Inativo"}</option>`).join("")}${cur!=="A"&&cur!=="I"?`<option value="${esc(cur)}" selected>${esc(cur||"-")} (atual)</option>`:""}</select></div>`;
     return `<div class="fld ${d?"dv":""}"><div class="l"><span>${esc(m.label)}</span><span class="a">atual ${cur==null?"–":brl(cur)}</span></div>
       <input class="in" data-ed="${p.prod}|${key}" inputmode="decimal" value="${cur!=null&&cur!==0?brl(cur):""}" placeholder="${cur==null||cur===0?"0,00":""}">
-      ${d?`<div class="m">${esc(d.motivo)}</div>${d.esp!=null?`<div class="sg">Sugestão <b>${brl(d.esp)}</b> <button type="button" class="btn sm" data-act="applySg" data-k="${p.prod}|${key}" data-v="${d.esp}">Aplicar</button></div>`:""}`:""}</div>`};
+      ${d?`<div class="m">${esc(d.motivo)}</div>${espU!=null?`<div class="sg">Sugestão <b>${brl(espU)}</b> <button type="button" class="btn sm" data-act="applySg" data-k="${p.prod}|${key}" data-v="${espU}">Aplicar</button></div>`:""}`:""}${isPack(key)&&cur>0?`<div class="a">total ${brl(r2(cur*qOf(key)))} · ${discH(p,p.packs.find(x=>x.k===key.replace(/^O/,""))||{p:0})}</div>`:""}</div>`};
   const allK=new Set();const me=g.items.find(x=>x.prod===+V.prod)||g.items[0];
   const cards=items.map(p=>{const ks=["UN","OF","TV","TVO"];p.packs.forEach(x=>{ks.push(x.k);if(x.o>0||dmap.has(p.prod+"|O"+x.k))ks.push("O"+x.k)});
     g.ev.D.filter(d=>d.prod===p.prod&&!ks.includes(d.key)).forEach(d=>ks.push(d.key));
@@ -521,7 +547,7 @@ VIEWS.edit=()=>{const g=groupOf(+V.prod,true,V.all);V._g=g;const dmap=new Map();
      <input class="in mono" id="rpV" inputmode="decimal" placeholder="Preço de ${esc(me.desc.slice(0,22))}" style="flex:1;min-width:120px"></div>
      <div class="chipsel" style="margin:8px 0" id="rpS"><button class="on" data-act="rpS" data-v="all">Todos da família</button><button data-act="rpS" data-v="div">Só os divergentes</button><button data-act="rpS" data-v="me">Só este produto</button></div>
      <button class="btn tag" data-act="replicar" style="width:100%">Replicar</button>
-     <p class="small muted" style="margin:6px 0 0">Digite o preço do produto escaneado (${me.prod}, ${fnum(me.pct)}%). Os outros recebem o valor ajustado pela proporção de cada um. Em AP/CX/AC o valor é o total da embalagem. Confira e toque em “Adicionar à lista de correção”.</p></div>
+     <p class="small muted" style="margin:6px 0 0">Digite o preço do produto escaneado (${me.prod}, ${fnum(me.pct)}%). Os outros recebem o valor ajustado pela proporção de cada um. Em AP/CX/AC digite o preço unitário (o total é calculado). Confira e toque em “Adicionar à lista de correção”.</p></div>
     ${cards}
     <label class="f">Observação para o Pricing<textarea class="in" id="edObs" rows="2" placeholder="Ex.: etiqueta da gôndola está R$ 32,79"></textarea></label>
     ${!S.cfg.user?`<label class="f">Seu nome (fica salvo)<input class="in" id="edUser" placeholder="Nome de quem está solicitando"></label>`:""}`;
@@ -535,48 +561,54 @@ function replicar(){const g=V._g;const k=$("#rpK").value;const v=num($("#rpV").v
     if(scope==="div"&&!g.ev.D.some(d=>d.prod===p.prod&&d.key===k))continue;
     inp.value=brl(r2(v*p.pct/(me.pct||100)));markChg(inp);n++}
   toast(n?`${n} produto(s) preenchido(s) — confira e adicione à lista`:"Nenhum produto nesse filtro tem esse campo")}
-function markChg(inp){const [prod,key]=inp.dataset.ed.split("|");const p=V._g.items.find(x=>x.prod===+prod);const cur=getVal(p,key);const fl=inp.closest(".fld");if(!fl)return;
+function markChg(inp){const [prod,key]=inp.dataset.ed.split("|");const p=V._g.items.find(x=>x.prod===+prod);const cur=getValU(p,key);const fl=inp.closest(".fld");if(!fl)return;
   const ch=(key==="SC"||key==="SV")?inp.value!==cur:(inp.value.trim()!==""&&Math.abs(r2(num(inp.value))-(cur||0))>=0.005);fl.classList.toggle("chg",ch)}
 function saveEdit(){const g=V._g;const obs=($("#edObs")?.value||"").trim();const u=$("#edUser");if(u&&u.value.trim()){S.cfg.user=u.value.trim();saveCfg()}
-  const loja=curLoja();let n=0;
-  for(const inp of $$("[data-ed]")){const [ps,key]=inp.dataset.ed.split("|");const p=g.items.find(x=>x.prod===+ps);const cur=getVal(p,key);let nv=inp.value.trim();
+  const loja=curLoja();let n=0;const bid="I"+uid();const chg=new Map();
+  for(const inp of $$("[data-ed]")){const [ps,key]=inp.dataset.ed.split("|");const p=g.items.find(x=>x.prod===+ps);const cur=getValU(p,key);let nv=inp.value.trim();
     if(key==="SC"||key==="SV"){if(nv===cur)continue}else{if(nv==="")continue;nv=r2(num(nv));if(Math.abs(nv-(cur||0))<0.005)continue}
     const d=g.ev.D.find(x=>x.prod===p.prod&&x.key===key);const m=keyMeta(p,key);
     S.corr=S.corr.filter(c=>!(c.st==="Pendente"&&c.loja===loja&&c.prod===p.prod&&c.key===key));
-    S.corr.push({id:uid(),dt:Date.now(),loja,alt:g.alt,fam:p.fam,prod:p.prod,desc:p.desc,key,label:m.label,seg:m.seg,emb:m.emb,q:m.q,campo:m.campo,atual:cur,novo:nv,esp:d?d.esp:null,motivo:d?d.motivo:"Ajuste solicitado pela loja",obs,user:S.cfg.user||"",st:"Pendente"});n++}
-  if(!n)return toast("Nenhum valor alterado");saveCorr();toast(n+" correção(ões) adicionada(s)");hist.pop();go("corr");
+    const q=isPack(key)?qOf(key):1;
+    S.corr.push({id:uid(),dt:Date.now(),loja,alt:g.alt,fam:p.fam,prod:p.prod,desc:p.desc,key,label:m.label,seg:m.seg,emb:m.emb,q:m.q,campo:m.campo,atual:cur,novo:nv,esp:d&&d.esp!=null?r2(d.esp/q):null,
+      totAtual:q>1&&typeof cur==="number"?r2(cur*q):"",totNovo:q>1&&typeof nv==="number"?r2(nv*q):"",img:bid,motivo:d?d.motivo:"Ajuste solicitado pela loja",obs,user:S.cfg.user||"",st:"Pendente"});
+    chg.set(p.prod+"|"+key,{novo:nv,atual:cur,label:m.label});n++}
+  if(!n)return toast("Nenhum valor alterado");
+  try{const cv=drawFicha(g,+V.prod,chg);S.corrImg[bid]=cv.toDataURL("image/jpeg",0.85);IDB.set("corrImg",S.corrImg)}catch(e){console.error(e)}
+  saveCorr();toast(n+" correção(ões) adicionada(s)");hist.pop();go("corr");
   if(GMODE&&navigator.onLine)flushCorr().then(k=>{if(k){toast(k+" correção(ões) enviada(s) ao Pricing");if(V.name==="corr")render()}}).catch(e=>toast("Envio pendente: "+e.message))}
 
 /* ---------- correções ---------- */
 VIEWS.corr=()=>{const f=V.f||"Pendente";const L=S.corr.filter(c=>f==="todas"||(f==="Enviado"?c.st!=="Pendente":c.st===f));const by=new Map();L.forEach(c=>{const k=c.loja+"|"+c.prod;if(!by.has(k))by.set(k,[]);by.get(k).push(c)});
   const np=S.corr.filter(c=>c.st==="Pendente").length,ne=S.corr.filter(c=>c.st!=="Pendente").length;
   const body=`${GMODE?`<p class="small muted">${np?`${np} aguardando envio${navigator.onLine?"":" (sem internet: vão sozinhas quando a conexão voltar)"}.`:"Tudo enviado para a planilha do Pricing."} A situação de cada pedido (Corrigido, Recusado…) volta da aba CORRECOES.</p>`:""}<div class="chipsel">${[["Pendente","Pendentes ("+np+")"],["Enviado","Enviadas ("+ne+")"],["todas","Todas"]].map(([k,l])=>`<button class="${f===k?"on":""}" data-act="corrF" data-f="${k}">${l}</button>`).join("")}</div>
-   ${L.length?[...by.values()].map(arr=>`<div class="card"><div style="margin-bottom:6px"><b data-act="open" data-p="${arr[0].prod}" style="cursor:pointer">${esc(arr[0].desc)}</b><div class="mono small muted">${arr[0].prod} · ALT ${arr[0].alt??"–"} · ${esc(lojaNome(arr[0].loja))}</div></div>
+   ${L.length?[...by.values()].map(arr=>`<div class="card"><div style="margin-bottom:6px"><b data-act="open" data-p="${arr[0].prod}" style="cursor:pointer">${esc(arr[0].desc)}</b><div class="mono small muted">${arr[0].prod} · ALT ${arr[0].alt??"–"} · ${esc(lojaNome(arr[0].loja))}</div>${[...new Set(arr.map(c=>c.img).filter(i=>i&&S.corrImg[i]))].map(i=>`<button class="btn sm" data-act="corrImg" data-id="${i}" style="margin-top:4px">Ver imagem da ficha</button>`).join(" ")}</div>
      ${arr.map(c=>`<div class="row small" style="border-top:1px solid var(--line);padding:6px 0;flex-wrap:nowrap;align-items:flex-start"><div class="grow" style="min-width:0"><b>${esc(c.label)}</b>: ${typeof c.atual==="number"||c.atual==null?brl(c.atual):esc(c.atual)} → <b>${typeof c.novo==="number"?brl(c.novo):esc(c.novo)}</b><br><span class="muted">${esc(c.motivo)}${c.obs?" · "+esc(c.obs):""} · ${fmtDT(c.dt)}${c.user?" · "+esc(c.user):""}</span><br><span class="b ${c.st==="Pendente"?"warn":c.st==="Recusado"?"bad":c.st==="Corrigido"?"ok":"info"}">${esc(c.st)}</span>${c.ret?` <span class="muted">Pricing: ${esc(c.ret)}</span>`:""}</div><button class="btn sm" data-act="delCorr" data-id="${c.id}" aria-label="Excluir">✕</button></div>`).join("")}</div>`).join(""):`<div class="empty">Nenhuma correção ${f==="todas"?"":f==="Pendente"?"pendente":"enviada"}.<br>Escaneie um produto e use “Corrigir divergências”.</div>`}`;
   return shell("Correções",body,{foot:`${ne?`<button class="btn" data-act="clearSent">Limpar enviadas</button>`:""}${GMODE?`<button class="btn" data-act="corrRefresh">Atualizar situação</button>`:""}<button class="btn pri" data-act="sendCorr" ${np?"":"disabled"}>Enviar ${np} pendente(s)</button>`})};
 function corrRows(list){return list.map(c=>({DATA:fmtDT(c.dt),COD_LOJA:c.loja,LOJA:lojaNome(c.loja),SEQ_ALT:c.alt??"",SEQ_FAMILIA:c.fam??"",SEQ_PRODUTO:c.prod,DESCRICAO:c.desc,SEGMENTO:c.seg,EMBALAGEM:c.emb,QTD_EMB:c.q,CAMPO:c.campo,DESCRICAO_CAMPO:c.label,
-  VALOR_ATUAL:c.atual==null?"":c.atual,VALOR_NOVO:c.novo,VALOR_ESPERADO:c.esp==null?"":c.esp,MOTIVO:c.motivo,OBS:c.obs,USUARIO:c.user,STATUS:c.st}))}
+  VALOR_ATUAL:c.atual==null?"":c.atual,VALOR_NOVO:c.novo,VALOR_ESPERADO:c.esp==null?"":c.esp,MOTIVO:c.motivo,OBS:c.obs,USUARIO:c.user,STATUS:c.st,
+  TOTAL_ATUAL:c.totAtual??"",TOTAL_NOVO:c.totNovo??"",IMAGEM:c.img&&S.corrImg[c.img]?`ficha_${c.img}.jpg`:""}))}
 function toCsv(rows){if(!rows.length)return "﻿";const h=Object.keys(rows[0]);const q=v=>{v=typeof v==="number"?String(v).replace(".",","):String(v??"");return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};return "﻿"+[h.join(";"),...rows.map(r=>h.map(k=>q(r[k])).join(";"))].join("\r\n")}
 function toBlob(sheets,fmt){if(fmt==="xlsx"&&window.XLSX){const wb=XLSX.utils.book_new();sheets.forEach(([n,r])=>{const ws=XLSX.utils.json_to_sheet(r.length?r:[{}]);ws["!cols"]=Object.keys(r[0]||{}).map(k=>({wch:Math.max(8,Math.min(42,k.length+2,...r.slice(0,200).map(x=>String(x[k]??"").length+1)))}));XLSX.utils.book_append_sheet(wb,ws,n.slice(0,31))});
   return new Blob([XLSX.write(wb,{bookType:"xlsx",type:"array"})],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"})}
   return new Blob([toCsv(sheets[0][1])],{type:"text/csv"})}
-async function deliver(filename,blob,subject,text){
+async function deliver(filename,blob,subject,text,extra=[]){
   if(GRUN){if(!navigator.onLine){toast("Sem internet para gerar o arquivo no Drive");return false}
     modal(`<h3>Gerando arquivo</h3><p class="small">Salvando <b class="mono">${esc(filename)}</b> no Google Drive…</p>`);
     try{const r=await gs("saveExport",filename,blob.type||"application/octet-stream",await blobB64(blob));
       modal(`<h3>Arquivo pronto</h3><p class="small">Salvo na pasta <b>${esc(r.folder)}</b> do Drive.</p><a class="btn pri" href="${esc(r.url)}" target="_blank" rel="noopener">Abrir / baixar</a><a class="btn" href="${esc(waLink(text+"\n"+r.url))}" target="_blank" rel="noopener">Enviar link no WhatsApp</a><button class="btn" data-act="mclose">Fechar</button>`);return true}
     catch(e){modal(`<h3>Não foi possível gerar</h3><p class="small">${esc(e.message)}</p><button class="btn" data-act="mclose">OK</button>`);return false}}
-  const file=new File([blob],filename,{type:blob.type});
-  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:subject,text});toast("Arquivo enviado para compartilhar");return true}}catch(e){if(e&&e.name==="AbortError")return false}
+  const file=new File([blob],filename,{type:blob.type});const files=[file,...extra];
+  try{if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,title:subject,text});toast("Arquivo enviado para compartilhar");return true}}catch(e){if(e&&e.name==="AbortError")return false}
   let saved=false;
   try{const dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null;if(dl){await dl.save({filename,data:blob});saved=true}}catch(e){}
-  if(!saved){try{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();saved=true}catch(e){}}
+  if(!saved){try{for(const f of files){const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();a.remove();await new Promise(r=>setTimeout(r,300))}saved=true}catch(e){}}
   const wa="https://wa.me/"+(S.cfg.wa?"55"+String(S.cfg.wa).replace(/\D/g,"").replace(/^55/,""):"")+"?text="+encodeURIComponent(text.slice(0,3500)+"\n\nArquivo: "+filename);
   const mail="mailto:"+encodeURIComponent(S.cfg.emails.replace(/\s/g,"")).replace(/%3B/gi,";").replace(/%40/g,"@")+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(text.slice(0,1700)+"\n\nAnexe o arquivo "+filename+" salvo no aparelho.");
   modal(`<h3>Arquivo pronto</h3><p class="small">${saved?`O arquivo <b class="mono">${esc(filename)}</b> foi salvo no aparelho.`:"Não foi possível salvar automaticamente."} Envie pelo WhatsApp ou e-mail e anexe o arquivo.</p>
     <a class="btn pri" href="${esc(wa)}" target="_blank" rel="noopener">Abrir WhatsApp</a><a class="btn" href="${esc(mail)}">Abrir e-mail (${esc(S.cfg.emails.split(/[;,]/)[0])}${S.cfg.emails.split(/[;,]/).length>1?" +":""})</a><button class="btn" data-act="mclose">Fechar</button>`);return true}
 function corrText(list){const by=new Map();list.forEach(c=>{const k=c.prod;if(!by.has(k))by.set(k,[]);by.get(k).push(c)});
-  return `*Correção de preços – ${lojaNome(list[0].loja)}*\n${fmtDT(Date.now())}${S.cfg.user?" · "+S.cfg.user:""}\n`+[...by.values()].map(a=>`\n▪ ${a[0].prod} ${a[0].desc} (ALT ${a[0].alt??"–"})\n`+a.map(c=>`   ${c.label}: ${typeof c.atual==="number"||c.atual==null?brl(c.atual):c.atual} → ${typeof c.novo==="number"?brl(c.novo):c.novo}${c.motivo?" – "+c.motivo:""}`).join("\n")+(a[0].obs?`\n   Obs.: ${a[0].obs}`:"")).join("\n")}
+  return `*Correção de preços – ${lojaNome(list[0].loja)}*\n${fmtDT(Date.now())}${S.cfg.user?" · "+S.cfg.user:""}\n`+[...by.values()].map(a=>`\n▪ ${a[0].prod} ${a[0].desc} (ALT ${a[0].alt??"–"})\n`+a.map(c=>`   ${c.label}: ${typeof c.atual==="number"||c.atual==null?brl(c.atual):c.atual} → ${typeof c.novo==="number"?brl(c.novo):c.novo}${c.totNovo?` (total ${brl(c.totNovo)})`:""}${c.motivo?" – "+c.motivo:""}`).join("\n")+(a[0].obs?`\n   Obs.: ${a[0].obs}`:"")).join("\n")}
 function sendCorrModal(){const L=S.corr.filter(c=>c.st==="Pendente");if(!L.length)return;
   if(GMODE)return modal(`<h3>Enviar ${L.length} correção(ões)</h3><p class="small muted">Vai para a aba CORRECOES da planilha do Pricing${S.srvCfg&&S.srvCfg.emailAuto?" e o Pricing recebe um e-mail":""}. Sem internet, fica guardado e sobe sozinho depois.</p>
    <button class="btn pri" data-act="doSend" data-fmt="gs">Enviar para a planilha do Pricing</button><button class="btn" data-act="doSend" data-fmt="txt">Também avisar no WhatsApp (texto)</button><button class="btn" data-act="mclose">Cancelar</button>`);
@@ -587,7 +619,8 @@ async function doSend(fmt){const L=S.corr.filter(c=>c.st==="Pendente");if(!L.len
     if(!navigator.onLine){if(fmt!=="txt")mclose();toast("Sem internet: as correções sobem sozinhas quando a conexão voltar");return}
     try{const n=await flushCorr();if(fmt!=="txt")mclose();toast(n+" correção(ões) gravada(s) na planilha do Pricing")}catch(e){if(fmt!=="txt")mclose();toast("Falha no envio: "+e.message)}return render()}
   if(fmt==="txt"){const wa="https://wa.me/"+(S.cfg.wa?"55"+String(S.cfg.wa).replace(/\D/g,"").replace(/^55/,""):"")+"?text="+encodeURIComponent(text.slice(0,3800));window.open(wa,"_blank");}
-  else{const name=`correcao_precos_loja${lj}_${today()}.${fmt==="xlsx"&&window.XLSX?"xlsx":"csv"}`;const ok=await deliver(name,toBlob([["Correcoes",corrRows(L)]],fmt),`Correção de preços – ${lojaNome(lj)} – ${today()}`,text);if(!ok)return}
+  else{const name=`correcao_precos_loja${lj}_${today()}.${fmt==="xlsx"&&window.XLSX?"xlsx":"csv"}`;const imgs=[...new Set(L.map(c=>c.img).filter(i=>i&&S.corrImg[i]))].map(i=>{const u=b64ToU8(S.corrImg[i].split(",")[1]);return new File([u],`ficha_${i}.jpg`,{type:"image/jpeg"})});
+    const ok=await deliver(name,toBlob([["Correcoes",corrRows(L)]],fmt),`Correção de preços – ${lojaNome(lj)} – ${today()}`,text,imgs);if(!ok)return}
   L.forEach(c=>{c.st="Enviado";c.env=Date.now()});saveCorr();if(fmt==="txt")mclose();render()}
 
 /* ---------- export ficha ---------- */
@@ -625,7 +658,7 @@ const divFresh=()=>{const c=S.divCache;return !!(c&&c.loja===curLoja()&&c.pk===(
 async function expDiv(){const c=S.divCache;if(!c)return;const f=V.f||"fam",sec=V.sec||"";
   const rows=[];for(const r of c.res){if(sec&&r.sec!==sec)continue;const nm=p=>r.items.find(x=>x.prod===p)||{};
     if(f==="alert"){r.A.forEach(a=>rows.push({LOJA:c.loja,SECAO:r.sec,SEQ_ALT:r.alt,SEQ_FAMILIA:nm(a.prod).fam??"",SEQ_PRODUTO:a.prod,DESCRICAO:nm(a.prod).desc||"",TIPO:"ALERTA",CAMPO:"",ATUAL:"",ESPERADO:"",MOTIVO:a.msg}));continue}
-    r.D.filter(d=>f==="all"||d.tp===f).forEach(d=>{const it=nm(d.prod);rows.push({LOJA:c.loja,SECAO:r.sec,SEQ_ALT:r.alt,SEQ_FAMILIA:it.fam??"",SEQ_PRODUTO:d.prod,DESCRICAO:it.desc||"",PROPORCAO:it.pct,TIPO:d.tp.toUpperCase(),CAMPO:keyMeta({emb:"UN"},d.key).label,ATUAL:d.atual??"",ESPERADO:d.esp??"",MOTIVO:d.motivo})})}
+    r.D.filter(d=>f==="all"||d.tp===f).forEach(d=>{const it=nm(d.prod);rows.push({LOJA:c.loja,SECAO:r.sec,SEQ_ALT:r.alt,SEQ_FAMILIA:it.fam??"",SEQ_PRODUTO:d.prod,DESCRICAO:it.desc||"",PROPORCAO:it.pct,TIPO:d.tp.toUpperCase(),CAMPO:keyMeta({emb:"UN"},d.key).label,QTD_EMB:qOf(d.key),ATUAL_UNIT:d.atual==null?"":r2(d.atual/qOf(d.key)),ESPERADO_UNIT:d.esp==null?"":r2(d.esp/qOf(d.key)),MOTIVO:d.motivo})})}
   if(!rows.length)return toast("Nada para exportar");
   await deliver(`divergencias_loja${c.loja}_${today()}.xlsx`,toBlob([["Divergencias",rows]],"xlsx"),`Divergências de preço – ${lojaNome(c.loja)}`,`Divergências de preço – ${lojaNome(c.loja)} – ${rows.length} linha(s).`)}
 
@@ -772,8 +805,12 @@ document.addEventListener("click",async e=>{const el=e.target.closest("[data-act
   if(a==="pickBase")return $("#fileBase").click();
   if(a==="edit")return go("edit",{prod:V.prod,all:V.all});
   if(a==="applySg"){const i=$(`[data-ed="${el.dataset.k}"]`);if(i){i.value=brl(+el.dataset.v);markChg(i)}return}
-  if(a==="applyAll"){V._g.ev.D.forEach(d=>{if(d.esp==null)return;const i=$(`[data-ed="${d.prod}|${d.key}"]`);if(i){i.value=brl(d.esp);markChg(i)}});return toast("Sugestões aplicadas — revise antes de enviar")}
+  if(a==="applyAll"){V._g.ev.D.forEach(d=>{if(d.esp==null)return;const i=$(`[data-ed="${d.prod}|${d.key}"]`);if(i){i.value=brl(r2(d.esp/qOf(d.key)));markChg(i)}});return toast("Sugestões aplicadas — revise antes de enviar")}
   if(a==="saveEdit")return saveEdit();
+  if(a==="share")return shareMenu();
+  if(a==="shImg"){mclose();return shareFichaImg()}
+  if(a==="home"){hist.length=0;V={name:"home"};render();return window.scrollTo(0,0)}
+  if(a==="corrImg"){const d=S.corrImg[el.dataset.id];if(!d)return toast("Imagem não encontrada");return modal(`<h3>Imagem da solicitação</h3><img src="${d}" alt="Ficha" style="width:100%;border:1px solid var(--line);border-radius:8px"><button class="btn" data-act="mclose">Fechar</button>`)}
   if(a==="corrF"){V.f=el.dataset.f;return render()}
   if(a==="delCorr"){S.corr=S.corr.filter(c=>c.id!==el.dataset.id);saveCorr();return render()}
   if(a==="corrRefresh"){if(!navigator.onLine)return toast("Sem internet");toast("Atualizando…");try{await flushCorr();await pullCorr()}catch(e){toast(e.message)}return render()}
@@ -783,7 +820,7 @@ document.addEventListener("click",async e=>{const el=e.target.closest("[data-act
   if(a==="clearSent"){S.corr=S.corr.filter(c=>c.st==="Pendente");saveCorr();return render()}
   if(a==="sendCorr")return sendCorrModal();
   if(a==="doSend")return doSend(el.dataset.fmt);
-  if(a==="expFicha")return expFicha();
+  if(a==="expFicha"){mclose();return expFicha()}
   if(a==="divF"){V.f=el.dataset.f;return render()}
   if(a==="fTog"){const F=V.F,k=el.dataset.k,v=el.dataset.v;F[k]=F[k].includes(v)?F[k].filter(x=>x!==v):[...F[k],v];el.classList.toggle("on");return}
   if(a==="fClear"){V.F=defF();V.res=null;fSave();toast("Filtro voltou ao padrão: compra ativo");return render()}
@@ -819,15 +856,88 @@ async function apiConnect(){const u=($("#apiIn").value||"").trim();if(!apiOk(u))
   const old=S.cfg.apiUrl;S.cfg.apiUrl=u;toast("Testando conexão…");
   try{await gs("info");GMODE=true;await saveCfg();toast("Conectado à planilha");render();gsync()}catch(e){S.cfg.apiUrl=old;toast("Não conectou: "+e.message)}}
 
+
+/* ================= imagem da ficha (para WhatsApp e correções) ================= */
+const mgT=(p,u)=>{const m=mgOf(p,u);return m==null?"":"Mg "+pctf(m)};
+const discT=(p,x)=>{if(!(x.p>0))return "";const r=discRef(p,x);if(!r)return "";const d=1-(x.p/x.q)/r.u;return (d>=0?"−":"+")+pctf(Math.abs(d))+" vs "+r.lbl};
+function drawFicha(g,prod,changes){changes=changes||new Map();
+  const hasOu=g.items.some(p=>p.packs.some(x=>["DP","FD","PC"].includes(x.emb)));
+  const cols=[["cv","C / V",78],["seq","SEQ-PROD",104],["pct","Prop.",66],["desc","Descrição",380],["un","Preço UN",150],["ap","Preço AP",200],["tv","Preço TV",140],["cx","Preço CX",200],["ac","Preço AC",200]];
+  if(hasOu)cols.push(["ou","Outras emb.",190]);cols.push(["of","Oferta",130],["est","Estoque",110]);
+  const M=20,W=cols.reduce((a,c)=>a+c[2],0)+M*2;const F='"Segoe UI",Roboto,Arial,sans-serif';
+  const cv=document.createElement("canvas");let x=cv.getContext("2d");
+  const font=(sz,b)=>`${b?"700 ":"400 "}${sz}px ${F}`;
+  const wrap=(t,w,sz,b,max)=>{x.font=font(sz,b);const ws=String(t).split(/\s+/);const out=[];let cur="";for(const wd of ws){const tt=cur?cur+" "+wd:wd;if(x.measureText(tt).width>w&&cur){out.push(cur);cur=wd}else cur=tt}if(cur)out.push(cur);if(max&&out.length>max){out.length=max;out[max-1]+="…"}return out};
+  const GR="#1f7a4d",RD="#b3261e",GY="#5a6967",INK="#14201f",BL="#0b4f8a";
+  const dmap=new Map();for(const d of g.ev.D){const a=dmap.get(d.prod)||[];a.push(d);dmap.set(d.prod,a)}
+  const packL=(p,embs)=>{const ps=p.packs.filter(y=>embs.includes(y.emb));if(!ps.length)return [{t:"–",c:GY}];const L=[];
+    for(const y of ps){L.push({t:`${y.emb==="AP"?y.q+"+":(["CX","AC"].includes(y.emb)?"":y.emb+" ")+"c/"+y.q}: ${brl(y.p/y.q)}`,b:1,c:y.sv!=="A"?GY:INK});
+      if(y.o>0)L.push({t:"oferta "+brl(y.o/y.q),c:RD,b:1});L.push({t:y.p>0?"tot. "+brl(y.p):"sem preço",c:GY,s:14});
+      const dt=discT(p,y),mt=y.p>0?mgT(p,(y.o>0?y.o:y.p)/y.q):"";if(dt||mt)L.push({t:[dt,mt].filter(Boolean).join(" · "),c:BL,s:14})}return L};
+  const cell=(p,col)=>{switch(col){
+    case "cv":return [{t:"C:"+p.sc,c:p.sc==="A"?GR:p.sc==="I"?RD:GY,b:1},{t:"V:"+p.sv,c:p.sv==="A"?GR:p.sv==="I"?RD:GY,b:1}];
+    case "seq":return [{t:String(p.prod),b:1}].concat(p.prod===prod?[{t:"◀ lido",c:BL,s:14,b:1}]:[]);
+    case "pct":return [{t:fnum(p.pct)+"%"}];
+    case "desc":{const L=wrap(p.desc,cols.find(c=>c[0]==="desc")[2]-14,16,0,3).map(t=>({t}));const n=(dmap.get(p.prod)||[]).length;if(n)L.push({t:n+" divergência(s)",c:RD,s:14,b:1});return L}
+    case "un":return p.un>0?[{t:brl(p.un)+(p.emb==="KG"?" kg":""),b:1},{t:mgT(p,p.un),c:BL,s:14}]:[{t:"sem preço",c:GY}];
+    case "tv":return p.tv>0?[{t:brl(p.tv),b:1},{t:mgT(p,p.tvO>0?p.tvO:p.tv),c:BL,s:14}].concat(p.tvO>0?[{t:"of. "+brl(p.tvO),c:RD,b:1}]:[]):[{t:p.tvsv==="A"?"sem preço":"–",c:GY}];
+    case "ap":return packL(p,["AP"]);case "cx":return packL(p,["CX"]);case "ac":return packL(p,["AC"]);case "ou":return packL(p,["DP","FD","PC"]);
+    case "of":return p.unO>0?[{t:brl(p.unO),c:RD,b:1},{t:mgT(p,p.unO),c:BL,s:14}]:[{t:"–",c:GY}];
+    case "est":return p.est==null?[{t:"–",c:GY}]:[{t:fnum(p.est),b:1,c:p.est<0?RD:INK}].concat(p.st&&p.st.mvd?[{t:fnum(r2(p.st.mvd))+"/dia",c:GY,s:14}]:[]);}return []};
+  const colOf=k=>Object.keys(colKeys).find(c=>colKeys[c](k));
+  const rows=g.items.map(p=>{const cells={};let mx=1;for(const [c] of cols){let L=cell(p,c);let bg=null;
+      const ds=(dmap.get(p.prod)||[]).filter(d=>colOf(d.key)===c);if(ds.length){bg="#f9dedc";ds.forEach(d=>{if(d.esp!=null)L=L.concat([{t:"esp. "+brl(d.esp/qOf(d.key))+(isPack(d.key)?"/un":""),c:RD,s:14,b:1}])})}
+      for(const [k,ch] of changes)if(+k.split("|")[0]===p.prod&&colOf(k.split("|")[1])===c){bg="#fff3b0";L=L.concat([{t:"→ "+(typeof ch.novo==="number"?brl(ch.novo):ch.novo)+(isPack(k.split("|")[1])?"/un":""),c:BL,b:1}])}
+      if(c==="cv"){for(const [k,ch] of changes)if(+k.split("|")[0]===p.prod&&/\|S[CV]$/.test(k)){bg="#fff3b0";L=L.concat([{t:(k.endsWith("SC")?"C→":"V→")+ch.novo,c:BL,b:1}])}}
+      cells[c]={L,bg};mx=Math.max(mx,L.length)}
+    return{p,cells,h:mx*22+16}});
+  const top=[];const add=(t,sz,b,c,gap)=>top.push({t,sz,b,c,gap:gap||0});
+  const p0=g.items.find(p=>p.prod===prod)||g.items[0];
+  const descL=wrap(p0.desc,W-2*M,30,1,2);
+  const info=`SEQ-PROD ${p0.prod} · SEQ-ALT ${g.alt??"–"} · SEQ-FAM ${p0.fam??"–"} · Compra ${p0.sc} · Venda ${p0.sv} · Estoque ${p0.est==null?"–":fnum(p0.est)}`;
+  const st=[];if(g.ev.D.length){st.push({t:`${g.ev.D.length} divergência(s) na família`,sz:20,b:1,c:RD});
+    g.ev.D.slice(0,14).forEach(d=>{const it=g.items.find(i=>i.prod===d.prod)||p0;wrap(`• ${it.prod} ${it.desc} · ${keyMeta(it,d.key).label}: ${d.atual==null?"–":brl(d.atual/qOf(d.key))}${d.esp!=null?" → esperado "+brl(d.esp/qOf(d.key)):""} (${d.motivo})`,W-2*M,15,0).forEach(t=>st.push({t,sz:15,c:INK}))});
+    if(g.ev.D.length>14)st.push({t:`… e mais ${g.ev.D.length-14}`,sz:15,c:GY})}
+  else st.push({t:"Família OK: preços coerentes",sz:20,b:1,c:GR});
+  if(changes.size){st.push({t:"Correções solicitadas",sz:20,b:1,c:BL});for(const [k,ch] of changes){const it=g.items.find(i=>i.prod===+k.split("|")[0]);wrap(`• ${it.prod} ${it.desc} · ${ch.label}: ${ch.atual==null?"–":typeof ch.atual==="number"?brl(ch.atual):ch.atual} → ${typeof ch.novo==="number"?brl(ch.novo):ch.novo}`,W-2*M,15,1).forEach(t=>st.push({t,sz:15,b:1,c:INK}))}}
+  const headH=64,prodH=24+descL.length*36+30,stH=st.reduce((a,l)=>a+l.sz+8,0)+20,thH=40;
+  const H=headH+prodH+stH+thH+rows.reduce((a,r)=>a+r.h,0)+56;
+  cv.width=W;cv.height=H;x=cv.getContext("2d");x.textBaseline="top";
+  x.fillStyle="#ffffff";x.fillRect(0,0,W,H);
+  x.fillStyle="#0f3b3a";x.fillRect(0,0,W,headH);x.fillStyle="#fff";x.font=font(28,1);x.fillText("FICHA DE PREÇOS",M,17);
+  x.font=font(18,0);const hr=`${lojaNome(curLoja())} · ${fmtDT(Date.now())}`;x.fillText(hr,W-M-x.measureText(hr).width,22);
+  let y=headH+14;x.fillStyle=GY;x.font=font(15,0);x.fillText(`${p0.sec||""}`,M,y);y+=22;
+  x.fillStyle=INK;x.font=font(30,1);descL.forEach(t=>{x.fillText(t,M,y);y+=36});x.font=font(16,0);x.fillStyle=GY;x.fillText(info,M,y+2);y+=30;
+  x.fillStyle=g.ev.D.length?"#fdf0ef":"#e8f5ee";x.fillRect(M-8,y,W-2*M+16,stH-8);y+=10;
+  st.forEach(l=>{x.font=font(l.sz,l.b);x.fillStyle=l.c;x.fillText(l.t,M,y);y+=l.sz+8});y=headH+prodH+stH;
+  x.fillStyle="#0f3b3a";x.fillRect(M,y,W-2*M,thH);x.fillStyle="#fff";x.font=font(15,1);let cx=M;for(const [,t,w] of cols){x.fillText(t.toUpperCase(),cx+7,y+12);cx+=w}y+=thH;
+  rows.forEach((r,i)=>{cx=M;if(r.p.prod===prod){x.fillStyle="#dceaf3";x.fillRect(M,y,W-2*M,r.h)}else if(i%2){x.fillStyle="#f4f7f6";x.fillRect(M,y,W-2*M,r.h)}
+    for(const [c,,w] of cols){const ce=r.cells[c];if(ce.bg){x.fillStyle=ce.bg;x.fillRect(cx+1,y+1,w-2,r.h-2)}let yy=y+8;
+      for(const l of ce.L){x.font=font(l.s||17,l.b);x.fillStyle=l.c||INK;let t=String(l.t);while(t.length>3&&x.measureText(t).width>w-12)t=t.slice(0,-2);x.fillText(t,cx+7,yy);yy+=22}cx+=w}
+    x.strokeStyle="#c9d3d1";x.beginPath();x.moveTo(M,y+r.h);x.lineTo(W-M,y+r.h);x.stroke();y+=r.h});
+  x.font=font(14,0);x.fillStyle=GY;x.fillText(`Filtro: ${filterDesc(baseF())}${S.cfg.user?" · "+S.cfg.user:""} · app Ficha de Preços · Mg = margem sobre o preço (PMZ)`,M,y+18);
+  return cv}
+const cvBlob=(cv,type="image/jpeg",q=0.88)=>new Promise(r=>cv.toBlob(r,type,q));
+async function shareFichaImg(){const g=V._g;if(!g)return;toast("Gerando imagem…");await tick();const cv=drawFicha(g,+V.prod);const blob=await cvBlob(cv);
+  const name=`ficha_${g.alt}_loja${curLoja()}_${today()}.jpg`;const p0=g.items.find(p=>p.prod===+V.prod)||g.items[0];
+  const text=`Ficha ${p0.prod} ${p0.desc} – ${lojaNome(curLoja())}${g.ev.D.length?` – ${g.ev.D.length} divergência(s)`:""}`;
+  if(!GRUN){const file=new File([blob],name,{type:"image/jpeg"});try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text});return}}catch(e){if(e&&e.name==="AbortError")return}}
+  const url=URL.createObjectURL(blob);
+  modal(`<h3>Imagem da ficha</h3><img src="${url}" alt="Imagem da ficha" style="width:100%;border:1px solid var(--line);border-radius:8px"><div id="imgAct"></div><button class="btn" data-act="mclose">Fechar</button>`);
+  const box=$("#imgAct");
+  if(GRUN){box.innerHTML=`<p class="small muted">Gerando link no Drive…</p>`;try{const r=await gs("saveExport",name,"image/jpeg",await blobB64(blob));box.innerHTML=`<a class="btn pri" href="${esc(r.url)}" target="_blank" rel="noopener">Abrir / baixar a imagem</a><a class="btn" href="${esc(waLink(text+"\n"+(r.view||r.url)))}" target="_blank" rel="noopener">Enviar link no WhatsApp</a>`}catch(e){box.innerHTML=`<p class="small" style="color:var(--bad)">${esc(e.message)}</p>`}}
+  else{box.innerHTML=`<a class="btn pri" href="${url}" download="${esc(name)}">Baixar imagem</a><p class="small muted">Depois anexe a imagem na conversa do WhatsApp.</p>`}}
+function shareMenu(){modal(`<h3>Compartilhar ficha</h3><button class="btn pri" data-act="shImg">Imagem da ficha (WhatsApp)</button><button class="btn" data-act="expFicha">Planilha Excel</button><button class="btn" data-act="mclose">Cancelar</button>`)}
+
 /* ================= sincronização Google (planilha + Drive) ================= */
 const u8ToB64=u=>{let s="";for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)};
 const b64ToU8=b=>{const bin=atob(b);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u};
 const blobB64=async b=>u8ToB64(new Uint8Array(await b.arrayBuffer()));
 const waLink=t=>"https://wa.me/"+(S.cfg.wa?"55"+String(S.cfg.wa).replace(/\D/g,"").replace(/^55/,""):"")+"?text="+encodeURIComponent(String(t).slice(0,3800));
 const baseNome=k=>k==="fam"?"famílias relacionadas":k.startsWith("preco_")?"preços loja "+k.slice(6):"estoque loja "+k.slice(4);
-function packPreco(pr,loja){const P=pr.byLoja.get(loja);const rows=[];for(const [p,x] of P)rows.push([p,x.f,x.sc,x.r]);const codes=[];for(const [c,v] of pr.codes)if(P.has(v[0]))codes.push([c,v[0],v[1],v[2]]);
+function packPreco(pr,loja){const P=pr.byLoja.get(loja);const rows=[];for(const [p,x] of P)rows.push([p,x.f,x.sc,x.r,x.z||0,x.mc||0]);const codes=[];for(const [c,v] of pr.codes)if(P.has(v[0]))codes.push([c,v[0],v[1],v[2]]);
   return{file:pr.file,dt:pr.dt,main:pr.main,loja,n:rows.length,linhas:pr.rows,rows,codes}}
-function unpackPreco(o){const P=new Map();for(const r of o.rows)P.set(r[0],{f:r[1],sc:r[2],r:r[3]});const codes=new Map();for(const c of o.codes)codes.set(c[0],[c[1],c[2],c[3]]);
+function unpackPreco(o){const P=new Map();for(const r of o.rows)P.set(r[0],{f:r[1],sc:r[2],r:r[3],z:r[4]||0,mc:r[5]||0});const codes=new Map();for(const c of o.codes)codes.set(c[0],[c[1],c[2],c[3]]);
   return{file:o.file,dt:o.dt,loaded:Date.now(),rows:o.linhas||o.n,main:o.main,lojas:[o.loja],byLoja:new Map([[o.loja,P]]),codes}}
 function packEst(es,loja){const E=es.byLoja.get(loja);const rows=[];for(const [p,x] of E)rows.push([p,x.e,x.c,x.v,x.d,x.mvd,x.de,x.pend,x.emb,x.ec]);const codes=[];for(const [c,p] of es.codes)if(E.has(p))codes.push([c,p]);
   return{file:es.file,dt:es.dt,loja,n:rows.length,rows,codes}}
@@ -865,7 +975,9 @@ function pickLojaCard(){const L=gLojas();
    <label class="f">Seu nome<input class="in" id="plUser" value="${esc(S.cfg.user)}" placeholder="Quem está usando o app"></label>
    <button class="btn pri" data-act="pickLoja" style="width:100%">Começar</button>${!navigator.onLine?`<p class="small" style="color:var(--bad)">Sem internet: conecte para baixar as bases.</p>`:""}</div>`}
 async function flushCorr(){if(!GMODE||!navigator.onLine)return 0;const L=S.corr.filter(c=>c.st==="Pendente");if(!L.length)return 0;
-  const rows=L.map(c=>({ID:c.id,...corrRows([c])[0],STATUS:"Pendente"}));const r=await gs("saveCorr",JSON.stringify(rows));const ok=new Set(r.ok);
+  const rows=L.map(c=>({ID:c.id,IMG_ID:c.img&&S.corrImg[c.img]?c.img:"",...corrRows([c])[0],STATUS:"Pendente"}));
+  const imgs={};rows.forEach(r=>{if(r.IMG_ID)imgs[r.IMG_ID]=S.corrImg[r.IMG_ID].split(",")[1]});
+  const r=await gs("saveCorr",JSON.stringify(rows),JSON.stringify(imgs));const ok=new Set(r.ok);
   L.forEach(c=>{if(ok.has(c.id)){c.st="Enviado";c.env=Date.now()}});saveCorr();return ok.size}
 async function pullCorr(){if(!GMODE||!navigator.onLine)return;const L=S.corr.filter(c=>c.st!=="Pendente").slice(-400);if(!L.length)return;
   const r=await gs("corrStatus",JSON.stringify(L.map(c=>c.id)));let ch=0;
@@ -899,7 +1011,7 @@ function basesG(){const B=S.srv?S.srv.bases:{};const ks=Object.keys(B).sort();co
 (async()=>{
   $("#app").innerHTML=`<main><div class="empty">Abrindo…</div></main>`;
   await IDB.open();
-  const [cfg,preco,est,famUp,lojasUp,corr,h]=await Promise.all(["cfg","preco","est","famUp","lojasUp","corr","hist"].map(k=>IDB.get(k)));
+  const [cfg,preco,est,famUp,lojasUp,corr,h,cimg]=await Promise.all(["cfg","preco","est","famUp","lojasUp","corr","hist","corrImg"].map(k=>IDB.get(k)));if(cimg)S.corrImg=cimg;
   if(cfg)Object.assign(S.cfg,cfg);
   try{const q=new URLSearchParams(location.search).get("api");if(q&&apiOk(q)){S.cfg.apiUrl=q;saveCfg();history.replaceState(null,"",location.pathname)}}catch(e){}
   GMODE=GRUN||apiOk(S.cfg.apiUrl);if(preco&&preco.byLoja)S.preco=preco;if(est&&est.byLoja)S.est=est;if(Array.isArray(corr))S.corr=corr;if(Array.isArray(h))S.hist=h;
