@@ -75,7 +75,7 @@ label.f{display:block;font-size:13px;color:var(--muted);margin-bottom:10px}label
 .status.bad h3{color:var(--bad)}.status.warn h3{color:var(--warn)}
 .status ul{margin:6px 0 0;padding-left:18px;color:var(--ink)}.status li{margin:3px 0;font-size:13.5px}
 .tw{overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);max-height:70vh}
-table.fx{border-collapse:separate;border-spacing:0;width:100%;font-size:13px;min-width:1080px}
+table.fx{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
 .fx th{position:sticky;top:0;background:var(--brand);color:var(--brand-ink);text-align:left;font:600 12px var(--f-body);text-transform:uppercase;letter-spacing:.04em;padding:8px;white-space:nowrap;z-index:1}
 .fx td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 .fx tr:last-child td{border-bottom:0}
@@ -88,6 +88,14 @@ table.fx{border-collapse:separate;border-spacing:0;width:100%;font-size:13px;min
 .fx .exp{display:block;font-size:11px;color:var(--bad);font-weight:600}
 .fx small{color:var(--muted)}
 .fx .off{opacity:.5}
+.fx .prodc{min-width:220px;max-width:340px}
+.fx td.prodc .pd{font-weight:600;line-height:1.25}
+.fx .ps{font-size:11px;color:var(--muted);margin:2px 0}
+.fx td .mg,.fx td .dsc,.fx td .cad,.fx .blk{display:block;width:max-content;margin:2px 0 0 auto}
+.fx td .pk{margin-bottom:4px}
+.cad{display:inline-block;font:500 10.5px var(--f-body);color:var(--muted);white-space:nowrap;margin-left:3px}
+.mg.na{background:var(--surface2);color:var(--muted)}
+
 .st{display:inline-block;min-width:34px;text-align:center;font:600 11.5px var(--f-mono);padding:2px 4px;border-radius:5px;margin:1px 2px 1px 0}
 .st.A{background:var(--ok-bg);color:var(--ok)}.st.I{background:var(--bad-bg);color:var(--bad)}.st.x{background:var(--surface2);color:var(--muted)}
 .ofv{color:var(--bad);font-weight:700}
@@ -134,6 +142,37 @@ table.fx{border-collapse:separate;border-spacing:0;width:100%;font-size:13px;min
 .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13.5px}.kv span{color:var(--muted)}
 .empty{text-align:center;padding:26px 12px;color:var(--muted)}
 .dl{font-size:13px}.dl b{font-weight:600}
+@media (max-width:640px){
+ body{font-size:14px}
+ main{padding-left:10px;padding-right:10px}
+ .tw{max-height:none}
+ table.fx{font-size:11.5px}
+ .fx th{font-size:10px;padding:6px 5px;letter-spacing:.02em}
+ .fx td{padding:5px 5px}
+ .fx .prodc{position:sticky;left:0;z-index:2;min-width:118px;max-width:132px;background:var(--surface);box-shadow:2px 0 3px rgba(0,0,0,.08)}
+ .fx th.prodc{z-index:3;background:var(--brand)}
+ .fx tr.me td.prodc{background:var(--info-bg)}
+ .fx td.prodc .pd{font-size:11.5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+ .fx .ps{font-size:9.5px}
+ .fx .st{min-width:0;font-size:9.5px;padding:1px 3px}
+ .fx .b{font-size:9.5px;padding:1px 5px}
+ .fx td .mg,.fx td .dsc{font-size:9.5px;padding:0 4px}
+ .fx .cad{font-size:9px}
+ .fx .exp{font-size:9.5px}
+ .fx small{font-size:9.5px}
+ .hero .desc{font-size:21px}
+ .board{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .pt{padding:8px 9px}
+ .pt .v{font-size:22px}.pt.main .v{font-size:30px}
+ .pt .k{font-size:10px}
+ .pl{font-size:12.5px}.pl b{font-size:14px}
+ .pt .mg,.pt .dsc{font-size:10px}
+ .status li{font-size:12.5px}
+ .sec-t{font-size:14px}
+ .foot .fb .btn{flex:1 1 84px;min-height:42px;font-size:13px;padding:4px 8px}
+ .navb{width:48px;height:48px}.fab{width:66px;height:66px;margin-top:-24px}
+ .fx td.n{white-space:nowrap}
+}
 @media print{.top,.foot,.noprint{display:none!important}main{padding:0}.tw{max-height:none;overflow:visible}table.fx{min-width:0;font-size:10px}}
 </style></head><body>
 <div id="app"></div><div id="modal"></div><div id="toast" class="toast" hidden></div>
@@ -411,7 +450,9 @@ const isPack=key=>qOf(key)>1||/^O?(AP|CX|AC|DP|FD|PC)\d+$/.test(key);
 function getValU(p,key){const v=getVal(p,key);if(typeof v!=="number")return v;return isPack(key)?r2(v/qOf(key)):v}
 const pctf=v=>(v*100).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+"%";
 const mgOf=(p,u)=>p.pmz>0&&u>0?(u-p.pmz)/u:null;
-function mgH(p,u,cls="mg"){const m=mgOf(p,u);if(m==null)return "";const low=p.mgc>0&&m<p.mgc-1e-6;return `<span class="${cls} ${low?"low":""}" title="Margem sobre o preço (PMZ ${brl(p.pmz)}${p.mgc?" · margem cadastro "+pctf(p.mgc):""})">Mg ${pctf(m)}</span>`}
+function mgH(p,u,cls="mg"){const m=mgOf(p,u);const cad=p.mgc>0?`<span class="cad">cad ${pctf(p.mgc)}</span>`:"";
+  if(m==null)return p.has&&u>0?`<span class="${cls} na" title="Base sem PMZ: publique/carregue a base de preços novamente">Mg –</span>${cad}`:"";
+  const low=p.mgc>0&&m<p.mgc-1e-6;return `<span class="${cls} ${low?"low":""}" title="Margem aplicada sobre o preço (PMZ ${brl(p.pmz)})${p.mgc?" · margem de cadastro "+pctf(p.mgc):""}">Mg ${pctf(m)}</span>${cad}`}
 function discRef(p,x){const act=e=>p.packs.filter(y=>y.emb===e&&y.p>0&&y.sv==="A"&&y.q<x.q).sort((a,b)=>b.q-a.q)[0];
   let r=null,lbl="UN";if(x.emb==="AC"){r=act("CX");lbl=r?"CX":null;if(!r){r=act("AP");lbl=r?"AP":null}}else if(x.emb==="CX"){r=act("AP");lbl=r?"AP":null}
   if(!r)return p.un>0?{u:p.un,lbl:"UN"}:null;return{u:r.p/r.q,lbl}}
@@ -479,24 +520,25 @@ AFTER.busca=AFTER.home;
 function stChip(v,lbl){const c=v==="A"?"A":v==="I"?"I":"x";return `<span class="st ${c}" title="${lbl} ${v==="A"?"ativo":v==="I"?"inativo":"sem informação"}">${lbl}:${esc(v||"-")}</span>`}
 const colKeys={un:k=>k==="UN",of:k=>k==="OF",tv:k=>k==="TV"||k==="TVO",ap:k=>/^O?AP\d/.test(k),cx:k=>/^O?CX\d/.test(k),ac:k=>/^O?AC\d/.test(k),ou:k=>/^O?(DP|FD|PC)\d/.test(k),sv:k=>k==="SV"||k==="SC"};
 function packCell(p,embs,isTV){const ps=(isTV?p.tvPacks:p.packs).filter(x=>embs.includes(x.emb));if(!ps.length)return "–";
-  return ps.map(x=>`<div class="pk ${x.sv!=="A"?"off":""}">${x.emb==="AP"?`${x.q}+`:`${x.emb!=="CX"&&x.emb!=="AC"?x.emb+" ":""}c/${x.q}`}: <b>${brl(x.p/x.q)}</b>${x.o>0?` <span class="ofv">${brl(x.o/x.q)}</span>`:""}<br><small>${x.p>0?"tot. "+brl(x.p):"sem preço"}${x.sv!=="A"?" · inat.":""}</small>${!isTV&&x.p>0?`<br>${discH(p,x)} ${mgH(p,(x.o>0?x.o:x.p)/x.q)}`:""}</div>`).join("")}
+  return ps.map(x=>`<div class="pk ${x.sv!=="A"?"off":""}">${x.emb==="AP"?`${x.q}+`:`${x.emb!=="CX"&&x.emb!=="AC"?x.emb+" ":""}c/${x.q}`}: <b>${brl(x.p/x.q)}</b>${x.o>0?` <span class="ofv">${brl(x.o/x.q)}</span>`:""}<br><small>${x.p>0?"tot. "+brl(x.p):"sem preço"}${x.sv!=="A"?" · inat.":""}</small>${!isTV&&x.p>0?`${discH(p,x)}${mgH(p,(x.o>0?x.o:x.p)/x.q)}`:""}</div>`).join("")}
 function fichaTable(g,meProd){const dmap=new Map();for(const d of g.ev.D){let a=dmap.get(d.prod);if(!a)dmap.set(d.prod,a=[]);a.push(d)}
-  const hasOu=g.items.some(p=>p.packs.some(x=>["DP","FD","PC"].includes(x.emb)));
   const dv=(p,col)=>(dmap.get(p.prod)||[]).filter(d=>colKeys[col](d.key));
-  const td=(p,col,html,cls="n")=>{const ds=dv(p,col);return `<td class="${cls}${ds.length?" dv":""}" ${ds.length?`title="${esc(ds.map(d=>d.motivo).join(" | "))}"`:""}>${html}${ds.map(d=>d.esp!=null?`<span class="exp">esp. ${brl(d.esp/qOf(d.key))}${isPack(d.key)?"/un ("+esc(d.key.replace(/^O/,"of."))+")":""}</span>`:"").join("")}</td>`};
-  const rows=g.items.map(p=>`<tr class="${p.prod===meProd?"me":""} ${p.sv!=="A"?"ina":""}" data-act="open" data-p="${p.prod}">
-    <td style="white-space:nowrap">${stChip(p.sc,"C")}${stChip(p.sv,"V")}${!p.has?`<br><small>sem preço cad.</small>`:!p.mix?`<br><small>fora do mix</small>`:""}</td>
-    <td class="mono">${p.alt??"–"}</td><td class="mono">${p.fam??"–"}</td><td class="mono"><b>${p.prod}</b></td><td class="n">${fnum(p.pct)}%</td>
-    <td style="min-width:220px">${esc(p.desc)}${(dmap.get(p.prod)||[]).length?` <span class="b bad">${dmap.get(p.prod).length} div.</span>`:""}</td>
-    ${td(p,"un",p.un>0?`<b>${brl(p.un)}</b>${p.emb==="KG"?" <small>kg</small>":""}<br>${mgH(p,p.un)}`:`<span class="muted">sem preço</span>`)}
-    ${td(p,"ap",packCell(p,["AP"]))}
-    ${td(p,"tv",p.tv>0?`<b>${brl(p.tv)}</b><br>${mgH(p,p.tvO>0?p.tvO:p.tv)}${p.tvO>0?`<br><span class="ofv">of. ${brl(p.tvO)}</span>`:""}${p.tvsv!=="A"?"<br><small>inat.</small>":""}`:`<span class="muted">${p.tvsv==="A"?"sem preço":"–"}</span>`)}
-    ${td(p,"cx",packCell(p,["CX"]))}
-    ${td(p,"ac",packCell(p,["AC"]))}
-    ${hasOu?td(p,"ou",packCell(p,["DP","FD","PC"])):""}
-    ${td(p,"of",p.unO>0?`<span class="ofv">${brl(p.unO)}</span><br>${mgH(p,p.unO)}`:"–")}
-    <td class="n ${p.est<0?"dv":""}">${p.est==null?"–":`<b>${fnum(p.est)}</b>${p.st&&p.st.mvd?`<br><small>${fnum(r2(p.st.mvd))}/dia</small>`:""}`}</td></tr>`).join("");
-  return `<div class="tw"><table class="fx"><thead><tr><th>Status C/V</th><th>SEQ-ALT</th><th>SEQ-FAM</th><th>SEQ-PROD</th><th>Prop.</th><th>Descrição</th><th>Preço UN</th><th>Preço AP</th><th>Preço TV</th><th>Preço CX</th><th>Preço AC</th>${hasOu?"<th>Outras emb.</th>":""}<th>Oferta</th><th>Estoque</th></tr></thead><tbody>${rows}</tbody></table></div>`}
+  const anyD=col=>g.items.some(p=>dv(p,col).length);
+  const hasE=e=>g.items.some(p=>p.packs.some(x=>e.includes(x.emb)));
+  const show={ap:hasE(["AP"])||anyD("ap"),tv:g.items.some(p=>p.tv>0||p.tvsv==="A")||anyD("tv"),cx:hasE(["CX"])||anyD("cx"),ac:hasE(["AC"])||anyD("ac"),ou:hasE(["DP","FD","PC"])||anyD("ou"),of:g.items.some(p=>p.unO>0)||anyD("of")};
+  const td=(p,col,html,cls="n")=>{const ds=dv(p,col);return `<td class="${cls}${ds.length?" dv":""}" ${ds.length?`title="${esc(ds.map(d=>d.motivo).join(" | "))}"`:""}>${html}${ds.map(d=>d.esp!=null?`<span class="exp">esp. ${brl(d.esp/qOf(d.key))}${isPack(d.key)?"/un":""}</span>`:"").join("")}</td>`};
+  const rows=g.items.map(p=>{const nd=(dmap.get(p.prod)||[]).length;return `<tr class="${p.prod===meProd?"me":""} ${p.sv!=="A"?"ina":""}" data-act="open" data-p="${p.prod}">
+    <td class="prodc"><div class="pd">${esc(p.desc)}</div><div class="ps mono">${p.prod} · ALT ${p.alt??"–"} · FAM ${p.fam??"–"} · ${fnum(p.pct)}%</div><div>${stChip(p.sc,"C")}${stChip(p.sv,"V")}${nd?`<span class="b bad">${nd} div.</span>`:""}${!p.has?` <small>sem preço cad.</small>`:!p.mix?` <small>fora do mix</small>`:""}</div></td>
+    ${td(p,"un",p.un>0?`<b>${brl(p.un)}</b>${p.emb==="KG"?" <small>kg</small>":""}${mgH(p,p.un)}`:`<span class="muted">sem preço</span>`)}
+    ${show.ap?td(p,"ap",packCell(p,["AP"])):""}
+    ${show.tv?td(p,"tv",p.tv>0?`<b>${brl(p.tv)}</b>${mgH(p,p.tvO>0?p.tvO:p.tv)}${p.tvO>0?`<span class="ofv blk">of. ${brl(p.tvO)}</span>`:""}${p.tvsv!=="A"?"<small class=blk>inat.</small>":""}`:`<span class="muted">${p.tvsv==="A"?"sem preço":"–"}</span>`):""}
+    ${show.cx?td(p,"cx",packCell(p,["CX"])):""}
+    ${show.ac?td(p,"ac",packCell(p,["AC"])):""}
+    ${show.ou?td(p,"ou",packCell(p,["DP","FD","PC"])):""}
+    ${show.of?td(p,"of",p.unO>0?`<span class="ofv">${brl(p.unO)}</span>${mgH(p,p.unO)}`:"–"):""}
+    <td class="n ${p.est<0?"dv":""}">${p.est==null?"–":`<b>${fnum(p.est)}</b>${p.st&&p.st.mvd?`<small class="blk">${fnum(r2(p.st.mvd))}/dia</small>`:""}`}</td></tr>`}).join("");
+  const hid=["ap","tv","cx","ac","ou","of"].filter(k=>!show[k]).map(k=>({ap:"AP",tv:"TV",cx:"CX",ac:"AC",ou:"outras emb.",of:"oferta"}[k]));
+  return `<div class="tw"><table class="fx"><thead><tr><th class="prodc">Produto · status C/V</th><th>UN</th>${show.ap?"<th>AP</th>":""}${show.tv?"<th>TV</th>":""}${show.cx?"<th>CX</th>":""}${show.ac?"<th>AC</th>":""}${show.ou?"<th>Outras</th>":""}${show.of?"<th>Oferta</th>":""}<th>Estoque</th></tr></thead><tbody>${rows}</tbody></table></div>${hid.length?`<p class="muted small" style="margin:4px 2px 0">Sem ${hid.join(", ")} cadastrado na família (colunas ocultas).</p>`:""}`}
 VIEWS.ficha=()=>{const prod=+V.prod;const g=groupOf(prod,true,V.all);const p=g.items.find(x=>x.prod===prod)||pview({prod});V._g=g;pushHist(prod);
   const myD=g.ev.D.filter(d=>d.prod===prod);const isD=k=>myD.some(d=>colKeys[k](d.key));
   const codeInfo=V.code?`<span class="b info mono">Lido: ${esc(V.code)}${V.cemb&&!(V.cq===1&&(V.cemb==="UN"||V.cemb==="KG"))?` · ${esc(V.cemb)} c/${V.cq}`:""}</span>`:"";
@@ -523,7 +565,7 @@ VIEWS.ficha=()=>{const prod=+V.prod;const g=groupOf(prod,true,V.all);const p=g.i
    ${baseOn(baseF())?`<div class="row small" style="margin:14px 2px -4px"><span class="b ${V.all?"warn":"info"}">${V.all?"Mostrando todos (filtro desligado nesta ficha)":"Filtro: "+esc(filterDesc(baseF()))}</span><span class="muted grow">${V.all?"":g.hidden?`${g.hidden} produto(s) da família ocultos`:"nenhum produto oculto"}</span><button class="btn sm" data-act="fichaAll">${V.all?"Aplicar filtro":"Mostrar todos"}</button><button class="btn sm" data-act="nav" data-v="filtro">Alterar</button></div>`:""}
    <div class="sec-t">Ficha da família · SEQ-ALT ${g.alt??"–"} · ${g.items.length}${g.filt?" de "+g.total:""} produto(s)${g.inFam?"":" <span class='b warn'>fora da base de famílias (agrupado pela família de preço)</span>"}</div>
    ${fichaTable(g,prod)}
-   <p class="muted small">Status C/V = compra/venda (A ativo, I inativo). AP, CX e AC mostram o preço por unidade e, abaixo, o total da embalagem. Células em vermelho divergem do restante da família; “esp.” é o valor esperado pela proporção.</p>`;
+   <p class="muted small">Status C/V = compra/venda (A ativo, I inativo). AP, CX e AC mostram o preço por unidade, o total da embalagem, o desconto sobre a embalagem anterior, a margem aplicada (Mg) e a margem de cadastro (cad). Células em vermelho divergem do restante da família; “esp.” é o valor esperado pela proporção.</p>`;
   const foot=`<button class="btn" data-act="share">Compartilhar</button><button class="btn ${nD?"bad":"pri"}" data-act="edit">${nD?`Corrigir (${nD})`:"Solicitar correção"}</button>`;
   return shell("Ficha do produto",body,{foot})};
 
@@ -858,7 +900,7 @@ async function apiConnect(){const u=($("#apiIn").value||"").trim();if(!apiOk(u))
 
 
 /* ================= imagem da ficha (para WhatsApp e correções) ================= */
-const mgT=(p,u)=>{const m=mgOf(p,u);return m==null?"":"Mg "+pctf(m)};
+const mgT=(p,u)=>{const m=mgOf(p,u);return m==null?"":"Mg "+pctf(m)+(p.mgc>0?" (cad "+pctf(p.mgc)+")":"")};
 const discT=(p,x)=>{if(!(x.p>0))return "";const r=discRef(p,x);if(!r)return "";const d=1-(x.p/x.q)/r.u;return (d>=0?"−":"+")+pctf(Math.abs(d))+" vs "+r.lbl};
 function drawFicha(g,prod,changes){changes=changes||new Map();
   const hasOu=g.items.some(p=>p.packs.some(x=>["DP","FD","PC"].includes(x.emb)));
